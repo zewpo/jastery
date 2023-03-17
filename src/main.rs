@@ -28,7 +28,7 @@ struct DragonMovement {
 
 #[derive(Bundle)]
 struct Fireball {
-        #[bundle]
+        // #[bundle]
     sprite_bundle: SpriteBundle,
     movement: FireballMovement,
 }
@@ -36,6 +36,7 @@ struct Fireball {
 #[derive(Component)]
 struct FireballMovement {
     speed: f32,
+    despawn_timer: Timer,
 }
 
 fn main() {
@@ -77,7 +78,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         DragonMovement {
             velocity: Vec3::ZERO,
-            max_velocity: 20.0,
+            max_velocity: 15.0,
             timer: Timer::from_seconds(0.05, TimerMode::Repeating),
         },
     ));
@@ -154,19 +155,33 @@ fn fireball_spawn_system(
     asset_server: Res<AssetServer>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Space) {
-        for (_,dragon_transform) in dragon_query.iter() {
+        for (dragon_movement, dragon_transform) in dragon_query.iter() {
+            
+            let mut speed_x: f32 = 70.0 + (20.0 * dragon_movement.velocity.x.abs());
+            let mut scale_x: f32 = 1.0;
+            let mut trans_x: f32 = 120.0;
+
+            if dragon_transform.scale.x < 0.0 { 
+                speed_x *= -1.0;
+                scale_x *= -1.0;
+                trans_x *= -1.0;
+            }
 
             // Spawn a fireball into the game.
             commands.spawn(Fireball {
                 sprite_bundle: SpriteBundle {
                     texture: asset_server.load("fireball.png"),
                     transform: Transform {
-                        translation: dragon_transform.translation + Vec3::new(50.0, 0.0, 0.0),
+                        translation: dragon_transform.translation + Vec3::new(trans_x, 30.0, 0.0),
+                        scale: Vec3::new(scale_x,1.0,1.0),
                         ..default()
                     },
                     ..default()
                 },
-                movement: FireballMovement { speed: (500.0) } ,
+                movement: FireballMovement { 
+                    speed: speed_x,
+                    despawn_timer: Timer::from_seconds(1.2, TimerMode::Once), // Set the timeout duration here
+                },
             });
         }
     }
@@ -175,18 +190,23 @@ fn fireball_spawn_system(
 fn fireball_movement_system(
         time: Res<Time>,
         mut commands: Commands,
-        mut fireball_query: Query<(&mut FireballMovement, &mut Transform)>,
-        window_query: Query<&Window>,
+        mut fireball_query: Query<(Entity, &mut FireballMovement, &mut Transform)>,
     ) {
     let delta_time = time.delta_seconds();
-    
-    let window_width = window_query.single().width();
-    for (fireball_movement, mut fireball_transform) in fireball_query.iter_mut() {
-        fireball_transform.translation.x += fireball_movement.speed * delta_time;
+    for (   entity,
+            mut fireball_movement, 
+            mut fireball_transform
+        ) in fireball_query.iter_mut() {
 
-        // Despawn the fireball if it has gone further than one-fifth the window width.
-        if fireball_transform.translation.x > window_width/5.0 {
-        //     commands.entity(entity).despawn();
+        // Move the sprite by distance of speed * time.
+        fireball_transform.translation.x += fireball_movement.speed * delta_time;
+        
+        // Update the despawn timer
+        fireball_movement.despawn_timer.tick(time.delta());
+
+        // Despawn the fireball if the timer has finished
+        if fireball_movement.despawn_timer.finished() {
+            commands.entity(entity).despawn();
         }
     }
 }
