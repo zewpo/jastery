@@ -121,13 +121,14 @@ fn main() {
         .add_state::<GameState>()
         .insert_resource(CameraScale(1.0))
         .add_systems(  (preload_images,
-                        setup_dragon, 
+                        setup_dragons, 
                         setup_camera,
                 ).chain().on_startup()
         )
         .add_system(setup_maze.run_if(in_state(GameState::Setup)))
         .add_systems((
-                keyboard_input_system.run_if(in_state(GameState::Running)), 
+                keyboard_input_system_ice_dragon.run_if(in_state(GameState::Running)),
+                keyboard_input_system_fire_dragon.run_if(in_state(GameState::Running)),
                 dragon_movement_system.run_if(in_state(GameState::Running)), 
                 camera_follow_system.run_if(in_state(GameState::Running)),
                 fireball_spawn_system.run_if(in_state(GameState::Running)), 
@@ -144,7 +145,7 @@ fn preload_images(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 
-fn setup_dragon(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_dragons(mut commands: Commands, asset_server: Res<AssetServer>) {
     println!("Setup Fire Dragon");
     // Spawn the Fire Dragon into the game.
     commands.spawn(FireDragonBundle {
@@ -169,7 +170,7 @@ fn setup_dragon(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 
 
-        // Spawn the Ice Dragon into the game.
+    // Spawn the Ice Dragon into the game.
     commands.spawn(IceDragonBundle {
         marker: IceDragon,
         dragon_bundle: DragonBundle {
@@ -276,7 +277,7 @@ fn setup_camera(
     ));
 }
 
-fn keyboard_input_system(
+fn keyboard_input_system_fire_dragon (
     keyboard_input: Res<Input<KeyCode>>, 
 //     mut dragon_query: Query<&mut DragonInput>,
     mut dragon_query: Query<&mut DragonInput, With<FireDragon>>,
@@ -285,16 +286,16 @@ fn keyboard_input_system(
     let mut dragon_input = dragon_query.single_mut();
     dragon_input.move_direction = Vec2::ZERO;
 
-    if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
+    if keyboard_input.pressed(KeyCode::Up) {
         dragon_input.move_direction.y += 1.0;
     }
-    if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S) {
+    if keyboard_input.pressed(KeyCode::Down) {
         dragon_input.move_direction.y -= 1.0;
     }
-    if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
+    if keyboard_input.pressed(KeyCode::Left)  {
         dragon_input.move_direction.x -= 1.0;
     }
-    if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
+    if keyboard_input.pressed(KeyCode::Right) {
         dragon_input.move_direction.x += 1.0;
     }
 
@@ -321,6 +322,29 @@ fn keyboard_input_system(
 }
 
 
+fn keyboard_input_system_ice_dragon (
+    keyboard_input: Res<Input<KeyCode>>, 
+    mut dragon_query: Query<&mut DragonInput, With<IceDragon>>,
+) {
+    let mut dragon_input = dragon_query.single_mut();
+    dragon_input.move_direction = Vec2::ZERO;
+
+    if keyboard_input.pressed(KeyCode::W) {
+        dragon_input.move_direction.y += 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::S) {
+        dragon_input.move_direction.y -= 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::A) {
+        dragon_input.move_direction.x -= 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::D) {
+        dragon_input.move_direction.x += 1.0;
+    }
+
+    dragon_input.fire = keyboard_input.pressed(KeyCode::R);
+
+}
 
 fn camera_follow_system(
     time: Res<Time>,
@@ -476,12 +500,12 @@ fn dragon_movement_system(
 
 fn fireball_spawn_system(
     time: Res<Time>,
-    mut dragon_query: Query<(&mut DragonAction, &mut DragonInput, &Transform)>,
+    mut dragon_query: Query<(&mut DragonAction, &mut DragonInput, &Transform, Option<&FireDragon>)>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
 
-    for (mut dragon_action, dragon_input, dragon_transform) in dragon_query.iter_mut(){
+    for (mut dragon_action, dragon_input, dragon_transform, fire_dragon) in dragon_query.iter_mut() {
     
         if dragon_input.fire && dragon_action.firerate_timer.tick(time.delta()).just_finished() {
         
@@ -497,10 +521,18 @@ fn fireball_spawn_system(
             // Calculate the rotation of the fireball based on its velocity direction.
             let fireball_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), fireball_direction);
 
+            
+            let texture: Handle<Image> = 
+                if let Some(_) = fire_dragon {
+                        asset_server.load("fireball.png")
+                } else {
+                        asset_server.load("iceball.png")
+                };
+
             // Spawn the fireball into the game.
             commands.spawn(FireballBundle {
                 sprite_bundle: SpriteBundle {
-                    texture: asset_server.load("fireball.png"),
+                    texture,
                     transform: Transform {
                         translation: dragon_transform.translation + Vec3::new(110.0 * dragon_transform.scale.x.signum(), 30.0, 0.0),
                         rotation: fireball_rotation,
