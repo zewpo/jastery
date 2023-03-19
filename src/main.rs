@@ -1,8 +1,7 @@
-use bevy::sprite::collide_aabb::Collision;
+use bevy::sprite::collide_aabb::{collide, Collision};
 use bevy::window::close_on_esc;
 use bevy::window::PresentMode;
 use bevy::prelude::*;
-use bevy::sprite::collide_aabb::collide;
 
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
@@ -11,7 +10,6 @@ enum GameState {
     Setup,
     Running,
 }
-
 
 #[derive(Bundle)]
 struct DragonBundle {
@@ -22,9 +20,28 @@ struct DragonBundle {
     dragon: Dragon,
 }
 
+#[derive(Bundle)]
+struct FireDragonBundle {
+    marker: FireDragon,
+    #[bundle]
+    dragon_bundle: DragonBundle,
+}
+
+#[derive(Bundle)]
+struct IceDragonBundle {
+    marker: IceDragon,
+    #[bundle]
+    dragon_bundle: DragonBundle,
+}
+
 #[derive(Component)]
 struct Dragon;
 
+#[derive(Component)]
+struct FireDragon;
+
+#[derive(Component)]
+struct IceDragon;
 
 #[derive(Component, Default)]
 struct DragonInput {
@@ -46,11 +63,15 @@ struct DragonAction {
     flipping: bool,
 }
 
+#[derive(Component)]
+struct Fireball;
+
 #[derive(Bundle)]
-struct Fireball {
+struct FireballBundle {
     #[bundle]
     sprite_bundle: SpriteBundle,
     movement: FireballMovement,
+    fireball: Fireball,
 }
 
 #[derive(Component)]
@@ -99,10 +120,10 @@ fn main() {
         }))
         .add_state::<GameState>()
         .insert_resource(CameraScale(1.0))
-        .add_systems((
-                setup_dragon, 
-                setup_camera,
-            ).chain().on_startup() //  in_set(OnUpdate(GameState::Setup))
+        .add_systems(  (preload_images,
+                        setup_dragon, 
+                        setup_camera,
+                ).chain().on_startup()
         )
         .add_system(setup_maze.run_if(in_state(GameState::Setup)))
         .add_systems((
@@ -117,30 +138,58 @@ fn main() {
         .run();
 }
 
-
-fn setup_dragon(mut commands: Commands, asset_server: Res<AssetServer>) {
-    println!("Setup Dragon");
-    // Spawn the Dragon into the game.
-    commands.spawn(DragonBundle {
-        sprite_bundle: SpriteBundle {
-            texture: asset_server.load("dragon.png"),
-            transform: Transform::from_xyz(100., 0., 0.),
-            ..default()
-        },
-        input: DragonInput::default(),
-        movement: DragonAction {
-            velocity: Vec3::ZERO,
-            max_velocity: 25.0,
-            motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
-            firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
-            flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
-            flipping: false,
-        },
-        dragon: Dragon,
-    });
-
+fn preload_images(mut commands: Commands, asset_server: Res<AssetServer>) {
     let wall_texture_handle = asset_server.load("wall.png");
     commands.insert_resource(WallTextureHandle(wall_texture_handle));
+}
+
+
+fn setup_dragon(mut commands: Commands, asset_server: Res<AssetServer>) {
+    println!("Setup Fire Dragon");
+    // Spawn the Fire Dragon into the game.
+    commands.spawn(FireDragonBundle {
+        marker: FireDragon,
+        dragon_bundle: DragonBundle {
+            sprite_bundle: SpriteBundle {
+                texture: asset_server.load("dragon.png"),
+                transform: Transform::from_xyz(100., 0., 0.),
+                ..default()
+            },
+            input: DragonInput::default(),
+            movement: DragonAction {
+                velocity: Vec3::ZERO,
+                max_velocity: 25.0,
+                motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+                firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
+                flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
+                flipping: false,
+            },
+            dragon: Dragon,
+        }
+    });
+
+
+        // Spawn the Ice Dragon into the game.
+    commands.spawn(IceDragonBundle {
+        marker: IceDragon,
+        dragon_bundle: DragonBundle {
+            sprite_bundle: SpriteBundle {
+                texture: asset_server.load("dragon.png"),
+                transform: Transform::from_xyz(1200., 0., 0.),
+                ..default()
+            },
+            input: DragonInput::default(),
+            movement: DragonAction {
+                velocity: Vec3::ZERO,
+                max_velocity: 25.0,
+                motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+                firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
+                flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
+                flipping: false,
+            },
+            dragon: Dragon,
+        }
+    });
 }
 
 
@@ -193,7 +242,7 @@ fn setup_maze(
                     commands.spawn(WallBundle {
                         sprite_bundle: SpriteBundle {
                             texture: wall_texture_handle.0.clone(),
-                            transform: Transform::from_xyz(x, y, 0.),
+                            transform: Transform::from_xyz(x, y, -1.0),
                             ..default()
                         },
                         wall: Wall,
@@ -229,7 +278,8 @@ fn setup_camera(
 
 fn keyboard_input_system(
     keyboard_input: Res<Input<KeyCode>>, 
-    mut dragon_query: Query<&mut DragonInput>,
+//     mut dragon_query: Query<&mut DragonInput>,
+    mut dragon_query: Query<&mut DragonInput, With<FireDragon>>,
     mut camera_query: Query<(&mut Transform, &mut GameCamera), With<GameCamera>>,
 ) {
     let mut dragon_input = dragon_query.single_mut();
@@ -274,7 +324,7 @@ fn keyboard_input_system(
 
 fn camera_follow_system(
     time: Res<Time>,
-    dragon_query: Query<(&Transform, &Handle<Image>, &DragonAction), Without<GameCamera>>,
+    dragon_query: Query<(&Transform, &Handle<Image>, &DragonAction), (With<FireDragon>,Without<GameCamera>)>,
     mut camera_query: Query<(&mut Transform, &GameCamera), With<GameCamera>>,
     windows: Query<&Window>,
     images: Res<Assets<Image>>,
@@ -316,8 +366,8 @@ fn camera_follow_system(
         target_translation.y += (dragon_top_edge - (window_top_edge - margin)).abs();
     }
 
-    let lerp_speed = 7.0;
-    camera_transform.translation = camera_transform.translation.lerp(target_translation, time.delta_seconds() * lerp_speed);
+    let lerp_rate = 7.0;
+    camera_transform.translation = camera_transform.translation.lerp(target_translation, time.delta_seconds() * lerp_rate);
 }
 
 
@@ -327,100 +377,103 @@ fn dragon_movement_system(
     wall_query: Query<(&Wall, &Transform, &Handle<Image>), Without<DragonAction>>,
     images: Res<Assets<Image>>,
 ) {
-    let (mut dragon_action, dragon_input, mut dragon_transform, dragon_image_handle) = dragon_query.single_mut();
-    let acceleration = 0.4;
+    for (mut dragon_action, dragon_input, mut dragon_transform, dragon_image_handle) in dragon_query.iter_mut() {
+        let acceleration = 0.4;
 
-    dragon_action.velocity.x += dragon_input.move_direction.x * acceleration;
-    dragon_action.velocity.y += dragon_input.move_direction.y * acceleration;
+        dragon_action.velocity.x += dragon_input.move_direction.x * acceleration;
+        dragon_action.velocity.y += dragon_input.move_direction.y * acceleration;
 
-    // Brake if both LShift and RShift are pressed
-    if dragon_input.brake && dragon_action.motion_timer.tick(time.delta()).just_finished() {
-        dragon_action.velocity *= 0.6;
-    }
+        // Brake if both LShift and RShift are pressed
+        if dragon_input.brake && dragon_action.motion_timer.tick(time.delta()).just_finished() {
+            dragon_action.velocity *= 0.6;
+        }
 
-    // Move to home position if X is pressed
-    if dragon_input.home {
-        dragon_action.velocity = Vec3::ZERO;
-        dragon_transform.translation = Vec3::ZERO;
-    } else if dragon_input.ease_up && dragon_action.motion_timer.tick(time.delta()).just_finished() {
-        dragon_action.velocity *= 0.8;
-    }
+        // Move to home position if X is pressed
+        if dragon_input.home {
+            dragon_action.velocity = Vec3::ZERO;
+            dragon_transform.translation = Vec3::ZERO;
+        } else if dragon_input.ease_up && dragon_action.motion_timer.tick(time.delta()).just_finished() {
+            dragon_action.velocity *= 0.8;
+        }
 
-    // Check for collisions
-    if let Some(dragon_image) = images.get(dragon_image_handle) {
+        // Check for collisions
+        if let Some(dragon_image) = images.get(dragon_image_handle) {
 
-        // Check for wall collisions
-        let dragon_size = dragon_image.size().extend(0.0) * dragon_transform.scale.abs();
-        let dragon_center_position = dragon_transform.translation;
+            // Check for wall collisions
+            let dragon_size = dragon_image.size().extend(0.0) * dragon_transform.scale.abs();
+            let dragon_center_position = dragon_transform.translation;
 
-        for (_, wall_transform, wall_image_handle) in wall_query.iter() {
-            if let Some(wall_image) = images.get(wall_image_handle) {
-                let wall_size = wall_image.size().extend(0.0) * wall_transform.scale.abs();
-                let wall_center_position = wall_transform.translation;
-                 // If the collision occurs on multiple sides, the side with the deepest penetration is returned.
-                 // If all sides are involved, `Inside` is returned.
-                if let Some(collision) = collide(
-                    dragon_center_position,
-                    dragon_size.truncate(),
-                    wall_center_position,
-                    wall_size.truncate(),
-                ) {
-                    dragon_action.velocity = Vec3::ZERO;
-                    match collision {
-                        Collision::Left => {
-                            dragon_transform.translation.x = wall_center_position.x - (wall_size.x + dragon_size.x) / 2.0;
-                            dragon_action.velocity.x = -0.0;
+            for (_, wall_transform, wall_image_handle) in wall_query.iter() {
+                if let Some(wall_image) = images.get(wall_image_handle) {
+                    let wall_size = wall_image.size().extend(0.0) * wall_transform.scale.abs();
+                    let wall_center_position = wall_transform.translation;
+                     // If the collision occurs on multiple sides, the side with the deepest penetration is returned.
+                     // If all sides are involved, `Inside` is returned.
+                    if let Some(collision) = collide(
+                        dragon_center_position,
+                        dragon_size.truncate(),
+                        wall_center_position,
+                        wall_size.truncate(),
+                    ) {
+                        dragon_action.velocity = Vec3::ZERO;
+                        match collision {
+                            Collision::Left => {
+                                dragon_transform.translation.x = wall_center_position.x - (wall_size.x + dragon_size.x) / 2.0;
+                                dragon_action.velocity.x = -0.0;
+                            }
+                            Collision::Right => {
+                                dragon_transform.translation.x = wall_center_position.x + (wall_size.x + dragon_size.x) / 2.0;
+                                dragon_action.velocity.x = 0.0;
+                            }
+                            Collision::Top => {
+                                dragon_transform.translation.y = wall_center_position.y + (wall_size.y + dragon_size.y) / 2.0;
+                                dragon_action.velocity.y = 0.0;
+                            }
+                            Collision::Bottom => {
+                                dragon_transform.translation.y = wall_center_position.y - (wall_size.y + dragon_size.y) / 2.0;
+                                dragon_action.velocity.y = -0.0;
+                            }
+                            Collision::Inside => {
+                                // Handle inside collision as appropriate for your game
+                                println!("Dragon inside wall collision!?");
+                            }
                         }
-                        Collision::Right => {
-                            dragon_transform.translation.x = wall_center_position.x + (wall_size.x + dragon_size.x) / 2.0;
-                            dragon_action.velocity.x = 0.0;
-                        }
-                        Collision::Top => {
-                            dragon_transform.translation.y = wall_center_position.y + (wall_size.y + dragon_size.y) / 2.0;
-                            dragon_action.velocity.y = 0.0;
-                        }
-                        Collision::Bottom => {
-                            dragon_transform.translation.y = wall_center_position.y - (wall_size.y + dragon_size.y) / 2.0;
-                            dragon_action.velocity.y = -0.0;
-                        }
-                        Collision::Inside => {
-                            // Handle inside collision as appropriate for your game
-                            println!("Dragon inside wall collision!?");
-                        }
+                        break;
                     }
-                    break;
                 }
             }
         }
-    }
 
-    // Move the dragon sprite.
-    if dragon_action.velocity != Vec3::ZERO {
-        dragon_action.velocity = dragon_action.velocity.clamp_length_max(dragon_action.max_velocity);
-        dragon_transform.translation += dragon_action.velocity;
-    }
-
-    // Flip the dragon with an animation when it changes directions between left to right.
-    if dragon_action.flipping {
-        if dragon_action.flip_timer.tick(time.delta()).just_finished() {
-        // Finish the flipping animation.
-            dragon_action.flipping = false;
-            if dragon_transform.scale.x < 0.0{
-                dragon_transform.scale.x = 1.0;
-            } else {
-                dragon_transform.scale.x = -1.0;
-            }
-        } else {
-            // Continue the flipping animation.
-            let progress = dragon_action.flip_timer.percent();
-            dragon_transform.scale.x = dragon_transform.scale.x.signum() * (0.5 - 0.5 * (progress * std::f32::consts::PI).sin());
+        // Move the dragon sprite.
+        if dragon_action.velocity != Vec3::ZERO {
+            dragon_action.velocity = dragon_action.velocity.clamp_length_max(dragon_action.max_velocity);
+            dragon_transform.translation += dragon_action.velocity;
         }
-    } else if (dragon_action.velocity.x > 0.0 && dragon_transform.scale.x < 0.0) || (dragon_action.velocity.x < 0.0 && dragon_transform.scale.x > 0.0) {
-        // Start the flipping animation.
-        dragon_action.flip_timer.reset();
-        dragon_action.flipping = true;
+
+        // Flip the dragon with an animation when it changes directions between left to right.
+        if dragon_action.flipping {
+            if dragon_action.flip_timer.tick(time.delta()).just_finished() {
+            // Finish the flipping animation.
+                dragon_action.flipping = false;
+                if dragon_transform.scale.x < 0.0{
+                    dragon_transform.scale.x = 1.0;
+                } else {
+                    dragon_transform.scale.x = -1.0;
+                }
+            } else {
+                // Continue the flipping animation.
+                let progress = dragon_action.flip_timer.percent();
+                dragon_transform.scale.x = dragon_transform.scale.x.signum() * (0.5 - 0.5 * (progress * std::f32::consts::PI).sin());
+            }
+        } else if (dragon_action.velocity.x > 0.0 && dragon_transform.scale.x < 0.0) || (dragon_action.velocity.x < 0.0 && dragon_transform.scale.x > 0.0) {
+            // Start the flipping animation.
+            dragon_action.flip_timer.reset();
+            dragon_action.flipping = true;
+        }
     }
 }
+
+
 fn fireball_spawn_system(
     time: Res<Time>,
     mut dragon_query: Query<(&mut DragonAction, &mut DragonInput, &Transform)>,
@@ -428,39 +481,40 @@ fn fireball_spawn_system(
     asset_server: Res<AssetServer>,
 ) {
 
-    let (mut dragon_action, dragon_input, dragon_transform) = dragon_query.single_mut();
+    for (mut dragon_action, dragon_input, dragon_transform) in dragon_query.iter_mut(){
     
-    if dragon_input.fire && dragon_action.firerate_timer.tick(time.delta()).just_finished() {
+        if dragon_input.fire && dragon_action.firerate_timer.tick(time.delta()).just_finished() {
         
-        // println!("fireball_spawn_system called");
+            // println!("fireball_spawn_system called");
+            let mut fireball_direction = dragon_action.velocity.normalize_or_zero();
+            if fireball_direction == Vec3::ZERO {
+                    fireball_direction.x = 1.0 * dragon_transform.scale.x.signum();
+            }
 
-        let mut fireball_direction = dragon_action.velocity.normalize_or_zero();
-        if fireball_direction == Vec3::ZERO {
-                fireball_direction.x = dragon_transform.scale.x;
-        }
+            // Calculate the speed of the fireball based on the dragon's velocity.
+            let fireball_speed = fireball_direction * (250.0 + 75.0 * dragon_action.velocity.length());
 
-        // Calculate the speed of the fireball based on the dragon's velocity.
-        let fireball_speed = fireball_direction * (250.0 + 50.0 * dragon_action.velocity.length());
+            // Calculate the rotation of the fireball based on its velocity direction.
+            let fireball_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), fireball_direction);
 
-        // Calculate the rotation of the fireball based on its velocity direction.
-        let fireball_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), fireball_direction);
-
-        // Spawn a fireball into the game.
-        commands.spawn(Fireball {
-            sprite_bundle: SpriteBundle {
-                texture: asset_server.load("fireball.png"),
-                transform: Transform {
-                    translation: dragon_transform.translation + Vec3::new(120.0 * dragon_transform.scale.x.signum(), 30.0, 0.0),
-                    rotation: fireball_rotation,
+            // Spawn the fireball into the game.
+            commands.spawn(FireballBundle {
+                sprite_bundle: SpriteBundle {
+                    texture: asset_server.load("fireball.png"),
+                    transform: Transform {
+                        translation: dragon_transform.translation + Vec3::new(110.0 * dragon_transform.scale.x.signum(), 30.0, 0.0),
+                        rotation: fireball_rotation,
+                        ..default()
+                    },
                     ..default()
                 },
-                ..default()
-            },
-            movement: FireballMovement { 
-                speed: fireball_speed,
-                despawn_timer: Timer::from_seconds(2.4, TimerMode::Once), // Set the timeout duration here
-            },
-        });
+                movement: FireballMovement { 
+                    speed: fireball_speed,
+                    despawn_timer: Timer::from_seconds(2.4, TimerMode::Once), // Set the timeout duration here
+                },
+                fireball: Fireball,
+            });
+        }
     }
 }
 
@@ -468,25 +522,49 @@ fn fireball_spawn_system(
 fn fireball_movement_system(
         time: Res<Time>,
         mut commands: Commands,
-        mut fireball_query: Query<(Entity, &mut FireballMovement, &mut Transform)>,
+        mut fireball_query: Query<(Entity, &mut FireballMovement, &mut Transform, &Handle<Image>),With<Fireball>>,
+        wall_query: Query<(&Wall, &Transform, &Handle<Image>),Without<Fireball>>,
+        images: Res<Assets<Image>>,
     ) {
     let delta_time = time.delta_seconds();
-    for (   entity,
+    for (   fireball_entity,
             mut fireball_movement, 
-            mut fireball_transform
+            mut fireball_transform,
+            fireball_image_handle,
         ) in fireball_query.iter_mut() {
 
         // Move the fireball sprite by distance of speed * time.
-        fireball_transform.translation.x += fireball_movement.speed.x * delta_time;
-        fireball_transform.translation.y += fireball_movement.speed.y * delta_time;
-        fireball_transform.translation.z += fireball_movement.speed.z * delta_time;
+        fireball_transform.translation += fireball_movement.speed * delta_time;
 
         // Update the despawn timer
         fireball_movement.despawn_timer.tick(time.delta());
 
         // Despawn the fireball if the timer has finished
         if fireball_movement.despawn_timer.finished() {
-            commands.entity(entity).despawn();
+            commands.entity(fireball_entity).despawn();
+        } else {
+            // Check for collisions with walls
+            if let Some(fireball_image) = images.get(fireball_image_handle) {
+                let fireball_size = Vec2::new(fireball_image.size().x as f32, fireball_image.size().y as f32);
+                for (_wall, wall_transform, wall_image_handle) in wall_query.iter() {
+                
+                    if let Some(wall_image) = images.get(wall_image_handle){
+                        let wall_size = Vec2::new(wall_image.size().x as f32, wall_image.size().y as f32);
+
+                        let collision = collide(
+                            fireball_transform.translation,
+                            fireball_size/5.0,
+                            wall_transform.translation,
+                            wall_size,
+                        );
+
+                        if let Some(_) = collision {
+                            commands.entity(fireball_entity).despawn();
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 }
