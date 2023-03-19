@@ -18,7 +18,7 @@ struct DragonBundle {
     #[bundle]
     sprite_bundle: SpriteBundle,
     input: DragonInput,
-    movement: DragonMovement,
+    movement: DragonAction,
     dragon: Dragon,
 }
 
@@ -26,32 +26,23 @@ struct DragonBundle {
 struct Dragon;
 
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct DragonInput {
     move_direction: Vec2,
     brake: bool,
     home: bool,
     ease_up: bool,
-}
-
-impl Default for DragonInput {
-    fn default() -> Self {
-        Self {
-            move_direction: Vec2::ZERO,
-            brake: false,
-            home: false,
-            ease_up: false,
-        }
-    }
+    fire: bool,
 }
 
 
 #[derive(Component)]
-struct DragonMovement {
+struct DragonAction {
     velocity: Vec3,
     max_velocity: f32,
-    timer: Timer,
+    motion_timer: Timer,
     flip_timer: Timer,
+    firerate_timer: Timer,
     flipping: bool,
 }
 
@@ -137,10 +128,11 @@ fn setup_dragon(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         input: DragonInput::default(),
-        movement: DragonMovement {
+        movement: DragonAction {
             velocity: Vec3::ZERO,
             max_velocity: 25.0,
-            timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+            motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+            firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
             flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
             flipping: false,
         },
@@ -240,26 +232,27 @@ fn keyboard_input_system(
     mut dragon_query: Query<&mut DragonInput>,
     mut camera_query: Query<(&mut Transform, &mut GameCamera), With<GameCamera>>,
 ) {
-    for mut dragon_input in dragon_query.iter_mut() {
-        dragon_input.move_direction = Vec2::ZERO;
+    let mut dragon_input = dragon_query.single_mut();
+    dragon_input.move_direction = Vec2::ZERO;
 
-        if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
-            dragon_input.move_direction.y += 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S) {
-            dragon_input.move_direction.y -= 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
-            dragon_input.move_direction.x -= 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
-            dragon_input.move_direction.x += 1.0;
-        }
-        
-        dragon_input.brake = keyboard_input.pressed(KeyCode::LShift) || keyboard_input.pressed(KeyCode::RShift);
-        dragon_input.home = keyboard_input.pressed(KeyCode::X);
-        dragon_input.ease_up = !dragon_input.brake && !dragon_input.home && dragon_input.move_direction == Vec2::ZERO;
+    if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
+        dragon_input.move_direction.y += 1.0;
     }
+    if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S) {
+        dragon_input.move_direction.y -= 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
+        dragon_input.move_direction.x -= 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
+        dragon_input.move_direction.x += 1.0;
+    }
+
+    dragon_input.fire = keyboard_input.pressed(KeyCode::Space);
+    dragon_input.brake = keyboard_input.pressed(KeyCode::LShift) || keyboard_input.pressed(KeyCode::RShift);
+    dragon_input.home = keyboard_input.pressed(KeyCode::X);
+    dragon_input.ease_up = !dragon_input.brake && !dragon_input.home && dragon_input.move_direction == Vec2::ZERO;
+    
 
     let ctrl_pressed = keyboard_input.pressed(KeyCode::LControl) || keyboard_input.pressed(KeyCode::RControl);
 
@@ -281,14 +274,14 @@ fn keyboard_input_system(
 
 fn camera_follow_system(
     time: Res<Time>,
-    dragon_query: Query<(&Transform, &Handle<Image>, &DragonMovement), Without<GameCamera>>,
+    dragon_query: Query<(&Transform, &Handle<Image>, &DragonAction), Without<GameCamera>>,
     mut camera_query: Query<(&mut Transform, &GameCamera), With<GameCamera>>,
     windows: Query<&Window>,
     images: Res<Assets<Image>>,
 ) {
     let window = windows.single();
     let (mut camera_transform, game_camera) = camera_query.single_mut();
-    let (dragon_transform, dragon_handle, _dragon_movement) = dragon_query.single();
+    let (dragon_transform, dragon_handle, _dragon_action) = dragon_query.single();
 
     let dragon_image = images.get(dragon_handle).unwrap();
     let scaled_dragon_size = Vec2::new(dragon_image.size().x * dragon_transform.scale.x.abs(), dragon_image.size().y * dragon_transform.scale.y.abs());
@@ -330,146 +323,147 @@ fn camera_follow_system(
 
 fn dragon_movement_system(
     time: Res<Time>,
-    mut dragon_query: Query<(&mut DragonMovement, &DragonInput, &mut Transform, &Handle<Image>)>,
-    wall_query: Query<(&Wall, &Transform, &Handle<Image>), Without<DragonMovement>>,
+    mut dragon_query: Query<(&mut DragonAction, &DragonInput, &mut Transform, &Handle<Image>)>,
+    wall_query: Query<(&Wall, &Transform, &Handle<Image>), Without<DragonAction>>,
     images: Res<Assets<Image>>,
 ) {
-    for (mut dragon_movement, dragon_input, mut dragon_transform, dragon_image_handle) in dragon_query.iter_mut() {
-        let acceleration = 0.4;
+    let (mut dragon_action, dragon_input, mut dragon_transform, dragon_image_handle) = dragon_query.single_mut();
+    let acceleration = 0.4;
 
-        dragon_movement.velocity.x += dragon_input.move_direction.x * acceleration;
-        dragon_movement.velocity.y += dragon_input.move_direction.y * acceleration;
+    dragon_action.velocity.x += dragon_input.move_direction.x * acceleration;
+    dragon_action.velocity.y += dragon_input.move_direction.y * acceleration;
 
-        // Brake if both LShift and RShift are pressed
-        if dragon_input.brake && dragon_movement.timer.tick(time.delta()).just_finished() {
-            dragon_movement.velocity *= 0.6;
-        }
+    // Brake if both LShift and RShift are pressed
+    if dragon_input.brake && dragon_action.motion_timer.tick(time.delta()).just_finished() {
+        dragon_action.velocity *= 0.6;
+    }
 
-        // Move to home position if X is pressed
-        if dragon_input.home {
-            dragon_movement.velocity = Vec3::ZERO;
-            dragon_transform.translation = Vec3::ZERO;
-        } else if dragon_input.ease_up && dragon_movement.timer.tick(time.delta()).just_finished() {
-            dragon_movement.velocity *= 0.8;
-        }
+    // Move to home position if X is pressed
+    if dragon_input.home {
+        dragon_action.velocity = Vec3::ZERO;
+        dragon_transform.translation = Vec3::ZERO;
+    } else if dragon_input.ease_up && dragon_action.motion_timer.tick(time.delta()).just_finished() {
+        dragon_action.velocity *= 0.8;
+    }
 
-        // Check for collisions
-        if let Some(dragon_image) = images.get(dragon_image_handle) {
+    // Check for collisions
+    if let Some(dragon_image) = images.get(dragon_image_handle) {
 
-            // Check for wall collisions
-            let dragon_size = dragon_image.size().extend(0.0) * dragon_transform.scale.abs();
-            let dragon_center_position = dragon_transform.translation;
+        // Check for wall collisions
+        let dragon_size = dragon_image.size().extend(0.0) * dragon_transform.scale.abs();
+        let dragon_center_position = dragon_transform.translation;
 
-            for (_, wall_transform, wall_image_handle) in wall_query.iter() {
-                if let Some(wall_image) = images.get(wall_image_handle) {
-                    let wall_size = wall_image.size().extend(0.0) * wall_transform.scale.abs();
-                    let wall_center_position = wall_transform.translation;
-
-                    // If the collision occurs on multiple sides, the side with the deepest penetration is returned.
-                    // If all sides are involved, `Inside` is returned.
-                    if let Some(collision) = collide(
-                        dragon_center_position,
-                        dragon_size.truncate(),
-                        wall_center_position,
-                        wall_size.truncate(),
-                    ) {
-                        dragon_movement.velocity = Vec3::ZERO;
-                        match collision {
-                            Collision::Left => {
-                                dragon_transform.translation.x = wall_center_position.x - (wall_size.x + dragon_size.x) / 2.0;
-                                dragon_movement.velocity.x = -1.0;
-                            }
-                            Collision::Right => {
-                                dragon_transform.translation.x = wall_center_position.x + (wall_size.x + dragon_size.x) / 2.0;
-                                dragon_movement.velocity.x = 1.0;
-                            }
-                            Collision::Top => {
-                                dragon_transform.translation.y = wall_center_position.y + (wall_size.y + dragon_size.y) / 2.0;
-                                dragon_movement.velocity.y = 1.0;
-                            }
-                            Collision::Bottom => {
-                                dragon_transform.translation.y = wall_center_position.y - (wall_size.y + dragon_size.y) / 2.0;
-                                dragon_movement.velocity.y = -1.0;
-                            }
-                            Collision::Inside => {
-                                // Handle inside collision as appropriate for your game
-                                println!("Dragon inside wall collision!?");
-                            }
+        for (_, wall_transform, wall_image_handle) in wall_query.iter() {
+            if let Some(wall_image) = images.get(wall_image_handle) {
+                let wall_size = wall_image.size().extend(0.0) * wall_transform.scale.abs();
+                let wall_center_position = wall_transform.translation;
+                 // If the collision occurs on multiple sides, the side with the deepest penetration is returned.
+                 // If all sides are involved, `Inside` is returned.
+                if let Some(collision) = collide(
+                    dragon_center_position,
+                    dragon_size.truncate(),
+                    wall_center_position,
+                    wall_size.truncate(),
+                ) {
+                    dragon_action.velocity = Vec3::ZERO;
+                    match collision {
+                        Collision::Left => {
+                            dragon_transform.translation.x = wall_center_position.x - (wall_size.x + dragon_size.x) / 2.0;
+                            dragon_action.velocity.x = -0.0;
                         }
-                        break;
+                        Collision::Right => {
+                            dragon_transform.translation.x = wall_center_position.x + (wall_size.x + dragon_size.x) / 2.0;
+                            dragon_action.velocity.x = 0.0;
+                        }
+                        Collision::Top => {
+                            dragon_transform.translation.y = wall_center_position.y + (wall_size.y + dragon_size.y) / 2.0;
+                            dragon_action.velocity.y = 0.0;
+                        }
+                        Collision::Bottom => {
+                            dragon_transform.translation.y = wall_center_position.y - (wall_size.y + dragon_size.y) / 2.0;
+                            dragon_action.velocity.y = -0.0;
+                        }
+                        Collision::Inside => {
+                            // Handle inside collision as appropriate for your game
+                            println!("Dragon inside wall collision!?");
+                        }
                     }
+                    break;
                 }
             }
         }
+    }
 
-        // Move the dragon sprite.
-        if dragon_movement.velocity != Vec3::ZERO {
-            dragon_movement.velocity = dragon_movement.velocity.clamp_length_max(dragon_movement.max_velocity);
-            dragon_transform.translation += dragon_movement.velocity;
-        }
+    // Move the dragon sprite.
+    if dragon_action.velocity != Vec3::ZERO {
+        dragon_action.velocity = dragon_action.velocity.clamp_length_max(dragon_action.max_velocity);
+        dragon_transform.translation += dragon_action.velocity;
+    }
 
-        if dragon_movement.flipping {
-            if dragon_movement.flip_timer.tick(time.delta()).just_finished() {
-            // Finish the flipping animation.
-                dragon_movement.flipping = false;
-                if dragon_transform.scale.x < 0.0{
-                    dragon_transform.scale.x = 1.0;
-                } else {
-                    dragon_transform.scale.x = -1.0;
-                }
+    // Flip the dragon with an animation when it changes directions between left to right.
+    if dragon_action.flipping {
+        if dragon_action.flip_timer.tick(time.delta()).just_finished() {
+        // Finish the flipping animation.
+            dragon_action.flipping = false;
+            if dragon_transform.scale.x < 0.0{
+                dragon_transform.scale.x = 1.0;
             } else {
-                // Continue the flipping animation.
-                let progress = dragon_movement.flip_timer.percent();
-                dragon_transform.scale.x = dragon_transform.scale.x.signum() * (0.5 - 0.5 * (progress * std::f32::consts::PI).sin());
+                dragon_transform.scale.x = -1.0;
             }
-        } else if (dragon_movement.velocity.x > 0.0 && dragon_transform.scale.x < 0.0) || (dragon_movement.velocity.x < 0.0 && dragon_transform.scale.x > 0.0) {
-            // Start the flipping animation.
-            dragon_movement.flip_timer.reset();
-            dragon_movement.flipping = true;
+        } else {
+            // Continue the flipping animation.
+            let progress = dragon_action.flip_timer.percent();
+            dragon_transform.scale.x = dragon_transform.scale.x.signum() * (0.5 - 0.5 * (progress * std::f32::consts::PI).sin());
         }
-
-
+    } else if (dragon_action.velocity.x > 0.0 && dragon_transform.scale.x < 0.0) || (dragon_action.velocity.x < 0.0 && dragon_transform.scale.x > 0.0) {
+        // Start the flipping animation.
+        dragon_action.flip_timer.reset();
+        dragon_action.flipping = true;
     }
 }
-
-
-
 fn fireball_spawn_system(
-    keyboard_input: Res<Input<KeyCode>>,
-    dragon_query: Query<(&DragonMovement, &Transform)>,
+    time: Res<Time>,
+    mut dragon_query: Query<(&mut DragonAction, &mut DragonInput, &Transform)>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        for (dragon_movement, dragon_transform) in dragon_query.iter() {
-            
-            let mut scale_x: f32 = 1.0;
-            let mut trans_x: f32 = 120.0;
 
-            if dragon_transform.scale.x < 0.0 { 
-                scale_x *= -1.0;
-                trans_x *= -1.0;
-            }
+    let (mut dragon_action, dragon_input, dragon_transform) = dragon_query.single_mut();
+    
+    if dragon_input.fire && dragon_action.firerate_timer.tick(time.delta()).just_finished() {
+        
+        // println!("fireball_spawn_system called");
 
-            // Spawn a fireball into the game.
-            commands.spawn(Fireball {
-                sprite_bundle: SpriteBundle {
-                    texture: asset_server.load("fireball.png"),
-                    transform: Transform {
-                        translation: dragon_transform.translation + Vec3::new(trans_x, 30.0, 0.0),
-                        scale: Vec3::new(scale_x,1.0,1.0),
-                        ..default()
-                    },
+        let mut fireball_direction = dragon_action.velocity.normalize_or_zero();
+        if fireball_direction == Vec3::ZERO {
+                fireball_direction.x = dragon_transform.scale.x;
+        }
+
+        // Calculate the speed of the fireball based on the dragon's velocity.
+        let fireball_speed = fireball_direction * (250.0 + 50.0 * dragon_action.velocity.length());
+
+        // Calculate the rotation of the fireball based on its velocity direction.
+        let fireball_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), fireball_direction);
+
+        // Spawn a fireball into the game.
+        commands.spawn(Fireball {
+            sprite_bundle: SpriteBundle {
+                texture: asset_server.load("fireball.png"),
+                transform: Transform {
+                    translation: dragon_transform.translation + Vec3::new(120.0 * dragon_transform.scale.x.signum(), 30.0, 0.0),
+                    rotation: fireball_rotation,
                     ..default()
                 },
-                movement: FireballMovement { 
-                    speed: 5.0 + (dragon_movement.velocity * 3.0),
-                    despawn_timer: Timer::from_seconds(2.4, TimerMode::Once), // Set the timeout duration here
-                },
-            });
-        }
+                ..default()
+            },
+            movement: FireballMovement { 
+                speed: fireball_speed,
+                despawn_timer: Timer::from_seconds(2.4, TimerMode::Once), // Set the timeout duration here
+            },
+        });
     }
 }
+
 
 fn fireball_movement_system(
         time: Res<Time>,
