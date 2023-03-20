@@ -5,6 +5,7 @@ use bevy::{
     window::{close_on_esc, PresentMode},
 };
 use image::DynamicImage;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 enum GameState {
@@ -13,14 +14,46 @@ enum GameState {
     Running,
 }
 
-#[derive(Component)]
-struct Dragon;
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
+pub enum ElementalTheme {
+    Fire,
+    Ice,
+    Water,
+    Rock,
+    //? Air,
+    // Add more elemental themes here as needed
+}
+
 
 #[derive(Component)]
-struct FireDragon;
+pub struct Dragon{
+    pub id: Uuid,
+    pub elemental_theme: ElementalTheme,
+}
 
+pub struct DragonImage {
+    pub size: Vec2,
+    pub image: DynamicImage,
+    pub file_handle: Handle<Image>,
+    pub elemental_theme: ElementalTheme,
+}
+
+// #[derive(Component)]
+// struct FireDragon;
+
+// #[derive(Component)]
+// struct IceDragon;
+
+// Marker to query the dragon to control by the local system.
 #[derive(Component)]
-struct IceDragon;
+pub struct MyDragon;
+
+#[derive(Bundle)]
+struct MyDragonBundle {
+    #[bundle]
+    dragon_bundle: DragonBundle,
+    my_dragon: MyDragon,
+}
 
 #[derive(Bundle)]
 struct DragonBundle {
@@ -31,19 +64,19 @@ struct DragonBundle {
     dragon: Dragon,
 }
 
-#[derive(Bundle)]
-struct FireDragonBundle {
-    marker: FireDragon,
-    #[bundle]
-    dragon_bundle: DragonBundle,
-}
+// #[derive(Bundle)]
+// struct FireDragonBundle {
+//     marker: FireDragon,
+//     #[bundle]
+//     dragon_bundle: DragonBundle,
+// }
 
-#[derive(Bundle)]
-struct IceDragonBundle {
-    marker: IceDragon,
-    #[bundle]
-    dragon_bundle: DragonBundle,
-}
+// #[derive(Bundle)]
+// struct IceDragonBundle {
+//     marker: IceDragon,
+//     #[bundle]
+//     dragon_bundle: DragonBundle,
+// }
 
 #[derive(Component, Default)]
 struct DragonInput {
@@ -65,8 +98,12 @@ struct DragonAction {
     flipping: bool,
 }
 
+
+
 #[derive(Component)]
-struct Projectile;
+pub struct Projectile {
+    pub elemental_theme: ElementalTheme,
+}
 
 #[derive(Bundle)]
 struct ProjectileBundle {
@@ -82,6 +119,12 @@ struct ProjectileMovement {
     despawn_timer: Timer,
 }
 
+pub struct ProjectileImage {
+    pub size: Vec2,
+    pub image: DynamicImage,
+    pub file_handle: Handle<Image>,
+    pub elemental_theme: ElementalTheme,
+}
 
 
 #[derive(Component)]
@@ -132,7 +175,8 @@ struct CameraScale(f32);
 #[derive(Resource)]
 pub struct ResourceCache {
     pub wall_images: HashMap<WallShape, WallImage>,
-    pub dragon_image: DynamicImage,
+    pub dragon_images: HashMap<ElementalTheme, DragonImage>, // DynamicImage,
+    pub projectile_images: HashMap<ElementalTheme, ProjectileImage>,
     // Other resources can be added here, e.g., audio files, character data, etc.
 }
 
@@ -161,8 +205,8 @@ fn main() {
         )
         .add_system(setup_maze.run_if(in_state(GameState::Setup)))
         .add_systems((
-                keyboard_input_system_ice_dragon.run_if(in_state(GameState::Running)),
-                keyboard_input_system_fire_dragon.run_if(in_state(GameState::Running)),
+                // keyboard_input_system_ice_dragon.run_if(in_state(GameState::Running)),
+                keyboard_input_system.run_if(in_state(GameState::Running)),
                 dragon_movement_system.run_if(in_state(GameState::Running)), 
                 camera_follow_system.run_if(in_state(GameState::Running)),
                 projectile_spawn_system.run_if(in_state(GameState::Running)), 
@@ -190,12 +234,22 @@ pub fn preload_resources(mut commands: Commands, asset_server: Res<AssetServer>)
         // Add more wall types and their paths here
     ];
 
+    let projectile_element_file_names = vec![
+        (ElementalTheme::Fire, "sprites/fireball.png"),
+        (ElementalTheme::Ice, "sprites/iceball.png"),
+        // (ElementalTheme::Water, "sprites/waterball.png"),
+        // (ElementalTheme::Rock, "sprites/rockball.png"),
+        // Add more projectile elements and their paths here
+    ];
+
     let mut resource_cache = ResourceCache {
         wall_images: HashMap::new(),
-        dragon_image,
+        dragon_images: HashMap::new(),
+        projectile_images: HashMap::new(),
     };
 
-    for (wall_shape, path) in wall_shape_file_names {
+    // Preload the walls
+    for (shape, path) in wall_shape_file_names {
         let wall_handle: Handle<Image> = asset_server.load(path);
         let wall_image = load_image_data(path);
         let wall_size = Vec2::new(wall_image.width() as f32, wall_image.height() as f32);
@@ -205,10 +259,25 @@ pub fn preload_resources(mut commands: Commands, asset_server: Res<AssetServer>)
             size: wall_size,
             image: wall_image,
             file_handle: wall_handle,
-            shape: wall_shape,
+            shape,
         };
 
-        resource_cache.wall_images.insert(wall_shape, wall_data);
+        resource_cache.wall_images.insert(shape, wall_data);
+    }
+
+    // Preloading projectiles
+    for (elemental_theme, path) in projectile_element_file_names {
+        let projectile_handle: Handle<Image> = asset_server.load(path);
+        let projectile_image_data = load_image_data(path);
+        let projectile_size = Vec2::new(projectile_image_data.width() as f32, projectile_image_data.height() as f32);
+
+        let projectile_image = ProjectileImage {
+            size: projectile_size,
+            image: projectile_image_data,
+            file_handle: projectile_handle,
+            elemental_theme,
+        };
+        resource_cache.projectile_images.insert(elemental_theme, projectile_image);
     }
 
     commands.insert_resource(resource_cache);
@@ -222,11 +291,14 @@ pub fn preload_resources(mut commands: Commands, asset_server: Res<AssetServer>)
 
 
 fn setup_dragons(mut commands: Commands, asset_server: Res<AssetServer>) {
-    println!("Setup Fire Dragon");
+    
+    println!("Setup the main players fire dragon");
+    
+    
     // Spawn the Fire Dragon into the game.
     let firedragon_spawn_home = Vec3::new(100., 0., 0.);
-    commands.spawn(FireDragonBundle {
-        marker: FireDragon,
+    commands.spawn(MyDragonBundle {
+        my_dragon: MyDragon,
         dragon_bundle: DragonBundle {
             sprite_bundle: SpriteBundle {
                 texture: asset_server.load("sprites/fire-dragon.png"),
@@ -243,20 +315,21 @@ fn setup_dragons(mut commands: Commands, asset_server: Res<AssetServer>) {
                 flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
                 flipping: false,
             },
-            dragon: Dragon,
-        }
+            dragon: Dragon {
+                id: Uuid::new_v4(),
+                elemental_theme: ElementalTheme::Fire
+            },
+        },
     });
 
 
     // Spawn the Ice Dragon into the game.
     let icedragon_spawn_home = Vec3::new(1400., 0., 0.);
-    commands.spawn(IceDragonBundle {
-        marker: IceDragon,
-        dragon_bundle: DragonBundle {
-            sprite_bundle: SpriteBundle {
-                texture: asset_server.load("sprites/ice-dragon.png"),
-                transform: Transform::from_translation(icedragon_spawn_home),  //from_xyz(1200., 0., 0.),
-                ..default()
+    commands.spawn( DragonBundle {
+                sprite_bundle: SpriteBundle {
+                    texture: asset_server.load("sprites/ice-dragon.png"),
+                    transform: Transform::from_translation(icedragon_spawn_home),  //from_xyz(1200., 0., 0.),
+                    ..default()
             },
             input: DragonInput::default(),
             movement: DragonAction {
@@ -268,8 +341,10 @@ fn setup_dragons(mut commands: Commands, asset_server: Res<AssetServer>) {
                 flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
                 flipping: false,
             },
-            dragon: Dragon,
-        }
+            dragon: Dragon { 
+                id: Uuid::new_v4(), 
+                elemental_theme: ElementalTheme::Ice 
+            }
     });
 }
 
@@ -360,10 +435,10 @@ fn setup_camera(
     ));
 }
 
-fn keyboard_input_system_fire_dragon (
+fn keyboard_input_system (
     keyboard_input: Res<Input<KeyCode>>, 
 //     mut dragon_query: Query<&mut DragonInput>,
-    mut dragon_query: Query<&mut DragonInput, With<FireDragon>>,
+    mut dragon_query: Query<&mut DragonInput, With<MyDragon>>,
     mut camera_query: Query<(&mut Transform, &mut GameCamera), With<GameCamera>>,
 ) {
     let mut dragon_input = dragon_query.single_mut();
@@ -405,36 +480,36 @@ fn keyboard_input_system_fire_dragon (
 }
 
 
-fn keyboard_input_system_ice_dragon (
-    keyboard_input: Res<Input<KeyCode>>, 
-    mut dragon_query: Query<&mut DragonInput, With<IceDragon>>,
-) {
-    let mut dragon_input = dragon_query.single_mut();
-    dragon_input.move_direction = Vec2::ZERO;
+// fn keyboard_input_system_ice_dragon (
+//     keyboard_input: Res<Input<KeyCode>>, 
+//     mut dragon_query: Query<&mut DragonInput, With<IceDragon>>,
+// ) {
+//     let mut dragon_input = dragon_query.single_mut();
+//     dragon_input.move_direction = Vec2::ZERO;
 
-    if keyboard_input.pressed(KeyCode::W) {
-        dragon_input.move_direction.y += 1.0;
-    }
-    if keyboard_input.pressed(KeyCode::S) {
-        dragon_input.move_direction.y -= 1.0;
-    }
-    if keyboard_input.pressed(KeyCode::A) {
-        dragon_input.move_direction.x -= 1.0;
-    }
-    if keyboard_input.pressed(KeyCode::D) {
-        dragon_input.move_direction.x += 1.0;
-    }
+//     if keyboard_input.pressed(KeyCode::W) {
+//         dragon_input.move_direction.y += 1.0;
+//     }
+//     if keyboard_input.pressed(KeyCode::S) {
+//         dragon_input.move_direction.y -= 1.0;
+//     }
+//     if keyboard_input.pressed(KeyCode::A) {
+//         dragon_input.move_direction.x -= 1.0;
+//     }
+//     if keyboard_input.pressed(KeyCode::D) {
+//         dragon_input.move_direction.x += 1.0;
+//     }
 
-    dragon_input.fire = keyboard_input.pressed(KeyCode::R);
-    dragon_input.brake = keyboard_input.pressed(KeyCode::LShift);
-    dragon_input.home = keyboard_input.pressed(KeyCode::Q);
-    dragon_input.ease_up = !dragon_input.brake && !dragon_input.home && dragon_input.move_direction == Vec2::ZERO;
+//     dragon_input.fire = keyboard_input.pressed(KeyCode::R);
+//     dragon_input.brake = keyboard_input.pressed(KeyCode::LShift);
+//     dragon_input.home = keyboard_input.pressed(KeyCode::Q);
+//     dragon_input.ease_up = !dragon_input.brake && !dragon_input.home && dragon_input.move_direction == Vec2::ZERO;
 
-}
+// }
 
 fn camera_follow_system(
     time: Res<Time>,
-    dragon_query: Query<(&Transform, &Handle<Image>, &DragonAction), (With<FireDragon>,Without<GameCamera>)>,
+    dragon_query: Query<(&Transform, &Handle<Image>, &DragonAction), (With<MyDragon>,Without<GameCamera>)>,
     mut camera_query: Query<(&mut Transform, &GameCamera), With<GameCamera>>,
     windows: Query<&Window>,
     images: Res<Assets<Image>>,
@@ -588,52 +663,55 @@ fn dragon_movement_system(
 
 fn projectile_spawn_system(
     time: Res<Time>,
-    mut dragon_query: Query<(&mut DragonAction, &mut DragonInput, &Transform, Option<&FireDragon>)>,
+    mut dragon_query: Query<(&Dragon, &mut DragonAction, &mut DragonInput, &Transform)>,
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    // asset_server: Res<AssetServer>,
+    resource_cache: Res<ResourceCache>,
 ) {
 
-    for (mut dragon_action, dragon_input, dragon_transform, fire_dragon) in dragon_query.iter_mut() {
+    for (dragon, mut dragon_action, dragon_input, dragon_transform) in dragon_query.iter_mut() {
     
-        if dragon_input.fire && dragon_action.firerate_timer.tick(time.delta()).just_finished() {
-        
-            // println!("projectile_spawn_system called");
-            let mut projectile_direction = dragon_action.velocity.normalize_or_zero();
-            if projectile_direction == Vec3::ZERO {
-                    projectile_direction.x = 1.0 * dragon_transform.scale.x.signum();
-            }
-
-            // Calculate the speed of the projectile based on the dragon's velocity.
-            let projectile_speed = projectile_direction * (250.0 + 75.0 * dragon_action.velocity.length());
-
-            // Calculate the rotation of the projectile based on its velocity direction.
-            let projectile_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), projectile_direction);
-
+        if dragon_input.fire && dragon_action.firerate_timer.tick(time.delta()).just_finished() { 
+            if let Some(projectile_image) = resource_cache.projectile_images.get(&dragon.elemental_theme) {
             
-            let texture: Handle<Image> = 
-                if let Some(_) = fire_dragon {
-                        asset_server.load("sprites/fireball.png")
-                } else {
-                        asset_server.load("sprites/iceball.png")
-                };
+                // println!("projectile_spawn_system called");
+                let mut projectile_direction = dragon_action.velocity.normalize_or_zero();
+                if projectile_direction == Vec3::ZERO {
+                        projectile_direction.x = 1.0 * dragon_transform.scale.x.signum();
+                }
 
-            // Spawn the projectile into the game.
-            commands.spawn(ProjectileBundle {
-                sprite_bundle: SpriteBundle {
-                    texture,
-                    transform: Transform {
-                        translation: dragon_transform.translation + Vec3::new(110.0 * dragon_transform.scale.x.signum(), 30.0, 0.0),
-                        rotation: projectile_rotation,
+                // Calculate the speed of the projectile based on the dragon's velocity.
+                let projectile_speed = projectile_direction * (250.0 + 75.0 * dragon_action.velocity.length());
+
+                // Calculate the rotation of the projectile based on its velocity direction.
+                let projectile_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), projectile_direction);
+
+                
+                // let texture: Handle<Image> = match dragon.elemental_theme {
+                //     ElementalTheme::Fire => asset_server.load("sprites/fireball.png"),
+                //     ElementalTheme::Ice => asset_server.load("sprites/iceball.png"),
+                //     ElementalTheme::Water => asset_server.load("sprites/waterball.png"),
+                //     ElementalTheme::Rock => asset_server.load("sprites/rockball.png"),
+                // };
+
+                // Spawn the projectile into the game.
+                commands.spawn(ProjectileBundle {
+                    sprite_bundle: SpriteBundle {
+                        texture: projectile_image.file_handle.clone(),
+                        transform: Transform {
+                            translation: dragon_transform.translation + Vec3::new(110.0 * dragon_transform.scale.x.signum(), 30.0, 0.0),
+                            rotation: projectile_rotation,
+                            ..default()
+                        },
                         ..default()
                     },
-                    ..default()
-                },
-                movement: ProjectileMovement { 
-                    speed: projectile_speed,
-                    despawn_timer: Timer::from_seconds(2.4, TimerMode::Once), // Set the timeout duration here
-                },
-                projectile: Projectile,
-            });
+                    movement: ProjectileMovement { 
+                        speed: projectile_speed,
+                        despawn_timer: Timer::from_seconds(2.4, TimerMode::Once), // Set the timeout duration here
+                    },
+                    projectile: Projectile { elemental_theme: dragon.elemental_theme }
+                });
+            }
         }
     }
 }
