@@ -1,8 +1,10 @@
-use bevy::sprite::collide_aabb::{collide, Collision};
-use bevy::window::close_on_esc;
-use bevy::window::PresentMode;
-use bevy::prelude::*;
-
+use bevy::{
+    prelude::*,
+    sprite::collide_aabb::{collide, Collision},
+    utils::HashMap,
+    window::{close_on_esc, PresentMode},
+};
+use image::DynamicImage;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 enum GameState {
@@ -10,6 +12,15 @@ enum GameState {
     Setup,
     Running,
 }
+
+#[derive(Component)]
+struct Dragon;
+
+#[derive(Component)]
+struct FireDragon;
+
+#[derive(Component)]
+struct IceDragon;
 
 #[derive(Bundle)]
 struct DragonBundle {
@@ -34,15 +45,6 @@ struct IceDragonBundle {
     dragon_bundle: DragonBundle,
 }
 
-#[derive(Component)]
-struct Dragon;
-
-#[derive(Component)]
-struct FireDragon;
-
-#[derive(Component)]
-struct IceDragon;
-
 #[derive(Component, Default)]
 struct DragonInput {
     move_direction: Vec2,
@@ -52,9 +54,9 @@ struct DragonInput {
     fire: bool,
 }
 
-
 #[derive(Component)]
 struct DragonAction {
+    spawn_home: Vec3,
     velocity: Vec3,
     max_velocity: f32,
     motion_timer: Timer,
@@ -64,27 +66,28 @@ struct DragonAction {
 }
 
 #[derive(Component)]
-struct Fireball;
+struct Projectile;
 
 #[derive(Bundle)]
-struct FireballBundle {
+struct ProjectileBundle {
     #[bundle]
     sprite_bundle: SpriteBundle,
-    movement: FireballMovement,
-    fireball: Fireball,
+    movement: ProjectileMovement,
+    projectile: Projectile,
 }
 
 #[derive(Component)]
-struct FireballMovement {
+struct ProjectileMovement {
     speed: Vec3,
     despawn_timer: Timer,
 }
 
-#[derive(Component)]
-struct Wall;
 
-#[derive(Resource)]
-struct WallTextureHandle(Handle<Image>);
+
+#[derive(Component)]
+pub struct Wall {
+    shape: WallShape
+}
 
 #[derive(Bundle)]
 struct WallBundle {
@@ -92,6 +95,29 @@ struct WallBundle {
     sprite_bundle: SpriteBundle,
     wall: Wall,
 }
+
+pub struct WallImage {
+    pub size: Vec2,
+    pub image: DynamicImage,
+    pub file_handle: Handle<Image>,
+    pub shape: WallShape,
+}
+
+
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
+pub enum WallShape {
+    Straight,
+    Corner,
+    TJunction,
+    Cross,
+    ShortStraight,
+    LongStraight,
+    Diagonal,
+    Curved,
+    Narrow,
+}
+
+
 
 #[derive(Component)]
 pub struct GameCamera {
@@ -101,6 +127,14 @@ pub struct GameCamera {
 
 #[derive(Resource)]
 struct CameraScale(f32);
+
+
+#[derive(Resource)]
+pub struct ResourceCache {
+    pub wall_images: HashMap<WallShape, WallImage>,
+    pub dragon_image: DynamicImage,
+    // Other resources can be added here, e.g., audio files, character data, etc.
+}
 
 
 fn main() {
@@ -120,7 +154,7 @@ fn main() {
         }))
         .add_state::<GameState>()
         .insert_resource(CameraScale(1.0))
-        .add_systems(  (preload_images,
+        .add_systems(  (preload_resources,
                         setup_dragons, 
                         setup_camera,
                 ).chain().on_startup()
@@ -131,33 +165,77 @@ fn main() {
                 keyboard_input_system_fire_dragon.run_if(in_state(GameState::Running)),
                 dragon_movement_system.run_if(in_state(GameState::Running)), 
                 camera_follow_system.run_if(in_state(GameState::Running)),
-                fireball_spawn_system.run_if(in_state(GameState::Running)), 
-                fireball_movement_system.run_if(in_state(GameState::Running))
+                projectile_spawn_system.run_if(in_state(GameState::Running)), 
+                projectile_movement_system.run_if(in_state(GameState::Running))
             )
         )
         .add_system(close_on_esc)
         .run();
 }
 
-fn preload_images(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let wall_texture_handle = asset_server.load("wall.png");
-    commands.insert_resource(WallTextureHandle(wall_texture_handle));
+fn load_image_data(path: &str) -> DynamicImage {
+    let image_bytes = std::fs::read( "assets/".to_owned() + path).expect("Failed to read image file");
+    let image_data = image::load_from_memory(&image_bytes).expect("Failed to load image data");
+    
+    image_data
 }
+
+// //, mut materials: ResMut<Assets<ColorMaterial>>) {
+pub fn preload_resources(mut commands: Commands, asset_server: Res<AssetServer>) { 
+    // let dragon_handle = asset_server.load("sprites/dragon.png");
+    let dragon_image = load_image_data("sprites/dragon.png");
+    
+    let wall_shape_file_names = vec![
+        (WallShape::Straight, "sprites/wall-straight.png"),
+        // Add more wall types and their paths here
+    ];
+
+    let mut resource_cache = ResourceCache {
+        wall_images: HashMap::new(),
+        dragon_image,
+    };
+
+    for (wall_shape, path) in wall_shape_file_names {
+        let wall_handle: Handle<Image> = asset_server.load(path);
+        let wall_image = load_image_data(path);
+        let wall_size = Vec2::new(wall_image.width() as f32, wall_image.height() as f32);
+        //let wall_size = wall_image.size().extend(0.0) * wall_transform.scale.abs();
+        
+        let wall_data = WallImage {
+            size: wall_size,
+            image: wall_image,
+            file_handle: wall_handle,
+            shape: wall_shape,
+        };
+
+        resource_cache.wall_images.insert(wall_shape, wall_data);
+    }
+
+    commands.insert_resource(resource_cache);
+
+    
+//     materials.set(dragon_handle.clone(), ColorMaterial::from(Handle::from(dragon_handle)));
+//     materials.set(wall_handle.clone(), ColorMaterial::from(Handle::from(wall_handle)));
+
+}
+
 
 
 fn setup_dragons(mut commands: Commands, asset_server: Res<AssetServer>) {
     println!("Setup Fire Dragon");
     // Spawn the Fire Dragon into the game.
+    let firedragon_spawn_home = Vec3::new(100., 0., 0.);
     commands.spawn(FireDragonBundle {
         marker: FireDragon,
         dragon_bundle: DragonBundle {
             sprite_bundle: SpriteBundle {
-                texture: asset_server.load("dragon.png"),
-                transform: Transform::from_xyz(100., 0., 0.),
+                texture: asset_server.load("sprites/fire-dragon.png"),
+                transform: Transform::from_translation(firedragon_spawn_home),
                 ..default()
             },
             input: DragonInput::default(),
             movement: DragonAction {
+                spawn_home: firedragon_spawn_home,
                 velocity: Vec3::ZERO,
                 max_velocity: 25.0,
                 motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
@@ -171,16 +249,18 @@ fn setup_dragons(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 
     // Spawn the Ice Dragon into the game.
+    let icedragon_spawn_home = Vec3::new(1400., 0., 0.);
     commands.spawn(IceDragonBundle {
         marker: IceDragon,
         dragon_bundle: DragonBundle {
             sprite_bundle: SpriteBundle {
-                texture: asset_server.load("dragon.png"),
-                transform: Transform::from_xyz(1200., 0., 0.),
+                texture: asset_server.load("sprites/ice-dragon.png"),
+                transform: Transform::from_translation(icedragon_spawn_home),  //from_xyz(1200., 0., 0.),
                 ..default()
             },
             input: DragonInput::default(),
             movement: DragonAction {
+                spawn_home: icedragon_spawn_home,
                 velocity: Vec3::ZERO,
                 max_velocity: 25.0,
                 motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
@@ -198,42 +278,45 @@ fn setup_maze(
     mut commands: Commands,
 //     asset_server: Res<AssetServer>,
     _state: ResMut<State<GameState>>,
-    images: Res<Assets<Image>>,
+//     images: Res<Assets<Image>>,
     mut next_state: ResMut<NextState<GameState>>,
-    wall_texture_handle: Res<WallTextureHandle>,
+//     wall_texture_handle: Res<WallTextureHandle>,
+    resource_cache: Res<ResourceCache>
 ) {
     println!("Setup Maze");
 //     let wall_handle = asset_server.load("wall.png");
+//     let wall_sizes = &resource_cache.wall_sizes;
+    let wall_images = &resource_cache.wall_images;
 
-    if let Some(wall_image) = images.get(&wall_texture_handle.0) {
-        let wall_width = wall_image.size().x;
-        let wall_height = wall_image.size().y;
+    let mut maze = [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    ];
+    maze.reverse();
 
-        let mut maze = [
-                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-        ];
+    if let Some(wall_image) =  wall_images.get(&WallShape::Straight) {
+        let wall_width = wall_image.size.x;
+        let wall_height = wall_image.size.y;
 
-        maze.reverse();
         // Spawn Wall blocks into the game.
         for (i, row) in maze.iter().enumerate() {
             for (j, cell) in row.iter().enumerate() {
@@ -242,11 +325,11 @@ fn setup_maze(
                     let y = (i as f32 * wall_height) - 1000.0;
                     commands.spawn(WallBundle {
                         sprite_bundle: SpriteBundle {
-                            texture: wall_texture_handle.0.clone(),
+                            texture: wall_image.file_handle.clone(),
                             transform: Transform::from_xyz(x, y, -1.0),
                             ..default()
                         },
-                        wall: Wall,
+                        wall: Wall { shape: WallShape::Straight },
                     });
                 }
             }
@@ -300,7 +383,7 @@ fn keyboard_input_system_fire_dragon (
     }
 
     dragon_input.fire = keyboard_input.pressed(KeyCode::Space);
-    dragon_input.brake = keyboard_input.pressed(KeyCode::LShift) || keyboard_input.pressed(KeyCode::RShift);
+    dragon_input.brake = keyboard_input.pressed(KeyCode::RShift);
     dragon_input.home = keyboard_input.pressed(KeyCode::X);
     dragon_input.ease_up = !dragon_input.brake && !dragon_input.home && dragon_input.move_direction == Vec2::ZERO;
     
@@ -343,6 +426,9 @@ fn keyboard_input_system_ice_dragon (
     }
 
     dragon_input.fire = keyboard_input.pressed(KeyCode::R);
+    dragon_input.brake = keyboard_input.pressed(KeyCode::LShift);
+    dragon_input.home = keyboard_input.pressed(KeyCode::Q);
+    dragon_input.ease_up = !dragon_input.brake && !dragon_input.home && dragon_input.move_direction == Vec2::ZERO;
 
 }
 
@@ -398,8 +484,9 @@ fn camera_follow_system(
 fn dragon_movement_system(
     time: Res<Time>,
     mut dragon_query: Query<(&mut DragonAction, &DragonInput, &mut Transform, &Handle<Image>)>,
-    wall_query: Query<(&Wall, &Transform, &Handle<Image>), Without<DragonAction>>,
+    wall_query: Query<(&Wall, &Transform), Without<DragonAction>>,
     images: Res<Assets<Image>>,
+    resource_cache: Res<ResourceCache>,
 ) {
     for (mut dragon_action, dragon_input, mut dragon_transform, dragon_image_handle) in dragon_query.iter_mut() {
         let acceleration = 0.4;
@@ -407,15 +494,15 @@ fn dragon_movement_system(
         dragon_action.velocity.x += dragon_input.move_direction.x * acceleration;
         dragon_action.velocity.y += dragon_input.move_direction.y * acceleration;
 
-        // Brake if both LShift and RShift are pressed
+        // Brake
         if dragon_input.brake && dragon_action.motion_timer.tick(time.delta()).just_finished() {
             dragon_action.velocity *= 0.6;
         }
 
-        // Move to home position if X is pressed
+        // Move to home position
         if dragon_input.home {
             dragon_action.velocity = Vec3::ZERO;
-            dragon_transform.translation = Vec3::ZERO;
+            dragon_transform.translation = dragon_action.spawn_home;
         } else if dragon_input.ease_up && dragon_action.motion_timer.tick(time.delta()).just_finished() {
             dragon_action.velocity *= 0.8;
         }
@@ -427,9 +514,10 @@ fn dragon_movement_system(
             let dragon_size = dragon_image.size().extend(0.0) * dragon_transform.scale.abs();
             let dragon_center_position = dragon_transform.translation;
 
-            for (_, wall_transform, wall_image_handle) in wall_query.iter() {
-                if let Some(wall_image) = images.get(wall_image_handle) {
-                    let wall_size = wall_image.size().extend(0.0) * wall_transform.scale.abs();
+            for (wall, wall_transform) in wall_query.iter() {
+                // if let Some(wall_image) = images.get(wall_image_handle) {
+                if let Some(wall_image) = resource_cache.wall_images.get(&wall.shape) {
+                    // let wall_size = wall_image.size().extend(0.0) * wall_transform.scale.abs();
                     let wall_center_position = wall_transform.translation;
                      // If the collision occurs on multiple sides, the side with the deepest penetration is returned.
                      // If all sides are involved, `Inside` is returned.
@@ -437,24 +525,24 @@ fn dragon_movement_system(
                         dragon_center_position,
                         dragon_size.truncate(),
                         wall_center_position,
-                        wall_size.truncate(),
+                        wall_image.size //.truncate(),
                     ) {
                         dragon_action.velocity = Vec3::ZERO;
                         match collision {
                             Collision::Left => {
-                                dragon_transform.translation.x = wall_center_position.x - (wall_size.x + dragon_size.x) / 2.0;
+                                dragon_transform.translation.x = wall_center_position.x - (wall_image.size.x + dragon_size.x) / 2.0;
                                 dragon_action.velocity.x = -0.0;
                             }
                             Collision::Right => {
-                                dragon_transform.translation.x = wall_center_position.x + (wall_size.x + dragon_size.x) / 2.0;
+                                dragon_transform.translation.x = wall_center_position.x + (wall_image.size.x + dragon_size.x) / 2.0;
                                 dragon_action.velocity.x = 0.0;
                             }
                             Collision::Top => {
-                                dragon_transform.translation.y = wall_center_position.y + (wall_size.y + dragon_size.y) / 2.0;
+                                dragon_transform.translation.y = wall_center_position.y + (wall_image.size.y + dragon_size.y) / 2.0;
                                 dragon_action.velocity.y = 0.0;
                             }
                             Collision::Bottom => {
-                                dragon_transform.translation.y = wall_center_position.y - (wall_size.y + dragon_size.y) / 2.0;
+                                dragon_transform.translation.y = wall_center_position.y - (wall_image.size.y + dragon_size.y) / 2.0;
                                 dragon_action.velocity.y = -0.0;
                             }
                             Collision::Inside => {
@@ -498,7 +586,7 @@ fn dragon_movement_system(
 }
 
 
-fn fireball_spawn_system(
+fn projectile_spawn_system(
     time: Res<Time>,
     mut dragon_query: Query<(&mut DragonAction, &mut DragonInput, &Transform, Option<&FireDragon>)>,
     mut commands: Commands,
@@ -509,89 +597,89 @@ fn fireball_spawn_system(
     
         if dragon_input.fire && dragon_action.firerate_timer.tick(time.delta()).just_finished() {
         
-            // println!("fireball_spawn_system called");
-            let mut fireball_direction = dragon_action.velocity.normalize_or_zero();
-            if fireball_direction == Vec3::ZERO {
-                    fireball_direction.x = 1.0 * dragon_transform.scale.x.signum();
+            // println!("projectile_spawn_system called");
+            let mut projectile_direction = dragon_action.velocity.normalize_or_zero();
+            if projectile_direction == Vec3::ZERO {
+                    projectile_direction.x = 1.0 * dragon_transform.scale.x.signum();
             }
 
-            // Calculate the speed of the fireball based on the dragon's velocity.
-            let fireball_speed = fireball_direction * (250.0 + 75.0 * dragon_action.velocity.length());
+            // Calculate the speed of the projectile based on the dragon's velocity.
+            let projectile_speed = projectile_direction * (250.0 + 75.0 * dragon_action.velocity.length());
 
-            // Calculate the rotation of the fireball based on its velocity direction.
-            let fireball_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), fireball_direction);
+            // Calculate the rotation of the projectile based on its velocity direction.
+            let projectile_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), projectile_direction);
 
             
             let texture: Handle<Image> = 
                 if let Some(_) = fire_dragon {
-                        asset_server.load("fireball.png")
+                        asset_server.load("sprites/fireball.png")
                 } else {
-                        asset_server.load("iceball.png")
+                        asset_server.load("sprites/iceball.png")
                 };
 
-            // Spawn the fireball into the game.
-            commands.spawn(FireballBundle {
+            // Spawn the projectile into the game.
+            commands.spawn(ProjectileBundle {
                 sprite_bundle: SpriteBundle {
                     texture,
                     transform: Transform {
                         translation: dragon_transform.translation + Vec3::new(110.0 * dragon_transform.scale.x.signum(), 30.0, 0.0),
-                        rotation: fireball_rotation,
+                        rotation: projectile_rotation,
                         ..default()
                     },
                     ..default()
                 },
-                movement: FireballMovement { 
-                    speed: fireball_speed,
+                movement: ProjectileMovement { 
+                    speed: projectile_speed,
                     despawn_timer: Timer::from_seconds(2.4, TimerMode::Once), // Set the timeout duration here
                 },
-                fireball: Fireball,
+                projectile: Projectile,
             });
         }
     }
 }
 
 
-fn fireball_movement_system(
+fn projectile_movement_system(
         time: Res<Time>,
         mut commands: Commands,
-        mut fireball_query: Query<(Entity, &mut FireballMovement, &mut Transform, &Handle<Image>),With<Fireball>>,
-        wall_query: Query<(&Wall, &Transform, &Handle<Image>),Without<Fireball>>,
+        mut projectile_query: Query<(Entity, &mut ProjectileMovement, &mut Transform, &Handle<Image>),With<Projectile>>,
+        wall_query: Query<(&Wall, &Transform, &Handle<Image>),Without<Projectile>>,
         images: Res<Assets<Image>>,
     ) {
     let delta_time = time.delta_seconds();
-    for (   fireball_entity,
-            mut fireball_movement, 
-            mut fireball_transform,
-            fireball_image_handle,
-        ) in fireball_query.iter_mut() {
+    for (   projectile_entity,
+            mut projectile_movement, 
+            mut projectile_transform,
+            projectile_image_handle,
+        ) in projectile_query.iter_mut() {
 
-        // Move the fireball sprite by distance of speed * time.
-        fireball_transform.translation += fireball_movement.speed * delta_time;
+        // Move the projectile sprite by distance of speed * time.
+        projectile_transform.translation += projectile_movement.speed * delta_time;
 
         // Update the despawn timer
-        fireball_movement.despawn_timer.tick(time.delta());
+        projectile_movement.despawn_timer.tick(time.delta());
 
-        // Despawn the fireball if the timer has finished
-        if fireball_movement.despawn_timer.finished() {
-            commands.entity(fireball_entity).despawn();
+        // Despawn the projectile if the timer has finished
+        if projectile_movement.despawn_timer.finished() {
+            commands.entity(projectile_entity).despawn();
         } else {
             // Check for collisions with walls
-            if let Some(fireball_image) = images.get(fireball_image_handle) {
-                let fireball_size = Vec2::new(fireball_image.size().x as f32, fireball_image.size().y as f32);
+            if let Some(projectile_image) = images.get(projectile_image_handle) {
+                let projectile_size = Vec2::new(projectile_image.size().x as f32, projectile_image.size().y as f32);
                 for (_wall, wall_transform, wall_image_handle) in wall_query.iter() {
                 
                     if let Some(wall_image) = images.get(wall_image_handle){
                         let wall_size = Vec2::new(wall_image.size().x as f32, wall_image.size().y as f32);
 
                         let collision = collide(
-                            fireball_transform.translation,
-                            fireball_size/5.0,
+                            projectile_transform.translation,
+                            projectile_size/5.0,
                             wall_transform.translation,
                             wall_size,
                         );
 
                         if let Some(_) = collision {
-                            commands.entity(fireball_entity).despawn();
+                            commands.entity(projectile_entity).despawn();
                             break;
                         }
                     }
