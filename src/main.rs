@@ -198,9 +198,14 @@ fn main() {
         }))
         .add_state::<GameState>()
         .insert_resource(CameraScale(1.0))
+        .insert_resource(ResourceCache {
+                wall_images: HashMap::new(),
+                dragon_images: HashMap::new(),
+                projectile_images: HashMap::new(),
+        })
         .add_systems(  (preload_resources,
-                        setup_dragons, 
-                        setup_camera,
+                        setup_dragons.after(preload_resources), 
+                        setup_camera.after(setup_dragons),
                 ).chain().on_startup()
         )
         .add_system(setup_maze.run_if(in_state(GameState::Setup)))
@@ -225,28 +230,26 @@ fn load_image_data(path: &str) -> DynamicImage {
 }
 
 // //, mut materials: ResMut<Assets<ColorMaterial>>) {
-pub fn preload_resources(mut commands: Commands, asset_server: Res<AssetServer>) { 
-    // let dragon_handle = asset_server.load("sprites/dragon.png");
-    let dragon_image = load_image_data("sprites/dragon.png");
+pub fn preload_resources(mut _commands: Commands, asset_server: Res<AssetServer>, mut resource_cache: ResMut<ResourceCache>) { 
     
     let wall_shape_file_names = vec![
         (WallShape::Straight, "sprites/wall-straight.png"),
         // Add more wall types and their paths here
     ];
 
-    let projectile_element_file_names = vec![
-        (ElementalTheme::Fire, "sprites/fireball.png"),
-        (ElementalTheme::Ice, "sprites/iceball.png"),
-        // (ElementalTheme::Water, "sprites/waterball.png"),
-        // (ElementalTheme::Rock, "sprites/rockball.png"),
-        // Add more projectile elements and their paths here
+    let theme_image_file_names = vec![
+        (ElementalTheme::Fire, "sprites/fire-dragon.png", "sprites/fire-projectile.png"),
+        (ElementalTheme::Ice, "sprites/ice-dragon.png", "sprites/ice-projectile.png"),
+        (ElementalTheme::Water, "sprites/water-dragon.png", "sprites/water-projectile.png"),
+        (ElementalTheme::Rock, "sprites/rock-dragon.png", "sprites/rock-projectile.png"),
+        // Add more themes and their file paths here
     ];
 
-    let mut resource_cache = ResourceCache {
-        wall_images: HashMap::new(),
-        dragon_images: HashMap::new(),
-        projectile_images: HashMap::new(),
-    };
+    // let mut resource_cache = ResourceCache {
+    //     wall_images: HashMap::new(),
+    //     dragon_images: HashMap::new(),
+    //     projectile_images: HashMap::new(),
+    // };
 
     // Preload the walls
     for (shape, path) in wall_shape_file_names {
@@ -266,9 +269,22 @@ pub fn preload_resources(mut commands: Commands, asset_server: Res<AssetServer>)
     }
 
     // Preloading projectiles
-    for (elemental_theme, path) in projectile_element_file_names {
-        let projectile_handle: Handle<Image> = asset_server.load(path);
-        let projectile_image_data = load_image_data(path);
+    for (elemental_theme, dragon_image_file_path, projectile_image_file_path) in theme_image_file_names {
+        
+        let dragon_handle: Handle<Image> = asset_server.load(dragon_image_file_path);
+        let dragon_image_data = load_image_data(dragon_image_file_path);
+        let dragon_size = Vec2::new(dragon_image_data.width() as f32, dragon_image_data.height() as f32);
+
+        let dragon_image = DragonImage {
+            size: dragon_size,
+            image: dragon_image_data,
+            file_handle: dragon_handle,
+            elemental_theme,
+        };
+        resource_cache.dragon_images.insert(elemental_theme, dragon_image);
+
+        let projectile_handle: Handle<Image> = asset_server.load(projectile_image_file_path);
+        let projectile_image_data = load_image_data(projectile_image_file_path);
         let projectile_size = Vec2::new(projectile_image_data.width() as f32, projectile_image_data.height() as f32);
 
         let projectile_image = ProjectileImage {
@@ -280,7 +296,7 @@ pub fn preload_resources(mut commands: Commands, asset_server: Res<AssetServer>)
         resource_cache.projectile_images.insert(elemental_theme, projectile_image);
     }
 
-    commands.insert_resource(resource_cache);
+    // commands.insert_resource(resource_cache);
 
     
 //     materials.set(dragon_handle.clone(), ColorMaterial::from(Handle::from(dragon_handle)));
@@ -290,24 +306,30 @@ pub fn preload_resources(mut commands: Commands, asset_server: Res<AssetServer>)
 
 
 
-fn setup_dragons(mut commands: Commands, asset_server: Res<AssetServer>) {
-    
+fn setup_dragons(
+        mut commands: Commands,
+        asset_server: Res<AssetServer>,
+        resource_cache: Res<ResourceCache>,
+    ) {
+
     println!("Setup the main players fire dragon");
     
-    
+    let dragon_images = &resource_cache.dragon_images;
+
     // Spawn the Fire Dragon into the game.
-    let firedragon_spawn_home = Vec3::new(100., 0., 0.);
+    let mydragon_spawn_home = Vec3::new(100., 0., 0.);
+    let mydragon_theme = ElementalTheme::Fire;
     commands.spawn(MyDragonBundle {
         my_dragon: MyDragon,
         dragon_bundle: DragonBundle {
             sprite_bundle: SpriteBundle {
-                texture: asset_server.load("sprites/fire-dragon.png"),
-                transform: Transform::from_translation(firedragon_spawn_home),
+                texture: dragon_images.get(&mydragon_theme).unwrap().file_handle.clone(), //  asset_server.load("sprites/fire-dragon.png"),
+                transform: Transform::from_translation(mydragon_spawn_home),
                 ..default()
             },
             input: DragonInput::default(),
             movement: DragonAction {
-                spawn_home: firedragon_spawn_home,
+                spawn_home: mydragon_spawn_home,
                 velocity: Vec3::ZERO,
                 max_velocity: 25.0,
                 motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
@@ -317,7 +339,7 @@ fn setup_dragons(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
             dragon: Dragon {
                 id: Uuid::new_v4(),
-                elemental_theme: ElementalTheme::Fire
+                elemental_theme: mydragon_theme
             },
         },
     });
@@ -325,9 +347,12 @@ fn setup_dragons(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Spawn the Ice Dragon into the game.
     let icedragon_spawn_home = Vec3::new(1400., 0., 0.);
+    let ice_dragon_theme = ElementalTheme::Ice;
+
     commands.spawn( DragonBundle {
                 sprite_bundle: SpriteBundle {
-                    texture: asset_server.load("sprites/ice-dragon.png"),
+                    // texture: asset_server.load("sprites/ice-dragon.png"),
+                    texture: dragon_images.get(&ice_dragon_theme).unwrap().file_handle.clone(),
                     transform: Transform::from_translation(icedragon_spawn_home),  //from_xyz(1200., 0., 0.),
                     ..default()
             },
@@ -343,7 +368,7 @@ fn setup_dragons(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
             dragon: Dragon { 
                 id: Uuid::new_v4(), 
-                elemental_theme: ElementalTheme::Ice 
+                elemental_theme: ice_dragon_theme 
             }
     });
 }
