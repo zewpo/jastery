@@ -308,11 +308,8 @@ pub fn preload_resources(mut _commands: Commands, asset_server: Res<AssetServer>
 
 fn setup_dragons(
         mut commands: Commands,
-        asset_server: Res<AssetServer>,
         resource_cache: Res<ResourceCache>,
     ) {
-
-    println!("Setup the main players fire dragon");
     
     let dragon_images = &resource_cache.dragon_images;
 
@@ -323,7 +320,7 @@ fn setup_dragons(
         my_dragon: MyDragon,
         dragon_bundle: DragonBundle {
             sprite_bundle: SpriteBundle {
-                texture: dragon_images.get(&mydragon_theme).unwrap().file_handle.clone(), //  asset_server.load("sprites/fire-dragon.png"),
+                texture: dragon_images.get(&mydragon_theme).unwrap().file_handle.clone(),
                 transform: Transform::from_translation(mydragon_spawn_home),
                 ..default()
             },
@@ -344,8 +341,7 @@ fn setup_dragons(
         },
     });
 
-
-    // Spawn the Ice Dragon into the game.
+    // Spawn an Ice Dragon into the game.
     let icedragon_spawn_home = Vec3::new(1400., 0., 0.);
     let ice_dragon_theme = ElementalTheme::Ice;
 
@@ -583,12 +579,12 @@ fn camera_follow_system(
 
 fn dragon_movement_system(
     time: Res<Time>,
-    mut dragon_query: Query<(&mut DragonAction, &DragonInput, &mut Transform, &Handle<Image>)>,
+    mut dragon_query: Query<(&Dragon, &mut DragonAction, &DragonInput, &mut Transform)>,
     wall_query: Query<(&Wall, &Transform), Without<DragonAction>>,
-    images: Res<Assets<Image>>,
+    // images: Res<Assets<Image>>,
     resource_cache: Res<ResourceCache>,
 ) {
-    for (mut dragon_action, dragon_input, mut dragon_transform, dragon_image_handle) in dragon_query.iter_mut() {
+    for (dragon, mut dragon_action, dragon_input, mut dragon_transform) in dragon_query.iter_mut() {
         let acceleration = 0.4;
 
         dragon_action.velocity.x += dragon_input.move_direction.x * acceleration;
@@ -608,10 +604,10 @@ fn dragon_movement_system(
         }
 
         // Check for collisions
-        if let Some(dragon_image) = images.get(dragon_image_handle) {
-
+        // if let Some(dragon_image) = images.get(dragon_image_handle) {
+        if let Some(dragon_image) = resource_cache.dragon_images.get(&dragon.elemental_theme) {
             // Check for wall collisions
-            let dragon_size = dragon_image.size().extend(0.0) * dragon_transform.scale.abs();
+            //let dragon_size = dragon_image.size().extend(0.0) * dragon_transform.scale.abs();
             let dragon_center_position = dragon_transform.translation;
 
             for (wall, wall_transform) in wall_query.iter() {
@@ -623,26 +619,26 @@ fn dragon_movement_system(
                      // If all sides are involved, `Inside` is returned.
                     if let Some(collision) = collide(
                         dragon_center_position,
-                        dragon_size.truncate(),
+                        dragon_image.size,
                         wall_center_position,
-                        wall_image.size //.truncate(),
+                        wall_image.size
                     ) {
                         dragon_action.velocity = Vec3::ZERO;
                         match collision {
                             Collision::Left => {
-                                dragon_transform.translation.x = wall_center_position.x - (wall_image.size.x + dragon_size.x) / 2.0;
+                                dragon_transform.translation.x = wall_center_position.x - (wall_image.size.x + dragon_image.size.x) / 2.0;
                                 dragon_action.velocity.x = -0.0;
                             }
                             Collision::Right => {
-                                dragon_transform.translation.x = wall_center_position.x + (wall_image.size.x + dragon_size.x) / 2.0;
+                                dragon_transform.translation.x = wall_center_position.x + (wall_image.size.x + dragon_image.size.x) / 2.0;
                                 dragon_action.velocity.x = 0.0;
                             }
                             Collision::Top => {
-                                dragon_transform.translation.y = wall_center_position.y + (wall_image.size.y + dragon_size.y) / 2.0;
+                                dragon_transform.translation.y = wall_center_position.y + (wall_image.size.y + dragon_image.size.y) / 2.0;
                                 dragon_action.velocity.y = 0.0;
                             }
                             Collision::Bottom => {
-                                dragon_transform.translation.y = wall_center_position.y - (wall_image.size.y + dragon_size.y) / 2.0;
+                                dragon_transform.translation.y = wall_center_position.y - (wall_image.size.y + dragon_image.size.y) / 2.0;
                                 dragon_action.velocity.y = -0.0;
                             }
                             Collision::Inside => {
