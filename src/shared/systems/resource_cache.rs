@@ -1,10 +1,26 @@
 use bevy::prelude::*;
 use image::DynamicImage;
+use bevy::utils::HashMap;
 use crate::shared::components::dragon::*;
 use crate::shared::components::elemental_theme::*;
 use crate::shared::components::projectile::*;
 use crate::shared::components::resource_cache::*;
 use crate::shared::components::wall::*;
+
+pub struct ResourceCachePlugin;
+
+
+impl Plugin for ResourceCachePlugin {
+    fn build(&self, app: &mut App) {
+        app
+        .insert_resource(ResourceCache {
+            wall_images: HashMap::new(),
+            dragon_images: HashMap::new(),
+            projectile_images: HashMap::new(),
+        })
+        .add_startup_system(preload_resources);
+    }
+}
 
 fn load_image_data(path: &str) -> DynamicImage {
     let image_bytes = std::fs::read( "assets/".to_owned() + path).expect("Failed to read image file");

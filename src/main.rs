@@ -5,10 +5,8 @@ mod shared;
 
 use bevy::{
     prelude::*,
-    utils::HashMap,
     window::{close_on_esc, PresentMode},
 };
-// use shared::systems::game::play::*;
 
 use crate::client::{
     components::game_camera::*,
@@ -21,15 +19,14 @@ use crate::client::{
 use crate::shared::{
     components::{
         game::*,
-        resource_cache::*,
     },
     systems::{
         game::*,
         game::play::*,
+        game::menu::*,
         resource_cache::*,
     },
 };
-
 
 fn main() {
     App::new()
@@ -49,24 +46,17 @@ fn main() {
         .add_state::<GameState>()
         .add_state::<GameOutcome>()
         .insert_resource(CameraScale(3.0))
-        .insert_resource(ResourceCache {
-                wall_images: HashMap::new(),
-                dragon_images: HashMap::new(),
-                projectile_images: HashMap::new(),
-        })
-        .add_startup_systems( (
-            preload_resources,
-            setup_camera))
+        .add_plugin(MainMenuPlugin)
+        .add_plugin(ResourceCachePlugin)
+        .add_startup_system(setup_camera)
         .add_plugin(GameSetupPlugin)
-        // .add_system(setup_maze.run_if(in_state(GameState::Setup)))
         .add_systems((
-                // keyboard_input_system_ice_dragon.run_if(in_state(GameState::Running)),
                 keyboard_input_system.run_if(in_state(GameState::Running)),
                 camera_follow_system.run_if(in_state(GameState::Running)),
-                // game_play_system
             )
         )
         .add_plugin(GamePlayPlugin)
+        .add_plugin(GameOverPlugin)
         .add_system(close_on_esc)
         .run();
 }

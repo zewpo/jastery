@@ -1,13 +1,10 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide};
-// use image::DynamicImage;
-// use uuid::Uuid;
 use crate::shared::components::{dragon::*, resource_cache::*, projectile::*, wall::*};
 
 pub fn projectile_spawn_system(
     time: Res<Time>,
     mut dragon_query: Query<(&Dragon, &mut DragonAction, &mut DragonInput, &Transform)>,
     mut commands: Commands,
-    // asset_server: Res<AssetServer>,
     resource_cache: Res<ResourceCache>,
 ) {
 
@@ -101,14 +98,6 @@ pub fn projectile_movement_system(
     }
 }
 
-
-
-
-// use bevy::prelude::*;
-// use crate::shared::components::{
-//     dragon::{Dragon, MyDragon},
-//     projectile::{Projectile, ProjectileType},
-// };
 
 pub fn projectile_collision_system(
     mut commands: Commands,

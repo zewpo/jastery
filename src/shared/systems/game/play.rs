@@ -1,3 +1,5 @@
+//  src\shared\systems\game\play.rs
+
 use bevy::prelude::*;
 use crate::shared::{components::{dragon::*, game::*}, systems::{projectile::*, dragon::*}};
 
@@ -5,16 +7,6 @@ use super::icedragon_ai::*;
 
 pub struct GamePlayPlugin;
 
-// impl Plugin for GamePlayPlugin {
-//     fn build(&self, app: &mut AppBuilder) {
-//         app.add_system_set(
-//             SystemSet::on_update(GameState::GamePlay)
-//                 .with_system(game_play_system.system())
-//                 .with_system(game_over_system.system())
-//                 // Add any other systems you want to include in this SystemSet
-//         );
-//     }
-// }
 
 impl Plugin for GamePlayPlugin {
     fn build(&self, app: &mut App) {
@@ -28,27 +20,6 @@ impl Plugin for GamePlayPlugin {
         ));
     }
 }
-
-// pub fn game_play_system_set() -> SystemSet {
-
-//     SystemSet::on_update(GameState::GamePlay)
-//         .with_system(game_over_system.system())
-//         // Add any other systems you want to include in this SystemSet
-
-//     // for (dragon, my_dragon) in dragon_query.iter() {
-//     //     if dragon.health <=0 {
-//     //         game_state.set(GameState::GameOver);
-//     //         println!("Game Over.");
-//     //         if let Some(_) = my_dragon {
-//     //             game_outcome.set(GameOutcome::Lose);
-//     //             println!("You Lose!");
-//     //         } else {
-//     //             game_outcome.set(GameOutcome::Win);
-//     //             println!("You Win!");
-//     //         }
-//     //     }
-//     // }
-// }
 
 
 fn game_over_system(

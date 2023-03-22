@@ -1,3 +1,5 @@
+// src\shared\systems\game\setup.rs
+
 use bevy::prelude::*;
 use uuid::Uuid;
 
@@ -11,7 +13,7 @@ impl Plugin for GameSetupPlugin {
         app.add_systems((
             setup_maze,
             setup_dragons,
-        ) .in_schedule(OnEnter(GameState::Setup)));
+        ).in_schedule(OnEnter(GameState::Setup)));
     }
 }
 
