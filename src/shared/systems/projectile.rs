@@ -1,7 +1,7 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide};
 // use image::DynamicImage;
 // use uuid::Uuid;
-use crate::shared::components::{dragon::*, resource_cache::ResourceCache, projectile::{ProjectileBundle, ProjectileMovement, Projectile}, wall::Wall};
+use crate::shared::components::{dragon::*, resource_cache::*, projectile::*, wall::*};
 
 pub fn projectile_spawn_system(
     time: Res<Time>,
@@ -100,3 +100,43 @@ pub fn projectile_movement_system(
         }
     }
 }
+
+
+
+
+// use bevy::prelude::*;
+// use crate::shared::components::{
+//     dragon::{Dragon, MyDragon},
+//     projectile::{Projectile, ProjectileType},
+// };
+
+pub fn projectile_collision_system(
+    mut commands: Commands,
+    mut projectile_query: Query<(Entity, &Transform, &Projectile), Without<Dragon>>,
+    mut dragon_query: Query<(&Transform, &mut Dragon, Option<&MyDragon>), With<Dragon>>,
+) {
+    for (projectile_entity, projectile_transform, projectile) in projectile_query.iter_mut() {
+        for (dragon_transform, mut dragon, my_dragon) in dragon_query.iter_mut() {
+            let distance = projectile_transform.translation.distance(dragon_transform.translation);
+
+            // Check if the projectile is close enough to the dragon to be considered a hit
+            if distance < 100.0 {
+                if projectile.elemental_theme != dragon.elemental_theme { 
+                    dragon.health -= 1;
+                    if let Some(_my_dragon) = my_dragon {
+                        // Handle hit on the fire dragon
+                        println!("Ouch...  My dragon hit! Health: {}",dragon.health);
+                    } else {
+                        println!("Yay...  I hit the Ice dragon, Health: {}",dragon.health);
+                    }
+                    // Remove the projectile after it has collided with a dragon of another kind.
+                    commands.entity(projectile_entity).despawn();
+                    
+                } else {
+                    // dragons projectiles don't hurt their own kind.
+                }
+            }
+        }
+    }
+}
+

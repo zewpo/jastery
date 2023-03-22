@@ -9,6 +9,7 @@ use crate::shared::components::elemental_theme::ElementalTheme;
 pub struct Dragon{
     pub id: Uuid,
     pub elemental_theme: ElementalTheme,
+    pub health: i32,
 }
 
 pub struct DragonImage {

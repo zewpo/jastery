@@ -24,12 +24,12 @@ pub struct WallImage {
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
 pub enum WallShape {
     Straight,
-    Corner,
-    TJunction,
-    Cross,
-    ShortStraight,
-    LongStraight,
-    Diagonal,
-    Curved,
-    Narrow,
+    // Corner,
+    // TJunction,
+    // Cross,
+    // ShortStraight,
+    // LongStraight,
+    // Diagonal,
+    // Curved,
+    // Narrow,
 }
