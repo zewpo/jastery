@@ -33,7 +33,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Dragsteroids!".into(),
-                resolution: (1200., 800.).into(),
+                resolution: (1400., 800.).into(),
                 present_mode: PresentMode::AutoVsync,
                 // Tells wasm to resize the window according to the available canvas
                 fit_canvas_to_parent: true,

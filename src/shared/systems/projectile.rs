@@ -7,7 +7,6 @@ pub fn projectile_spawn_system(
     mut commands: Commands,
     resource_cache: Res<ResourceCache>,
 ) {
-    println!("projectile_spawn_system running");
     for (dragon, mut dragon_action, dragon_input, dragon_transform) in dragon_query.iter_mut() {
     
         if dragon_input.fire && dragon_action.firerate_timer.tick(time.delta()).just_finished() { 
