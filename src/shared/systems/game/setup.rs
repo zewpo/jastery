@@ -27,7 +27,7 @@ fn setup_dragons(
     // Spawn the Fire Dragon into the game.
     let mydragon_spawn_home = Vec3::new(100., 0., 0.);
     let mydragon_theme = ElementalTheme::Fire;
-    commands.spawn(MyDragonBundle {
+    let _dragon_entity = commands.spawn(MyDragonBundle {
         my_dragon: MyDragon,
         dragon_bundle: DragonBundle {
             sprite_bundle: SpriteBundle {
@@ -49,9 +49,30 @@ fn setup_dragons(
                 id: Uuid::new_v4(),
                 elemental_theme: mydragon_theme,
                 health: 10,
+                max_health: 20,
             },
+            // health_text_bundle: Text2dBundle { 
+            //     text: Text::from_section(
+            //         format!("HealthX: {}", 10),
+            //         TextStyle {
+            //             font:  resource_cache.gui_fonts.get("FiraSans-Bold").unwrap().clone(),   //font.clone(),
+            //             font_size: 20.0,
+            //             color: Color::WHITE,
+            //           }
+            //         // TextAlignment::default(),
+            //         ), 
+            //         ..default()
+            //     // text_anchor: (), 
+            //     // text_2d_bounds: (), 
+            //     // transform: (), 
+            //     // global_transform: (), 
+            //     // visibility: (), 
+            //     // computed_visibility: () 
+            // },
         },
-    });
+    }).id();
+
+
 
     // Spawn an Ice Dragon into the game.
     let icedragon_spawn_home = Vec3::new(1400., 0., 0.);
@@ -78,7 +99,26 @@ fn setup_dragons(
                 id: Uuid::new_v4(), 
                 elemental_theme: ice_dragon_theme,
                 health: 10,
-            }
+                max_health: 20,
+            },
+            // health_text_bundle: Text2dBundle { 
+            //     text: Text::from_section(
+            //         format!("Health: {}", 10),
+            //         TextStyle {
+            //             font:  resource_cache.gui_fonts.get("FiraSans-Bold").unwrap().clone(), // .clone(),   //font.clone(),
+            //             font_size: 20.0,
+            //             color: Color::WHITE,
+            //           }
+            //         // TextAlignment::default(),
+            //         ),
+            //         ..default()
+            //     // text_anchor: (), 
+            //     // text_2d_bounds: (), 
+            //     // transform: (), 
+            //     // global_transform: (), 
+            //     // visibility: (), 
+            //     // computed_visibility: () 
+            // }
     });
     
 }

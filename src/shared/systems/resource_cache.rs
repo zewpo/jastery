@@ -17,6 +17,7 @@ impl Plugin for ResourceCachePlugin {
             wall_images: HashMap::new(),
             dragon_images: HashMap::new(),
             projectile_images: HashMap::new(),
+            gui_fonts: HashMap::new(),
         })
         .add_startup_system(preload_resources);
     }
@@ -29,9 +30,13 @@ fn load_image_data(path: &str) -> DynamicImage {
     image_data
 }
 
-// //, mut materials: ResMut<Assets<ColorMaterial>>) {
-pub fn preload_resources(mut _commands: Commands, asset_server: Res<AssetServer>, mut resource_cache: ResMut<ResourceCache>) { 
-    
+pub fn preload_resources(
+    mut _commands: Commands, 
+    asset_server: Res<AssetServer>,
+    mut resource_cache: ResMut<ResourceCache>
+) { 
+
+
     let wall_shape_file_names = vec![
         (WallShape::Straight, "sprites/wall-straight.png"),
         // Add more wall types and their paths here
@@ -44,12 +49,6 @@ pub fn preload_resources(mut _commands: Commands, asset_server: Res<AssetServer>
         (ElementalTheme::Rock, "sprites/rock-dragon.png", "sprites/rock-projectile.png"),
         // Add more themes and their file paths here
     ];
-
-    // let mut resource_cache = ResourceCache {
-    //     wall_images: HashMap::new(),
-    //     dragon_images: HashMap::new(),
-    //     projectile_images: HashMap::new(),
-    // };
 
     // Preload the walls
     for (shape, path) in wall_shape_file_names {
@@ -96,10 +95,28 @@ pub fn preload_resources(mut _commands: Commands, asset_server: Res<AssetServer>
         resource_cache.projectile_images.insert(elemental_theme, projectile_image);
     }
 
-    // commands.insert_resource(resource_cache);
 
-    
-//     materials.set(dragon_handle.clone(), ColorMaterial::from(Handle::from(dragon_handle)));
-//     materials.set(wall_handle.clone(), ColorMaterial::from(Handle::from(wall_handle)));
+    // preloads all the ttf file handles from the assets/fonts/ directory.
+    let dir = std::path::Path::new("assets/fonts/");
+    let paths = std::fs::read_dir(dir).unwrap();
 
+    for entry in paths {
+        let path = entry.unwrap().path();
+        if path.is_file() {
+            if let Some(extension) = path.extension() {
+                if extension == "ttf" {
+                    if let Some(file_name) = path.file_name() {
+                        if let Some(file_name_str) = file_name.to_str() {
+                            let handle: Handle<Font> = asset_server.load("fonts/".to_owned() + file_name_str);
+                            if let Some(file_stem) = path.file_stem() {
+                                if let Some(file_stem_str) = file_stem.to_str() {
+                                    resource_cache.gui_fonts.insert(file_stem_str.to_string(), handle);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

@@ -10,7 +10,17 @@ pub struct Dragon{
     pub id: Uuid,
     pub elemental_theme: ElementalTheme,
     pub health: i32,
+    pub max_health: i32,
 }
+
+// struct HealthText {
+//     dragon: Entity,
+// }
+
+#[derive(Component)]
+pub struct HealthText;
+
+
 
 pub struct DragonImage {
     pub size: Vec2,
