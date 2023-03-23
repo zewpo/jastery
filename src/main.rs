@@ -43,7 +43,7 @@ fn main() {
             }),
             ..default()
         }))
-        .add_state::<GameState>()
+        .add_state::<AppState>()
         .add_state::<GameOutcome>()
         .insert_resource(CameraScale(3.0))
         .add_plugin(MenuPlugin)
@@ -51,8 +51,8 @@ fn main() {
         .add_startup_system(setup_camera)
         .add_plugin(GameSetupPlugin)
         .add_systems((
-                keyboard_input_system.run_if(in_state(GameState::Running)),
-                camera_follow_system.run_if(in_state(GameState::Running)),
+                keyboard_input_system.run_if(in_state(AppState::Running)),
+                camera_follow_system.run_if(in_state(AppState::Running)),
             )
         )
         .add_plugin(GamePlayPlugin)

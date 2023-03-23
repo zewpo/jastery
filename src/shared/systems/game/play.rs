@@ -17,14 +17,14 @@ impl Plugin for GamePlayPlugin {
             projectile_collision_system,
             ice_dragon_ai_system,
             game_over_system
-        ).in_set(OnUpdate(GameState::Running)));
+        ).in_set(OnUpdate(AppState::Running)));
     }
 }
 
 
 fn game_over_system(
     dragon_query: Query<(&Dragon, Option<&MyDragon>)>,
-    mut next_state: ResMut<NextState<GameState>>,
+    mut next_state: ResMut<NextState<AppState>>,
     mut game_outcome:  ResMut<NextState<GameOutcome>>,
 ) {
 
@@ -38,7 +38,7 @@ fn game_over_system(
                 game_outcome.set(GameOutcome::Win);
                 println!("You Win!");
             }
-            next_state.set(GameState::GameOver);
+            next_state.set(AppState::GameOver);
         }
     }
 }

@@ -13,7 +13,7 @@ impl Plugin for GameSetupPlugin {
         app.add_systems((
             setup_maze,
             setup_dragons,
-        ).in_schedule(OnEnter(GameState::Setup)));
+        ).in_schedule(OnEnter(AppState::Setup)));
     }
 }
 
@@ -129,7 +129,7 @@ fn setup_dragons(
 fn setup_maze(
     mut commands: Commands,
     resource_cache: Res<ResourceCache>,
-    mut next_state: ResMut<NextState<GameState>>,
+    mut next_state: ResMut<NextState<AppState>>,
 ) {
     println!("Setup Maze");
     let wall_images = &resource_cache.wall_images;
@@ -187,7 +187,7 @@ fn setup_maze(
         println!("Setup Maze - Image not loaded yet...");
     }
     println!("Setup Maze DONE.");
-    next_state.set(GameState::Running);
+    next_state.set(AppState::Running);
 }
 
 
