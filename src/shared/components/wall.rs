@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use image::DynamicImage;
+use crate::shared::components::game::GamePiece;
 
 #[derive(Component)]
 pub struct Wall {
@@ -8,6 +9,7 @@ pub struct Wall {
 
 #[derive(Bundle)]
 pub struct WallBundle {
+    pub game_piece: GamePiece,
     #[bundle]
     pub sprite_bundle: SpriteBundle,
     pub wall: Wall,

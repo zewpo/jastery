@@ -1,14 +1,13 @@
 // src/shared/systems/game/menu.rs
 
 use bevy::app::AppExit;
-use bevy::window::PrimaryWindow;
 use bevy::{
     prelude::*,
     ui::Interaction,
 };
 
 use crate::shared::components::resource_cache::ResourceCache;
-use crate::{shared::components::game::*, client::components::game_camera::*};
+use crate::shared::components::game::*;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
@@ -17,177 +16,54 @@ const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
 
 const BUTTON_SIZE: Size = Size::new(Val::Px(180.0), Val::Px(65.0));
 
-
-
-// All actions that can be triggered from a Main menu button click
-#[derive(Component)]
-enum MainMenuButtonAction {
-    Play,
-    Quit,
+#[derive(Resource)]
+struct ScreenPackage {
+    entity: Entity,
 }
 
 
-// All actions that can be triggered from a Game Over menu button click
+// All actions that can be triggered from a menu button click
 #[derive(Component)]
-enum GameOverMenuButtonAction {
+enum MenuButtonAction {
+    Play,
+    Quit,
     Restart,
     // Settings,
     // SettingsDisplay,
     // SettingsSound,
     MainMenu,
     // BackToSettings,
-    Quit,
+}
+
+pub struct MenuPlugin;
+
+impl Plugin for MenuPlugin {
+    fn build(&self, app: &mut App) {
+        app
+        .add_plugin(MainMenu)
+        .add_plugin(GameOverMenu);
+    }
 }
 
 
-pub struct MainMenuPlugin;
+pub struct MainMenu;
 
-impl Plugin for MainMenuPlugin {
+impl Plugin for MainMenu {
     fn build(&self, app: &mut App) {
         app
             .add_system(setup_main_menu.in_schedule(OnEnter(GameState::MainMenu)))
-            .add_system(handle_main_menu.in_set(OnUpdate(GameState::MainMenu)))
-            .add_system(cleanup_main_menu.in_schedule(OnExit(GameState::MainMenu)))
+            .add_system(handle_menu_interaction.in_set(OnUpdate(GameState::MainMenu)))
+            .add_system(cleanup_screen.in_schedule(OnExit(GameState::MainMenu)))
         ;
     }
 }
 
 
 fn setup_main_menu(
-    mut commands: Commands, 
-    //asset_server: Res<AssetServer>
+    mut commands: Commands,
     resource_cache: Res<ResourceCache>,
 ) {
     
-    let font: Handle<Font> =  resource_cache.gui_fonts.get("FiraSans-Bold").unwrap().clone(); //asset_server.load("fonts/FiraSans-Bold.ttf");
-    // Common style for all buttons on the screen
-    let button_style = Style {
-        size: BUTTON_SIZE,
-        margin: UiRect::all(Val::Px(20.0)),
-        justify_content: JustifyContent::Center,
-        align_items: AlignItems::Center,
-        ..default()
-    };
-    let button_text_style = TextStyle {
-        font: font.clone(),
-        font_size: 40.0,
-        color: TEXT_COLOR,
-    };
-
-    commands.spawn(NodeBundle {
-            style: Style {
-                // center button
-                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                flex_direction: FlexDirection::Column,
-                ..default()
-            },
-            ..default()
-        })
-        .with_children(|parent| {
-            // Play Button
-            parent.spawn((MainMenuButtonAction::Play, ButtonBundle {
-                    style: button_style.clone(),
-                    background_color: NORMAL_BUTTON.into(),
-                    ..default()
-                },
-                ))
-                .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Play",
-                        button_text_style.clone()
-                    ));
-                });
-            // Quit Button
-            parent.spawn((MainMenuButtonAction::Quit, ButtonBundle {
-                    style: button_style.clone(),
-                    background_color: NORMAL_BUTTON.into(),
-                    ..default()
-                },
-                ))
-                .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Quit",
-                        button_text_style.clone()
-                    ));
-                });
-        });
-}
-
-
-
-fn handle_main_menu(
-    mut next_state: ResMut<NextState<GameState>>,
-    mut interaction_query: Query<
-        (&Interaction, &MainMenuButtonAction, &mut BackgroundColor),
-        (Changed<Interaction>, With<Button>),
-    >,
-    mut app_exit_events: EventWriter<AppExit>,
-) {
-    for (interaction, menu_button_action, mut color) in &mut interaction_query {
-        match *interaction {
-            Interaction::Clicked => {
-                *color = PRESSED_BUTTON.into();
-                match menu_button_action {
-                    MainMenuButtonAction::Play => next_state.set(GameState::Setup),
-                    MainMenuButtonAction::Quit => app_exit_events.send(AppExit),
-                }
-            }
-
-            Interaction::Hovered => {
-                *color = HOVERED_BUTTON.into();
-            }
-            Interaction::None => {
-                *color = NORMAL_BUTTON.into();
-            }
-        }
-    }
-}
-
-
-fn cleanup_main_menu(
-    mut commands: Commands,   // With<MainMenuButtonAction>,
-    all_entities_query: Query<Entity,(Without<GameCamera>,Without<PrimaryWindow>)>,
-) {
-    for entity in all_entities_query.iter() {
-        commands.entity(entity).despawn_recursive();
-    }
-}
-
-
-pub struct GameOverPlugin;
-
-impl Plugin for GameOverPlugin {
-    fn build(&self, app: &mut App) {
-        app
-            .add_system(setup_game_over_screen.in_schedule(OnEnter(GameState::GameOver)))
-            .add_system(handle_game_over_menu.in_set(OnUpdate(GameState::GameOver)))
-            //handle_game_over_input
-            .add_system(cleanup_game_over_screen.in_schedule(OnExit(GameState::GameOver)))
-        ;
-    }
-}
-
-fn setup_game_over_screen(
-    mut commands: Commands,
-    // asset_server: Res<AssetServer>,
-    resource_cache: Res<ResourceCache>,
-    game_outcome: Res<State<GameOutcome>>,
-) {
-
-    println!("Entering Game Over screen.");
-    // A semi-transparent black color
-    let dim_color = Color::rgba(0.0, 0.0, 0.0, 0.7);
-
-
-    let message = match &game_outcome.0 {
-        GameOutcome::Win => "You Win!",
-        GameOutcome::Lose => "You Lose!",
-        _ => "Game Over",
-    };
-
-    //let font: Handle<Font> = asset_server.load("fonts/FiraSans-Bold.ttf");
     let font: Handle<Font> =  resource_cache.gui_fonts.get("FiraSans-Bold").unwrap().clone();
     // Common style for all buttons on the screen
     let button_style = Style {
@@ -203,7 +79,155 @@ fn setup_game_over_screen(
         color: TEXT_COLOR,
     };
 
-    commands
+    let screen_package = commands.spawn(NodeBundle {
+            style: Style {
+                // center button
+                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|parent| {
+            // Play Button
+            parent.spawn((MenuButtonAction::Play, ButtonBundle {
+                    style: button_style.clone(),
+                    background_color: NORMAL_BUTTON.into(),
+                    ..default()
+                },
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Play",
+                        button_text_style.clone()
+                    ));
+                });
+            // Quit Button
+            parent.spawn((MenuButtonAction::Quit, ButtonBundle {
+                    style: button_style.clone(),
+                    background_color: NORMAL_BUTTON.into(),
+                    ..default()
+                },
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Quit",
+                        button_text_style.clone()
+                    ));
+                });
+        })
+        .id();
+
+        commands.insert_resource(ScreenPackage { entity: screen_package });
+}
+
+// fn cleanup_screen(mut commands: Commands, screen_package: Res<ScreenPackage>) {
+//     commands.entity(screen_package.entity).despawn_recursive();
+// }
+
+// fn handle_main_menu(
+//     mut next_state: ResMut<NextState<GameState>>,
+//     mut interaction_query: Query<
+//         (&Interaction, &MenuButtonAction, &mut BackgroundColor),
+//         (Changed<Interaction>, With<Button>),
+//     >,
+//     mut app_exit_events: EventWriter<AppExit>,
+// ) {
+//     for (interaction, menu_button_action, mut color) in &mut interaction_query {
+//         match *interaction {
+//             Interaction::Clicked => {
+//                 *color = PRESSED_BUTTON.into();
+//                 match menu_button_action {
+//                     MenuButtonAction::Play => next_state.set(GameState::Setup),
+//                     MenuButtonAction::Quit => app_exit_events.send(AppExit),
+//                 }
+//             }
+
+//             Interaction::Hovered => {
+//                 *color = HOVERED_BUTTON.into();
+//             }
+//             Interaction::None => {
+//                 *color = NORMAL_BUTTON.into();
+//             }
+//         }
+//     }
+// }
+
+// fn cleanup_main_menu(
+//     mut commands: Commands,   // With<MenuButtonAction>,
+//     all_entities_query: Query<Entity,(Without<GameCamera>,Without<PrimaryWindow>)>,
+// ) {
+
+//     commands.entity(menu_data.button_entity).despawn_recursive();
+
+//     // for entity in all_entities_query.iter() {
+//     //     commands.entity(entity).despawn_recursive();
+//     // }
+// }
+
+// fn cleanup_main_menu(
+//     mut commands: Commands,   // With<MenuButtonAction>,
+//     game_piece_query: Query<Entity,(With<GamePiece>,Without<GameCamera>,Without<PrimaryWindow>)>,
+//     button_query: Query<Entity,(With<Button>,Without<GameCamera>,Without<PrimaryWindow>)>,
+// ) {
+//     for entity in game_piece_query.iter() {
+//         commands.entity(entity).despawn_recursive();
+//     }
+
+//     for entity in button_query.iter() {
+//         commands.entity(entity).despawn_recursive();
+//     }
+// }
+
+
+pub struct GameOverMenu;
+
+impl Plugin for GameOverMenu {
+    fn build(&self, app: &mut App) {
+        app
+            .add_system(setup_game_over_screen.in_schedule(OnEnter(GameState::GameOver)))
+            .add_system(handle_menu_interaction.in_set(OnUpdate(GameState::GameOver)))
+            .add_system(cleanup_screen.in_schedule(OnExit(GameState::GameOver)))
+        ;
+    }
+}
+
+fn setup_game_over_screen(
+    mut commands: Commands,
+    // asset_server: Res<AssetServer>,
+    resource_cache: Res<ResourceCache>,
+    game_outcome: Res<State<GameOutcome>>,
+) {
+
+    println!("Entering Game Over screen.");
+    // A semi-transparent black color
+    let dim_color = Color::rgba(0.4, 0.4, 0.4, 0.75);
+
+
+    let message = match &game_outcome.0 {
+        GameOutcome::Win => "You Win!",
+        GameOutcome::Lose => "You Lose!",
+        _ => "Game Over",
+    };
+
+    let font: Handle<Font> =  resource_cache.gui_fonts.get("FiraSans-Bold").unwrap().clone();
+    // Common style for all buttons on the screen
+    let button_style = Style {
+        size: BUTTON_SIZE,
+        margin: UiRect::all(Val::Px(20.0)),
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        ..default()
+    };
+    let button_text_style = TextStyle {
+        font: font.clone(),
+        font_size: 40.0,
+        color: TEXT_COLOR,
+    };
+
+    let screen_package = commands
         .spawn(NodeBundle {
             style: Style {
                 size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
@@ -228,7 +252,7 @@ fn setup_game_over_screen(
             ));
             // Main Menu button
             parent
-                .spawn((GameOverMenuButtonAction::MainMenu, ButtonBundle {
+                .spawn((MenuButtonAction::MainMenu, ButtonBundle {
                     style: button_style.clone(),
                     background_color: NORMAL_BUTTON.into(),
                     ..default()
@@ -242,7 +266,7 @@ fn setup_game_over_screen(
                 });
             // Restart button
             parent
-                .spawn((GameOverMenuButtonAction::Restart, ButtonBundle {
+                .spawn((MenuButtonAction::Restart, ButtonBundle {
                     style: button_style.clone(),
                     background_color: NORMAL_BUTTON.into(),
                     ..default()
@@ -256,7 +280,7 @@ fn setup_game_over_screen(
                 });
             // Quit button
             parent
-                .spawn((GameOverMenuButtonAction::Quit, ButtonBundle {
+                .spawn((MenuButtonAction::Quit, ButtonBundle {
                     style: button_style.clone(),
                     background_color: NORMAL_BUTTON.into(),
                     ..default()
@@ -268,7 +292,10 @@ fn setup_game_over_screen(
                         button_text_style.clone()
                     ));
                 });
-        });
+        })
+        .id();
+
+    commands.insert_resource(ScreenPackage { entity: screen_package });
 
 }
 
@@ -284,8 +311,8 @@ fn setup_game_over_screen(
 //     }
 // }
 
-fn handle_game_over_menu(
-    mut interaction_query: Query<(&Interaction, &GameOverMenuButtonAction, &mut BackgroundColor), 
+fn handle_menu_interaction(
+    mut interaction_query: Query<(&Interaction, &MenuButtonAction, &mut BackgroundColor), 
                                  (Changed<Interaction>, With<Button>) >,
     mut next_state: ResMut<NextState<GameState>>,
     mut app_exit_events: EventWriter<AppExit>,
@@ -301,9 +328,10 @@ fn handle_game_over_menu(
             Interaction::Clicked => {
                 *color = PRESSED_BUTTON.into();
                 match menu_button_action {
-                    GameOverMenuButtonAction::Quit => app_exit_events.send(AppExit),
-                    GameOverMenuButtonAction::Restart => next_state.set(GameState::Setup),
-                    GameOverMenuButtonAction::MainMenu => next_state.set(GameState::MainMenu), 
+                    MenuButtonAction::Quit => app_exit_events.send(AppExit),
+                    MenuButtonAction::Restart => next_state.set(GameState::Setup),
+                    MenuButtonAction::MainMenu => next_state.set(GameState::MainMenu),
+                    MenuButtonAction::Play => next_state.set(GameState::Setup),
                 }
             }
             Interaction::Hovered => {
@@ -316,14 +344,14 @@ fn handle_game_over_menu(
     }
 }
 
-
-fn cleanup_game_over_screen(
+fn cleanup_screen(
     mut commands: Commands,
-    all_entities_query: Query<Entity,(Without<GameCamera>,Without<PrimaryWindow>)>,
+    game_piece_query: Query<Entity,With<GamePiece>>,
+    screen_package: Res<ScreenPackage>
 ) {
-
-    for entity in all_entities_query.iter() {
+    for entity in game_piece_query.iter() {
         commands.entity(entity).despawn_recursive();
     }
-}
+    commands.entity(screen_package.entity).despawn_recursive();
 
+}

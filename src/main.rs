@@ -46,7 +46,7 @@ fn main() {
         .add_state::<GameState>()
         .add_state::<GameOutcome>()
         .insert_resource(CameraScale(3.0))
-        .add_plugin(MainMenuPlugin)
+        .add_plugin(MenuPlugin)
         .add_plugin(ResourceCachePlugin)
         .add_startup_system(setup_camera)
         .add_plugin(GameSetupPlugin)
@@ -56,7 +56,6 @@ fn main() {
             )
         )
         .add_plugin(GamePlayPlugin)
-        .add_plugin(GameOverPlugin)
         .add_system(close_on_esc)
         .run();
 }

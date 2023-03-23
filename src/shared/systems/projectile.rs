@@ -1,5 +1,5 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide};
-use crate::shared::components::{dragon::*, resource_cache::*, projectile::*, wall::*};
+use crate::shared::components::{dragon::*, resource_cache::*, projectile::*, wall::*, game::*};
 
 pub fn projectile_spawn_system(
     time: Res<Time>,
@@ -7,7 +7,7 @@ pub fn projectile_spawn_system(
     mut commands: Commands,
     resource_cache: Res<ResourceCache>,
 ) {
-
+    println!("projectile_spawn_system running");
     for (dragon, mut dragon_action, dragon_input, dragon_transform) in dragon_query.iter_mut() {
     
         if dragon_input.fire && dragon_action.firerate_timer.tick(time.delta()).just_finished() { 
@@ -27,6 +27,7 @@ pub fn projectile_spawn_system(
 
                 // Spawn the projectile into the game.
                 commands.spawn(ProjectileBundle {
+                    game_piece: GamePiece,
                     sprite_bundle: SpriteBundle {
                         texture: projectile_image.file_handle.clone(),
                         transform: Transform {

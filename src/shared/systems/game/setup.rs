@@ -21,7 +21,7 @@ fn setup_dragons(
         mut commands: Commands,
         resource_cache: Res<ResourceCache>,
     ) {
-    
+    println!("Setup Dragons.");
     let dragon_images = &resource_cache.dragon_images;
 
     // Spawn the Fire Dragon into the game.
@@ -30,6 +30,7 @@ fn setup_dragons(
     let _dragon_entity = commands.spawn(MyDragonBundle {
         my_dragon: MyDragon,
         dragon_bundle: DragonBundle {
+            game_piece: GamePiece,
             sprite_bundle: SpriteBundle {
                 texture: dragon_images.get(&mydragon_theme).unwrap().file_handle.clone(),
                 transform: Transform::from_translation(mydragon_spawn_home),
@@ -79,11 +80,12 @@ fn setup_dragons(
     let ice_dragon_theme = ElementalTheme::Ice;
 
     commands.spawn( DragonBundle {
-                sprite_bundle: SpriteBundle {
-                    // texture: asset_server.load("sprites/ice-dragon.png"),
-                    texture: dragon_images.get(&ice_dragon_theme).unwrap().file_handle.clone(),
-                    transform: Transform::from_translation(icedragon_spawn_home),  //from_xyz(1200., 0., 0.),
-                    ..default()
+            game_piece: GamePiece,
+            sprite_bundle: SpriteBundle {
+                // texture: asset_server.load("sprites/ice-dragon.png"),
+                texture: dragon_images.get(&ice_dragon_theme).unwrap().file_handle.clone(),
+                transform: Transform::from_translation(icedragon_spawn_home),  //from_xyz(1200., 0., 0.),
+                ..default()
             },
             input: DragonInput::default(),
             movement: DragonAction {
@@ -120,14 +122,14 @@ fn setup_dragons(
             //     // computed_visibility: () 
             // }
     });
-    
+    println!("Setup Dragons DONE.");
 }
 
 
 fn setup_maze(
     mut commands: Commands,
     resource_cache: Res<ResourceCache>,
-    mut state: ResMut<NextState<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
     println!("Setup Maze");
     let wall_images = &resource_cache.wall_images;
@@ -168,6 +170,7 @@ fn setup_maze(
                     let x = (j as f32 * wall_width) - 1600.0;
                     let y = (i as f32 * wall_height) - 1000.0;
                     commands.spawn(WallBundle {
+                        game_piece: GamePiece,
                         sprite_bundle: SpriteBundle {
                             texture: wall_image.file_handle.clone(),
                             transform: Transform::from_xyz(x, y, -1.0),
@@ -183,7 +186,8 @@ fn setup_maze(
     } else {
         println!("Setup Maze - Image not loaded yet...");
     }
-    state.set(GameState::Running);
+    println!("Setup Maze DONE.");
+    next_state.set(GameState::Running);
 }
 
 

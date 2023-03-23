@@ -2,7 +2,7 @@
 use bevy::prelude::*;
 use image::DynamicImage;
 use crate::shared::components::elemental_theme::ElementalTheme;
-
+use crate::shared::components::game::GamePiece;
 #[derive(Component)]
 pub struct Projectile {
     pub elemental_theme: ElementalTheme,
@@ -10,6 +10,7 @@ pub struct Projectile {
 
 #[derive(Bundle)]
 pub struct ProjectileBundle {
+    pub game_piece: GamePiece,
     #[bundle]
     pub sprite_bundle: SpriteBundle,
     pub movement: ProjectileMovement,

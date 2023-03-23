@@ -18,4 +18,8 @@ pub enum GameOutcome {
     TBD,
     Win,
     Lose,
-} 
+}
+
+// useful marker for pieces that can be despawned to clear out the game.
+#[derive(Component)]
+pub struct GamePiece;

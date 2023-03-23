@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use image::DynamicImage;
 use uuid::Uuid;
 use crate::shared::components::elemental_theme::ElementalTheme;
+use crate::shared::components::game::GamePiece;
 //Dragon, DragonImage, MyDragon, MyDragonBundle, DragonBundle, DragonInput, and DragonAction 
 
 
@@ -19,8 +20,6 @@ pub struct Dragon{
 
 #[derive(Component)]
 pub struct HealthText;
-
-
 
 pub struct DragonImage {
     pub size: Vec2,
@@ -42,6 +41,7 @@ pub struct MyDragonBundle {
 
 #[derive(Bundle)]
 pub struct DragonBundle {
+    pub game_piece: GamePiece,
     #[bundle]
     pub sprite_bundle: SpriteBundle,
     pub input: DragonInput,

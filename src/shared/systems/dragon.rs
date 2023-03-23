@@ -9,6 +9,7 @@ pub fn dragon_movement_system(
     wall_query: Query<(&Wall, &Transform), Without<Dragon>>,
     resource_cache: Res<ResourceCache>,
 ) {
+    println!("dragon_movement_system running");
     for (dragon, mut dragon_action, dragon_input, mut dragon_transform) in dragon_query.iter_mut() {
         let acceleration = 0.4;
 
