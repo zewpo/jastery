@@ -3,31 +3,42 @@ use crate::{shared::components::dragon::*, client::components::game_camera::*};
 
 pub fn keyboard_input_system (
     keyboard_input: Res<Input<KeyCode>>, 
-//     mut dragon_query: Query<&mut DragonInput>,
     mut dragon_query: Query<&mut DragonInput, With<MyDragon>>,
     mut camera_query: Query<(&mut Transform, &mut GameCamera), With<GameCamera>>,
 ) {
     let mut dragon_input = dragon_query.single_mut();
-    dragon_input.move_direction = Vec2::ZERO;
+    dragon_input.move_direction = Vec3::ZERO;
+    dragon_input.fire_direction = Vec3::ZERO;
 
-    if keyboard_input.pressed(KeyCode::Up) {
+    if keyboard_input.pressed(KeyCode::W) {
         dragon_input.move_direction.y += 1.0;
     }
-    if keyboard_input.pressed(KeyCode::Down) {
+    if keyboard_input.pressed(KeyCode::S) {
         dragon_input.move_direction.y -= 1.0;
     }
-    if keyboard_input.pressed(KeyCode::Left)  {
+    if keyboard_input.pressed(KeyCode::A)  {
         dragon_input.move_direction.x -= 1.0;
     }
-    if keyboard_input.pressed(KeyCode::Right) {
+    if keyboard_input.pressed(KeyCode::D) {
         dragon_input.move_direction.x += 1.0;
+    }
+
+    if keyboard_input.pressed(KeyCode::Up) {
+        dragon_input.fire_direction.y += 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::Down) {
+        dragon_input.fire_direction.y -= 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::Left)  {
+        dragon_input.fire_direction.x -= 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::Right) {
+        dragon_input.fire_direction.x += 1.0;
     }
 
     dragon_input.fire = keyboard_input.pressed(KeyCode::Space);
     dragon_input.brake = keyboard_input.pressed(KeyCode::RShift);
     dragon_input.home = keyboard_input.pressed(KeyCode::X);
-    dragon_input.ease_up = !dragon_input.brake && !dragon_input.home && dragon_input.move_direction == Vec2::ZERO;
-    
 
     let ctrl_pressed = keyboard_input.pressed(KeyCode::LControl) || keyboard_input.pressed(KeyCode::RControl);
 

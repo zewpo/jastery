@@ -10,23 +10,46 @@ pub fn dragon_movement_system(
     resource_cache: Res<ResourceCache>,
 ) {
     for (dragon, mut dragon_action, dragon_input, mut dragon_transform) in dragon_query.iter_mut() {
-        let acceleration = 0.4;
+        
+        let previous_velocity = dragon_action.velocity;
+        
+        // Change in motion
+        if dragon_action.motion_timer.tick(time.delta()).just_finished() {
+            let acceleration_rate = 0.45;
+            let mut decceleration_rate = acceleration_rate;
 
-        dragon_action.velocity.x += dragon_input.move_direction.x * acceleration;
-        dragon_action.velocity.y += dragon_input.move_direction.y * acceleration;
+            if dragon_input.brake {
+                decceleration_rate *= 0.5;
+            }
 
-        // Brake
-        if dragon_input.brake && dragon_action.motion_timer.tick(time.delta()).just_finished() {
-            dragon_action.velocity *= 0.6;
+            if dragon_input.move_direction.x != 0.0 {
+                dragon_action.velocity.x += dragon_input.move_direction.x * acceleration_rate;
+            } else {
+                dragon_action.velocity.x *= decceleration_rate;
+            }
+
+            if dragon_input.move_direction.y != 0.0 {
+                dragon_action.velocity.y += dragon_input.move_direction.y * acceleration_rate;
+            } else {
+                dragon_action.velocity.y *= decceleration_rate;
+            }
+
+            if dragon_input.move_direction.z != 0.0 {
+                dragon_action.velocity.z += dragon_input.move_direction.z * acceleration_rate;
+            } else {
+                dragon_action.velocity.z *= decceleration_rate;
+            }
         }
 
-        // Move to home position
+
         if dragon_input.home {
+            // Move to home position
             dragon_action.velocity = Vec3::ZERO;
             dragon_transform.translation = dragon_action.spawn_home;
-        } else if dragon_input.ease_up && dragon_action.motion_timer.tick(time.delta()).just_finished() {
-            dragon_action.velocity *= 0.8;
-        }
+        } 
+        // else if dragon_action.motion_timer.tick(time.delta()).just_finished() {
+            
+        // }
 
         // Check for collisions
         if let Some(dragon_image) = resource_cache.dragon_images.get(&dragon.elemental_theme) {
@@ -73,6 +96,9 @@ pub fn dragon_movement_system(
         if dragon_action.velocity != Vec3::ZERO {
             dragon_action.velocity = dragon_action.velocity.clamp_length_max(dragon_action.max_velocity);
             dragon_transform.translation += dragon_action.velocity;
+        }
+        if dragon_action.motion_timer.tick(time.delta()).just_finished() {
+            dragon_action.acceleration = previous_velocity - previous_velocity;
         }
 
         // Flip the dragon with an animation when it changes directions between left to right.

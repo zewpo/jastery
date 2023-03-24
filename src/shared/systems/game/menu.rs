@@ -28,38 +28,47 @@ enum MenuButtonAction {
     Play,
     Quit,
     Restart,
-    // Settings,
+    Settings,
     // SettingsDisplay,
     // SettingsSound,
     MainMenu,
     // BackToSettings,
 }
 
-pub struct MenuPlugin;
+pub struct ScreenManagerPlugin;
 
-impl Plugin for MenuPlugin {
+impl Plugin for ScreenManagerPlugin {
     fn build(&self, app: &mut App) {
         app
-        .add_plugin(MainMenu)
-        .add_plugin(GameOverMenu);
+            .add_system(setup_main_menu_screen.in_schedule(OnEnter(AppScreen::MainMenu)))
+            .add_system(handle_menu_interaction.in_set(OnUpdate(AppScreen::MainMenu)))
+            .add_system(cleanup_screen.in_schedule(OnExit(AppScreen::MainMenu)))
+
+            .add_system(setup_game_over_screen.in_schedule(OnEnter(AppScreen::GameOver)))
+            .add_system(handle_menu_interaction.in_set(OnUpdate(AppScreen::GameOver)))
+            .add_system(cleanup_screen.in_schedule(OnExit(AppScreen::GameOver)));
     }
 }
 
 
-pub struct MainMenu;
+// pub struct MainMenuScreen;
 
-impl Plugin for MainMenu {
-    fn build(&self, app: &mut App) {
-        app
-            .add_system(setup_main_menu.in_schedule(OnEnter(AppState::MainMenu)))
-            .add_system(handle_menu_interaction.in_set(OnUpdate(AppState::MainMenu)))
-            .add_system(cleanup_screen.in_schedule(OnExit(AppState::MainMenu)))
-        ;
-    }
-}
+// impl Plugin for MainMenuScreen {
+//     fn build(&self, app: &mut App) {
+//         app
+//             .add_system(setup_main_menu_screen.in_schedule(OnEnter(AppScreen::MainMenu)))
+//             .add_system(handle_menu_interaction.in_set(OnUpdate(AppScreen::MainMenu)))
+//             .add_system(cleanup_screen.in_schedule(OnExit(AppScreen::MainMenu)))
+
+//             .add_system(setup_game_over_screen.in_schedule(OnEnter(AppScreen::GameOver)))
+//             .add_system(handle_menu_interaction.in_set(OnUpdate(AppScreen::GameOver)))
+//             .add_system(cleanup_screen.in_schedule(OnExit(AppScreen::GameOver)))
+//         ;
+//     }
+// }
 
 
-fn setup_main_menu(
+fn setup_main_menu_screen(
     mut commands: Commands,
     resource_cache: Res<ResourceCache>,
 ) {
@@ -101,6 +110,19 @@ fn setup_main_menu(
                 .with_children(|parent| {
                     parent.spawn(TextBundle::from_section(
                         "Play",
+                        button_text_style.clone()
+                    ));
+                });
+            // Settings Button
+            parent.spawn((MenuButtonAction::Settings, ButtonBundle {
+                    style: button_style.clone(),
+                    background_color: NORMAL_BUTTON.into(),
+                    ..default()
+                },
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Settings",
                         button_text_style.clone()
                     ));
                 });
@@ -182,17 +204,17 @@ fn setup_main_menu(
 // }
 
 
-pub struct GameOverMenu;
+// pub struct GameOverMenuScreen;
 
-impl Plugin for GameOverMenu {
-    fn build(&self, app: &mut App) {
-        app
-            .add_system(setup_game_over_screen.in_schedule(OnEnter(AppState::GameOver)))
-            .add_system(handle_menu_interaction.in_set(OnUpdate(AppState::GameOver)))
-            .add_system(cleanup_screen.in_schedule(OnExit(AppState::GameOver)))
-        ;
-    }
-}
+// impl Plugin for GameOverMenuScreen {
+//     fn build(&self, app: &mut App) {
+//         app
+//             .add_system(setup_game_over_screen.in_schedule(OnEnter(AppScreen::GameOver)))
+//             .add_system(handle_menu_interaction.in_set(OnUpdate(AppScreen::GameOver)))
+//             .add_system(cleanup_screen.in_schedule(OnExit(AppScreen::GameOver)))
+//         ;
+//     }
+// }
 
 fn setup_game_over_screen(
     mut commands: Commands,
@@ -314,7 +336,7 @@ fn setup_game_over_screen(
 fn handle_menu_interaction(
     mut interaction_query: Query<(&Interaction, &MenuButtonAction, &mut BackgroundColor), 
                                  (Changed<Interaction>, With<Button>) >,
-    mut next_state: ResMut<NextState<AppState>>,
+    mut next_screen: ResMut<NextState<AppScreen>>,
     mut app_exit_events: EventWriter<AppExit>,
 ) {
 
@@ -328,10 +350,13 @@ fn handle_menu_interaction(
             Interaction::Clicked => {
                 *color = PRESSED_BUTTON.into();
                 match menu_button_action {
+                    MenuButtonAction::Play => next_screen.set(AppScreen::GamePlay),
+                    MenuButtonAction::Settings => next_screen.set(AppScreen::Settings),
+                    
+                    MenuButtonAction::MainMenu => next_screen.set(AppScreen::MainMenu),
+                    MenuButtonAction::Restart => next_screen.set(AppScreen::GamePlay),
+
                     MenuButtonAction::Quit => app_exit_events.send(AppExit),
-                    MenuButtonAction::Restart => next_state.set(AppState::Setup),
-                    MenuButtonAction::MainMenu => next_state.set(AppState::MainMenu),
-                    MenuButtonAction::Play => next_state.set(AppState::Setup),
                 }
             }
             Interaction::Hovered => {

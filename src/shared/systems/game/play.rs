@@ -3,28 +3,31 @@
 use bevy::prelude::*;
 use crate::shared::{components::{dragon::*, game::*}, systems::{projectile::*, dragon::*}};
 
-use super::icedragon_ai::*;
+use super::{icedragon_ai::*, GameConstructionPlugin};
 
 pub struct GamePlayPlugin;
 
 
 impl Plugin for GamePlayPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems((
+        app
+        .add_state::<GameOutcome>()
+        .add_plugin(GameConstructionPlugin)
+        .add_systems((
             dragon_movement_system,
             projectile_spawn_system,
             projectile_movement_system,
             projectile_collision_system,
             ice_dragon_ai_system,
             game_over_system
-        ).in_set(OnUpdate(AppState::Running)));
+        ).in_set(OnUpdate(AppScreen::GamePlay)));
     }
 }
 
 
 fn game_over_system(
     dragon_query: Query<(&Dragon, Option<&MyDragon>)>,
-    mut next_state: ResMut<NextState<AppState>>,
+    mut next_screen: ResMut<NextState<AppScreen>>,
     mut game_outcome:  ResMut<NextState<GameOutcome>>,
 ) {
 
@@ -38,7 +41,7 @@ fn game_over_system(
                 game_outcome.set(GameOutcome::Win);
                 println!("You Win!");
             }
-            next_state.set(AppState::GameOver);
+            next_screen.set(AppScreen::GameOver);
         }
     }
 }

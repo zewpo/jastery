@@ -5,19 +5,19 @@ use uuid::Uuid;
 
 use crate::shared::components::{resource_cache::*, elemental_theme::*, dragon::*, game::*, wall::*};
 
-pub struct GameSetupPlugin;
+pub struct GameConstructionPlugin;
 
 
-impl Plugin for GameSetupPlugin {
+impl Plugin for GameConstructionPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems((
-            setup_maze,
-            setup_dragons,
-        ).in_schedule(OnEnter(AppState::Setup)));
+            build_maze,
+            spawn_dragons,
+        ).in_schedule(OnEnter(AppScreen::GamePlay)));
     }
 }
 
-fn setup_dragons(
+fn spawn_dragons(
         mut commands: Commands,
         resource_cache: Res<ResourceCache>,
     ) {
@@ -40,8 +40,9 @@ fn setup_dragons(
             movement: DragonAction {
                 spawn_home: mydragon_spawn_home,
                 velocity: Vec3::ZERO,
-                max_velocity: 25.0,
-                motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+                acceleration: Vec3::ZERO,
+                max_velocity: 15.0,
+                motion_timer: Timer::from_seconds(0.02, TimerMode::Repeating),
                 firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
                 flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
                 flipping: false,
@@ -91,7 +92,8 @@ fn setup_dragons(
             movement: DragonAction {
                 spawn_home: icedragon_spawn_home,
                 velocity: Vec3::ZERO,
-                max_velocity: 25.0,
+                acceleration: Vec3::ZERO,
+                max_velocity: 8.0,
                 motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
                 firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
                 flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
@@ -126,10 +128,9 @@ fn setup_dragons(
 }
 
 
-fn setup_maze(
+fn build_maze(
     mut commands: Commands,
     resource_cache: Res<ResourceCache>,
-    mut next_state: ResMut<NextState<AppState>>,
 ) {
     println!("Setup Maze");
     let wall_images = &resource_cache.wall_images;
@@ -187,7 +188,7 @@ fn setup_maze(
         println!("Setup Maze - Image not loaded yet...");
     }
     println!("Setup Maze DONE.");
-    next_state.set(AppState::Running);
+    // next_state.set(AppState::Running);
 }
 
 

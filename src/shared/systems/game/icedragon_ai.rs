@@ -8,13 +8,14 @@ pub fn ice_dragon_ai_system(
 ) {
     if let Ok(fire_dragon_transform) = fire_dragon_query.get_single() {
         for (mut ice_dragon_input, ice_dragon_transform) in ice_dragon_query.iter_mut() {
-            let fire_dragon_position = fire_dragon_transform.translation.truncate();
+            let fire_dragon_position = fire_dragon_transform.translation;
 
             // Calculate direction towards the fire dragon
-            let direction = fire_dragon_position - ice_dragon_transform.translation.truncate();
-            ice_dragon_input.move_direction = Vec2::new(
+            let direction = fire_dragon_position - ice_dragon_transform.translation;
+            ice_dragon_input.move_direction = Vec3::new(
                 direction.x.signum(),
                 direction.y.signum(),
+                0.
             );
 
             // Randomly decide when to shoot

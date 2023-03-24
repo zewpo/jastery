@@ -14,7 +14,7 @@ pub fn setup_camera(
             ..default()
         },
         GameCamera {
-            threshold: 250.0,
+            threshold: 250.0,  // distance to edge before camera moves to follow dragon
             scale: camera_scale.0,
         },
     ));

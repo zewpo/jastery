@@ -12,17 +12,27 @@ pub fn projectile_spawn_system(
         if dragon_input.fire && dragon_action.firerate_timer.tick(time.delta()).just_finished() { 
             if let Some(projectile_image) = resource_cache.projectile_images.get(&dragon.elemental_theme) {
             
-                // println!("projectile_spawn_system called");
-                let mut projectile_direction = dragon_action.velocity.normalize_or_zero();
+                //let mut projectile_direction = dragon_action.velocity.normalize_or_zero();
+
+                let mut projectile_direction = dragon_input.fire_direction.normalize_or_zero();
+
                 if projectile_direction == Vec3::ZERO {
-                        projectile_direction.x = 1.0 * dragon_transform.scale.x.signum();
+                    if dragon_input.move_direction == Vec3::ZERO {
+                        if dragon_action.velocity == Vec3::ZERO {
+                            projectile_direction.x = 1.0 * dragon_transform.scale.x.signum();
+                        } else {
+                            projectile_direction = dragon_action.velocity.normalize_or_zero();
+                        }
+                    } else {
+                        projectile_direction = dragon_input.move_direction.normalize_or_zero();
+                    }
                 }
 
                 // Calculate the speed of the projectile based on the dragon's velocity.
-                let projectile_speed = projectile_direction * (250.0 + 75.0 * dragon_action.velocity.length());
+                let projectile_speed = (projectile_direction * 500.0) + 10.0*dragon_action.velocity;//(250.0 + 75.0 * dragon_action.velocity.length());
 
-                // Calculate the rotation of the projectile based on its velocity direction.
-                let projectile_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), projectile_direction);
+                // Calculate the rotation of the projectile image, based on its velocity direction.
+                let projectile_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), projectile_direction.truncate().extend(0.));
 
                 // Spawn the projectile into the game.
                 commands.spawn(ProjectileBundle {

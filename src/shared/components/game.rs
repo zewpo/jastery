@@ -3,20 +3,19 @@
 use bevy::prelude::*;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
-pub enum AppState {
+pub enum AppScreen {
     #[default]
     MainMenu,
-    Setup,
-    Running,
+    Settings,
+    GamePlay,
     Paused,
-    GameOver,
+    GameOver
 }
 
 // #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 // pub enum GameState {
 //     #[default]
-//     MainMenu,
-//     Setup,
+//     Build,
 //     Running,
 //     Paused,
 //     GameOver,

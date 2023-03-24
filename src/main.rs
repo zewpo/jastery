@@ -5,23 +5,18 @@ mod shared;
 
 use bevy::{
     prelude::*,
-    window::{close_on_esc, PresentMode},
+    window::PresentMode,
 };
+// use client::UIPlugin;
 
-use crate::client::{
-    components::game_camera::*,
-    systems::{
-        camera::{camera_follow_system, setup_camera},
-        keyboard::keyboard_input_system,
-    },
-};
 
 use crate::shared::{
     components::{
         game::*,
     },
     systems::{
-        game::*,
+        game,
+        // game::*,
         game::play::*,
         game::menu::*,
         resource_cache::*,
@@ -32,7 +27,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                title: "Dragsteroids!".into(),
+                title: "Jastery!".into(),
                 resolution: (1400., 800.).into(),
                 present_mode: PresentMode::AutoVsync,
                 // Tells wasm to resize the window according to the available canvas
@@ -43,20 +38,13 @@ fn main() {
             }),
             ..default()
         }))
-        .add_state::<AppState>()
-        .add_state::<GameOutcome>()
-        .insert_resource(CameraScale(3.0))
-        .add_plugin(MenuPlugin)
+        .add_state::<AppScreen>()
+        // .add_state::<GameOutcome>()
         .add_plugin(ResourceCachePlugin)
-        .add_startup_system(setup_camera)
-        .add_plugin(GameSetupPlugin)
-        .add_systems((
-                keyboard_input_system.run_if(in_state(AppState::Running)),
-                camera_follow_system.run_if(in_state(AppState::Running)),
-            )
-        )
+        .add_plugin(ScreenManagerPlugin)
+        .add_plugin(client::UIPlugin)
         .add_plugin(GamePlayPlugin)
-        .add_system(close_on_esc)
+        // .add_system(close_on_esc)
         .run();
 }
 

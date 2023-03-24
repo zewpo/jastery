@@ -51,10 +51,10 @@ pub struct DragonBundle {
 
 #[derive(Component, Default)]
 pub struct DragonInput {
-    pub move_direction: Vec2,
+    pub move_direction: Vec3,
+    pub fire_direction: Vec3,
     pub brake: bool,
     pub home: bool,
-    pub ease_up: bool,
     pub fire: bool,
 }
 
@@ -62,6 +62,7 @@ pub struct DragonInput {
 pub struct DragonAction {
     pub spawn_home: Vec3,
     pub velocity: Vec3,
+    pub acceleration: Vec3,
     pub max_velocity: f32,
     pub motion_timer: Timer,
     pub flip_timer: Timer,
