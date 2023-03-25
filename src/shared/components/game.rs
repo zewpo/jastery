@@ -7,24 +7,33 @@ pub enum AppScreen {
     #[default]
     MainMenu,
     Settings,
-    GamePlay,
+    InPlay,
     Paused,
     GameOver
 }
 
-// #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
-// pub enum GameState {
-//     #[default]
-//     Build,
-//     Running,
-//     Paused,
-//     GameOver,
-// }
+#[derive(Resource, Default)]
+
+pub struct GameStatus {
+    pub phase: GamePhase,
+    pub outcome: GameOutcome,
+}
+
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+pub enum GamePhase {
+    #[default]
+    ToBeDefined,
+    Setup,
+    Playing,
+    Paused,
+    GameOver,
+}
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 pub enum GameOutcome {
     #[default]
-    TBD,
+    ToBeDefined,
     Win,
     Lose,
 }

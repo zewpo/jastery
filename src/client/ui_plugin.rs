@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::PresentMode};
+use bevy::prelude::*;
 
 
 use crate::{client::{
@@ -7,7 +7,7 @@ use crate::{client::{
         camera::{camera_follow_system, setup_camera},
         keyboard::keyboard_input_system,
     }, components::game_camera::CameraScale,
-}, shared::components::game::AppScreen};
+}, shared::components::game::{AppScreen, GamePhase}};
 
 pub struct UIPlugin;
 
@@ -33,7 +33,7 @@ impl Plugin for UIPlugin {
         .add_systems((
             keyboard_input_system,
             camera_follow_system,
-        ).in_set(OnUpdate(AppScreen::GamePlay)))
+        ).in_set(OnUpdate(GamePhase::Playing)))
         ;
     }
 }

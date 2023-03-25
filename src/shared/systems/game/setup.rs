@@ -5,19 +5,24 @@ use uuid::Uuid;
 
 use crate::shared::components::{resource_cache::*, elemental_theme::*, dragon::*, game::*, wall::*};
 
-pub struct GameConstructionPlugin;
+pub struct GameSetupPlugin;
 
-
-impl Plugin for GameConstructionPlugin {
+impl Plugin for GameSetupPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems((
-            build_maze,
-            spawn_dragons,
-        ).in_schedule(OnEnter(AppScreen::GamePlay)));
+        app
+        .add_systems((
+            setup_maze,
+            setup_dragons,
+        ).in_schedule(OnEnter(GamePhase::Setup)))
+        .add_system(setup_completion.in_set(OnUpdate(GamePhase::Setup)));
     }
 }
 
-fn spawn_dragons(
+fn setup_completion(mut game_phase: ResMut<NextState<GamePhase>>){
+    game_phase.set(GamePhase::Playing);
+}
+
+fn setup_dragons(
         mut commands: Commands,
         resource_cache: Res<ResourceCache>,
     ) {
@@ -128,7 +133,7 @@ fn spawn_dragons(
 }
 
 
-fn build_maze(
+fn setup_maze(
     mut commands: Commands,
     resource_cache: Res<ResourceCache>,
 ) {
