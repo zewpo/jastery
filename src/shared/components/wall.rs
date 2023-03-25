@@ -1,6 +1,8 @@
 use bevy::prelude::*;
-use image::DynamicImage;
-use crate::shared::components::game::GamePiece;
+use crate::shared::components::{
+    GamePiece,
+    CollidableImage
+};
 
 #[derive(Component)]
 pub struct Wall {
@@ -16,22 +18,31 @@ pub struct WallBundle {
 }
 
 pub struct WallImage {
-    pub size: Vec2,
-    pub image: DynamicImage,
-    pub file_handle: Handle<Image>,
     pub shape: WallShape,
+    pub image: CollidableImage,
 }
 
+impl WallImage {
+    pub fn height(&self) -> i32 {
+        self.image.height()
+    }
+    pub fn width(&self) -> i32 {
+        self.image.width()
+    }
+    pub fn size(&self) -> Vec2 {
+        Vec2::new(self.image.width() as f32, self.image.height() as f32)
+    }
+}
 
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
 pub enum WallShape {
     Straight,
-    // Corner,
-    // TJunction,
-    // Cross,
-    // ShortStraight,
-    // LongStraight,
-    // Diagonal,
-    // Curved,
-    // Narrow,
+    Corner,
+    TJunction,
+    Cross,
+    ShortStraight,
+    LongStraight,
+    Diagonal,
+    Curved,
+    Narrow,
 }
