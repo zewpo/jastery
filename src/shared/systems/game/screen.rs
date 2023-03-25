@@ -380,7 +380,7 @@ fn setup_game_play_screen(
     // app_screen: Res<State<AppScreen>>, 
     // mut next_app_screen: ResMut<NextState<AppScreen>>,
     mut game_phase: ResMut<NextState<GamePhase>>,
-    game_status: Res<GameStatus>,
+    // game_status: Res<GameStatus>,
 ){
     println!("setup_game_play_screen");
     // if game_status.phase == GamePhase::ToBeDefined {

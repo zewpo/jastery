@@ -2,12 +2,11 @@ use bevy::prelude::*;
 
 
 use crate::{client::{
-    
     systems::{
         camera::{camera_follow_system, setup_camera},
         keyboard::keyboard_input_system,
     }, components::game_camera::CameraScale,
-}, shared::components::game::{AppScreen, GamePhase}};
+}, shared::components::game::GamePhase};
 
 pub struct UIPlugin;
 
