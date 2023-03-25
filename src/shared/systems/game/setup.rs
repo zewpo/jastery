@@ -3,7 +3,13 @@
 use bevy::prelude::*;
 use uuid::Uuid;
 
-use crate::shared::components::{resource_cache::*, elemental_theme::*, dragon::*, game::*, wall::*};
+use crate::shared::components::{
+    ResourceCache,
+    ElementalTheme, 
+    dragon::*,
+    game::*, 
+    wall::*
+};
 
 pub struct GameSetupPlugin;
 
@@ -37,7 +43,7 @@ fn setup_dragons(
         dragon_bundle: DragonBundle {
             game_piece: GamePiece,
             sprite_bundle: SpriteBundle {
-                texture: dragon_images.get(&mydragon_theme).unwrap().file_handle.clone(),
+                texture: dragon_images.get(&mydragon_theme).unwrap().image.file_handle.clone(),
                 transform: Transform::from_translation(mydragon_spawn_home),
                 ..default()
             },
@@ -89,7 +95,7 @@ fn setup_dragons(
             game_piece: GamePiece,
             sprite_bundle: SpriteBundle {
                 // texture: asset_server.load("sprites/ice-dragon.png"),
-                texture: dragon_images.get(&ice_dragon_theme).unwrap().file_handle.clone(),
+                texture: dragon_images.get(&ice_dragon_theme).unwrap().image.file_handle.clone(),
                 transform: Transform::from_translation(icedragon_spawn_home),  //from_xyz(1200., 0., 0.),
                 ..default()
             },
@@ -98,7 +104,7 @@ fn setup_dragons(
                 spawn_home: icedragon_spawn_home,
                 velocity: Vec3::ZERO,
                 acceleration: Vec3::ZERO,
-                max_velocity: 8.0,
+                max_velocity: 0.0,
                 motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
                 firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
                 flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
@@ -166,19 +172,19 @@ fn setup_maze(
     maze.reverse();
 
     if let Some(wall_image) =  wall_images.get(&WallShape::Straight) {
-        let wall_width = wall_image.size.x;
-        let wall_height = wall_image.size.y;
+        let wall_width = wall_image.width();
+        let wall_height = wall_image.height();
 
         // Spawn Wall blocks into the game.
         for (i, row) in maze.iter().enumerate() {
             for (j, cell) in row.iter().enumerate() {
                 if *cell == 1 {
-                    let x = (j as f32 * wall_width) - 1600.0;
-                    let y = (i as f32 * wall_height) - 1000.0;
+                    let x = (j * wall_width as usize) as f32 - 1600.0;
+                    let y = (i * wall_height as usize) as f32 - 1000.0;
                     commands.spawn(WallBundle {
                         game_piece: GamePiece,
                         sprite_bundle: SpriteBundle {
-                            texture: wall_image.file_handle.clone(),
+                            texture: wall_image.image.file_handle.clone(),
                             transform: Transform::from_xyz(x, y, -1.0),
                             ..default()
                         },

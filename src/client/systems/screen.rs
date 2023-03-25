@@ -1,4 +1,4 @@
-// src/shared/systems/game/menu.rs
+// src\client\systems\screen.rs
 
 use bevy::app::AppExit;
 use bevy::{
@@ -21,6 +21,15 @@ struct ScreenPackage {
     entity: Entity,
 }
 
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+pub enum AppScreen {
+    #[default]
+    MainMenu,
+    Settings,
+    InPlay,
+    Paused,
+    GameOver
+}
 
 // All actions that can be triggered from a menu button click
 #[derive(Component)]
@@ -32,7 +41,7 @@ enum MenuButtonAction {
     // SettingsDisplay,
     // SettingsSound,
     MainMenu,
-    // BackToSettings,
+    // BackToSettings, 
 }
 
 pub struct ScreenManagerPlugin;
@@ -40,7 +49,7 @@ pub struct ScreenManagerPlugin;
 impl Plugin for ScreenManagerPlugin {
     fn build(&self, app: &mut App) {
         app
-            
+            .add_state::<AppScreen>()
 
             .add_system(setup_main_menu_screen.in_schedule(OnEnter(AppScreen::MainMenu)))
             .add_system(handle_menu_interaction.in_set(OnUpdate(AppScreen::MainMenu)))

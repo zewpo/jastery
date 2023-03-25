@@ -1,10 +1,31 @@
 use bevy::prelude::*;
-use image::DynamicImage;
+
 use uuid::Uuid;
-use crate::shared::components::elemental_theme::ElementalTheme;
-use crate::shared::components::game::GamePiece;
+use crate::shared::components::{
+    ElementalTheme,
+    CollidableImage,
+    GamePiece
+};
 //Dragon, DragonImage, MyDragon, MyDragonBundle, DragonBundle, DragonInput, and DragonAction 
 
+
+
+pub struct DragonImage {
+    pub elemental_theme: ElementalTheme,
+    pub image: CollidableImage
+}
+
+impl DragonImage {
+    pub fn height(&self) -> i32 {
+        self.image.height()
+    }
+    pub fn width(&self) -> i32 {
+        self.image.width()
+    }
+    pub fn size(&self) -> Vec2 {
+        Vec2::new(self.image.width() as f32, self.image.height() as f32)
+    }
+}
 
 #[derive(Component)]
 pub struct Dragon{
@@ -20,13 +41,6 @@ pub struct Dragon{
 
 #[derive(Component)]
 pub struct HealthText;
-
-pub struct DragonImage {
-    pub size: Vec2,
-    pub image: DynamicImage,
-    pub file_handle: Handle<Image>,
-    pub elemental_theme: ElementalTheme,
-}
 
 // Marker to query the dragon to control by the local system.
 #[derive(Component)]

@@ -1,13 +1,15 @@
 // use std::collections::HashMap;
 use bevy::prelude::*;
 // use image::DynamicImage;
-use bevy::utils::HashMap;
+// use bevy::utils::HashMap;
+use std::collections::HashMap;
 
-use crate::shared::components::wall::{WallShape, WallImage};
-use crate::shared::components::dragon::DragonImage;
-use crate::shared::components::projectile::ProjectileImage;
-use crate::shared::components::elemental_theme::ElementalTheme;
+use crate::shared::components::{WallShape, WallImage};
+use crate::shared::components::DragonImage;
+use crate::shared::components::ProjectileImage;
+use crate::shared::components::ElementalTheme;
 
+pub const CELL_SIZE: i32 = 8;
 
 #[derive(Resource)]
 pub struct ResourceCache {

@@ -4,4 +4,4 @@ pub mod resource_cache;
 pub mod game;
 
 pub use game::GamePlugin;
-pub use game::screen::ScreenManagerPlugin;
+pub use resource_cache::ResourceCachePlugin;

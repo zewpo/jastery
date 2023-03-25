@@ -1,5 +1,14 @@
 use bevy::prelude::*;
-use crate::{shared::components::dragon::*, client::components::game_camera::*};
+use crate::{shared::components::{dragon::*, game::GamePhase}, client::components::game_camera::*};
+
+pub struct UserInputPlugin;
+
+impl Plugin for UserInputPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .add_system(keyboard_input_system.in_set(OnUpdate(GamePhase::Playing)));
+    }
+}
 
 pub fn keyboard_input_system (
     keyboard_input: Res<Input<KeyCode>>, 

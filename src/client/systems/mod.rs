@@ -1,5 +1,8 @@
 
-pub mod client;
-
 pub mod camera;
-pub mod keyboard;
+pub mod user_input;
+pub mod screen;
+
+pub use camera::GameCameraPlugin;
+pub use user_input::UserInputPlugin;
+pub use screen::ScreenManagerPlugin;

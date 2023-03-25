@@ -2,16 +2,6 @@
 
 use bevy::prelude::*;
 
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
-pub enum AppScreen {
-    #[default]
-    MainMenu,
-    Settings,
-    InPlay,
-    Paused,
-    GameOver
-}
-
 #[derive(Resource, Default)]
 
 pub struct GameStatus {

@@ -7,21 +7,10 @@ use bevy::{
     prelude::*,
     window::PresentMode,
 };
-// use shared::systems::GamePlugin;
-// use client::UIPlugin;
-
-
-use crate::shared::{
-    components::{
-        game::*,
-    },
-    systems::{
-        // game,
+use client::UIPlugin;
+use shared::systems::{
         GamePlugin,
-        // game::play::*,
-        game::screen::*,
-        resource_cache::*,
-    },
+        ResourceCachePlugin,
 };
 
 fn main() {
@@ -39,13 +28,9 @@ fn main() {
             }),
             ..default()
         }))
-        .add_state::<AppScreen>()
-        // .add_state::<GameOutcome>()
+        .add_plugin(UIPlugin)
         .add_plugin(ResourceCachePlugin)
-        .add_plugin(ScreenManagerPlugin)
-        .add_plugin(client::UIPlugin)
         .add_plugin(GamePlugin)
-        // .add_system(close_on_esc)
         .run();
 }
 
