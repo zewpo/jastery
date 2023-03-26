@@ -7,6 +7,6 @@ pub enum ElementalTheme {
     Ice,
     Water,
     Rock,
-    Air,
+    // Air,
     // Add more elemental themes here as needed
 }

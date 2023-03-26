@@ -65,5 +65,5 @@ pub struct CollidableImage {
     pub size: I32ImageSize,
     pub pixel_data: DynamicImage,
     pub file_handle: Handle<Image>,
-    pub non_transparent_pixels: HashMap<(i32, i32), HashSet<(i32, i32)>>, // cell to non-transparent pixels map
+    pub opaque_pixel_cells: HashMap<(i32, i32), HashSet<(i32, i32)>>, // cell to non-transparent pixels map
 }

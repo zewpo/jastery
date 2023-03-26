@@ -1,0 +1,50 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'jastery'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=jastery",
+                    "--package=jastery",
+                    "--manifest-path",
+                    "${workspaceFolder}/Cargo.toml"
+                ],
+                "filter": {
+                    "name": "jastery",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            // "env": {
+            //     "CARGO_MANIFEST_DIR": "${workspaceFolder}",
+            // }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'jastery'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=jastery",
+                    "--package=jastery"
+                ],
+                "filter": {
+                    "name": "jastery",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

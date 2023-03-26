@@ -6,45 +6,16 @@ use crate::shared::components::{dragon::*, resource_cache::*, wall::*};
 
 // fn pixel_collision(
 //     pos1: Vec3,
-//     non_transparent_pixels1: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
+//     opaque_pixel_cells1: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
 //     pos2: Vec3,
-//     non_transparent_pixels2: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
+//     img2_size: Vec2, // We need the size of image 2 to determine if a collision occurs within its bounds
 //     cell_size: i32,
 // ) -> bool {
 //     let dx = (pos2.x - pos1.x).round() as i32;
 //     let dy = (pos2.y - pos1.y).round() as i32;
+//     let (width2, height2) = (img2_size.x as i32, img2_size.y as i32);
 
-//     for ((cell_x1, cell_y1), pixels1) in non_transparent_pixels1.iter() {
-//         let cell_x2 = *cell_x1 - dx / cell_size;
-//         let cell_y2 = *cell_y1 - dy / cell_size;
-
-//         if let Some(pixels2) = non_transparent_pixels2.get(&(cell_x2, cell_y2)) {
-//             for (x1, y1) in pixels1 {
-//                 let x2 = *x1 + cell_x2 * cell_size;
-//                 let y2 = *y1 + cell_y2 * cell_size;
-
-//                 let pixel_in_cell2 = (x2 % cell_size, y2 % cell_size);
-
-//                 if pixels2.contains(&pixel_in_cell2) {
-//                     return true;
-//                 }
-//             }
-//         }
-//     }
-//     false
-// }
-
-// fn pixel_collision(
-//     pos1: Vec3,
-//     non_transparent_pixels1: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
-//     pos2: Vec3,
-//     non_transparent_pixels2: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
-//     cell_size: i32,
-// ) -> bool {
-//     let dx = (pos2.x - pos1.x).round() as i32;
-//     let dy = (pos2.y - pos1.y).round() as i32;
-
-//     for ((cell_x1, cell_y1), pixels1) in non_transparent_pixels1.iter() {
+//     for ((cell_x1, cell_y1), pixels1) in opaque_pixel_cells1.iter() {
 //         for (x1, y1) in pixels1 {
 //             let x1_global = *x1 + *cell_x1 * cell_size;
 //             let y1_global = *y1 + *cell_y1 * cell_size;
@@ -52,33 +23,35 @@ use crate::shared::components::{dragon::*, resource_cache::*, wall::*};
 //             let x2_global = x1_global + dx;
 //             let y2_global = y1_global + dy;
 
-//             let cell_x2 = x2_global / cell_size;
-//             let cell_y2 = y2_global / cell_size;
-
-//             let pixel_in_cell2 = (x2_global % cell_size, y2_global % cell_size);
-
-//             if let Some(pixels2) = non_transparent_pixels2.get(&(cell_x2, cell_y2)) {
-//                 if pixels2.contains(&pixel_in_cell2) {
-//                     return true;
-//                 }
+//             // Check if the global position of the pixel from image 1 is within the bounds of image 2
+//             if x2_global >= 0 && x2_global < width2 && y2_global >= 0 && y2_global < height2 {
+//                 return true;
 //             }
 //         }
 //     }
 //     false
 // }
 
+
 fn pixel_collision(
     pos1: Vec3,
-    non_transparent_pixels1: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
+    opaque_pixel_cells1: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
     pos2: Vec3,
-    img2_size: Vec2, // We need the size of image 2 to determine if a collision occurs within its bounds
+    img2_size: Vec2,
     cell_size: i32,
 ) -> bool {
     let dx = (pos2.x - pos1.x).round() as i32;
     let dy = (pos2.y - pos1.y).round() as i32;
     let (width2, height2) = (img2_size.x as i32, img2_size.y as i32);
 
-    for ((cell_x1, cell_y1), pixels1) in non_transparent_pixels1.iter() {
+    // Check if the images overlap at all
+    if pos1.x + (cell_size as f32) <= pos2.x || pos1.x >= pos2.x + (img2_size.x as f32) ||
+        pos1.y + (cell_size as f32) <= pos2.y || pos1.y >= pos2.y + (img2_size.y as f32)
+    {
+        return false;
+    }
+
+    for ((cell_x1, cell_y1), pixels1) in opaque_pixel_cells1.iter() {
         for (x1, y1) in pixels1 {
             let x1_global = *x1 + *cell_x1 * cell_size;
             let y1_global = *y1 + *cell_y1 * cell_size;
@@ -92,8 +65,126 @@ fn pixel_collision(
             }
         }
     }
+
     false
 }
+
+
+// fn cell_collision(
+//     pos1: Vec3,
+//     opaque_pixel_cells1: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
+//     pos2: Vec3,
+//     img2_size: Vec2,
+//     cell_size: i32,
+// ) -> bool {
+//     let (width2, height2) = (img2_size.x as i32, img2_size.y as i32);
+//     let (cell_width2, cell_height2) = (width2 / cell_size, height2 / cell_size);
+
+//     // Iterate over each cell of the first object
+//     for ((cell_x1, cell_y1), _pixels1) in opaque_pixel_cells1.iter() {
+//         let cell_x1 = *cell_x1;
+//         let cell_y1 = *cell_y1;
+
+//         // Compute the global position of the top-left corner of the current cell of the first object
+//         let x1_global = pos1.x as i32 + cell_x1 * cell_size;
+//         let y1_global = pos1.y as i32 + cell_y1 * cell_size;
+
+//         // Compute the indices of the cell of the second object that contains the top-left corner of the current cell of the first object
+//         let cell_x2 = (x1_global - pos2.x as i32) / cell_size;
+//         let cell_y2 = (y1_global - pos2.y as i32) / cell_size;
+
+//         // Check if the indices of the cell of the second object match the current cell of the first object
+//         if cell_x2 >= 0 && cell_x2 < cell_width2 && cell_y2 >= 0 && cell_y2 < cell_height2 && (cell_x2, cell_y2) == (cell_x1, cell_y1) {
+//             return true;
+//         }
+//     }
+
+//     // No overlapping cells were found
+//     false
+// }
+
+
+fn cell_collision(
+    pos1: Vec3,
+    opaque_pixel_cells1: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
+    pos2: Vec3,
+    img2_size: Vec2,
+    cell_size: i32,
+) -> bool {
+    let (width2, height2) = (img2_size.x as i32, img2_size.y as i32);
+
+    for ((cell_x1, cell_y1), _pixels1) in opaque_pixel_cells1.iter() {
+        let cell_x2 = (pos2.x as i32 + cell_x1 * cell_size - pos1.x as i32) / cell_size;
+        let cell_y2 = (pos2.y as i32 + cell_y1 * cell_size - pos1.y as i32) / cell_size;
+
+        if cell_x2 >= 0 && cell_x2 < width2 / cell_size && cell_y2 >= 0 && cell_y2 < height2 / cell_size {
+            return true;
+        }
+    }
+    false
+}
+
+
+// fn cell_collision(
+//     pos1: Vec3,
+//     cells1: &HashSet<(i32, i32)>,
+//     pos2: Vec3,
+//     cells2: &HashSet<(i32, i32)>,
+//     cell_size: i32,
+// ) -> bool {
+//     let dx = (pos2.x - pos1.x).round() as i32;
+//     let dy = (pos2.y - pos1.y).round() as i32;
+
+//     // Calculate the bounds of the two images in terms of cells
+//     let (min_x1, max_x1, min_y1, max_y1) = get_bounds(cells1);
+//     let (min_x2, max_x2, min_y2, max_y2) = get_bounds(cells2);
+
+//     // Check if the bounds of the two images overlap
+//     if min_x1 + dx <= max_x2 && max_x1 + dx >= min_x2 && min_y1 + dy <= max_y2 && max_y1 + dy >= min_y2 {
+//         // Loop through each cell of the first image and check if it overlaps with any cells of the second image
+//         for (cell_x1, cell_y1) in cells1 {
+//             let x1_global = cell_x1 * cell_size;
+//             let y1_global = cell_y1 * cell_size;
+
+//             for (cell_x2, cell_y2) in cells2 {
+//                 let x2_global = cell_x2 * cell_size + dx;
+//                 let y2_global = cell_y2 * cell_size + dy;
+
+//                 // Check if the two cells overlap
+//                 if x1_global <= x2_global + cell_size && x1_global + cell_size >= x2_global && y1_global <= y2_global + cell_size && y1_global + cell_size >= y2_global {
+//                     return true;
+//                 }
+//             }
+//         }
+//     }
+
+//     false
+// }
+
+// fn get_bounds(cells: &HashSet<(i32, i32)>) -> (i32, i32, i32, i32) {
+//     let mut min_x = i32::MAX;
+//     let mut max_x = i32::MIN;
+//     let mut min_y = i32::MAX;
+//     let mut max_y = i32::MIN;
+
+//     for (x, y) in cells {
+//         if *x < min_x {
+//             min_x = *x;
+//         }
+//         if *x > max_x {
+//             max_x = *x;
+//         }
+//         if *y < min_y {
+//             min_y = *y;
+//         }
+//         if *y > max_y {
+//             max_y = *y;
+//         }
+//     }
+
+//     (min_x, max_x, min_y, max_y)
+// }
+
 
 
 pub fn dragon_movement_system(
@@ -157,13 +248,14 @@ pub fn dragon_movement_system(
                         wall_image.size()
                     ) {
                         // Check for pixel-perfect collision
-                        if pixel_collision(
+                        // if pixel_collision(
+                        if cell_collision(
                             dragon_transform.translation,
                             // dragon_image.image.size,
-                            &dragon_image.image.non_transparent_pixels,
+                            &dragon_image.image.opaque_pixel_cells,
                             wall_transform.translation,
                             wall_image.size(),
-                            // &wall_image.image.non_transparent_pixels,
+                            // &wall_image.image.opaque_pixel_cells,
                             CELL_SIZE
                         ) {
                             let mut opposite_direction = -0.5 * dragon_action.velocity.normalize_or_zero();
