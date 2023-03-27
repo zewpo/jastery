@@ -17,6 +17,7 @@ pub fn setup_dragons(
     let my_dragon_theme = ElementalTheme::Fire;
     let my_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(my_dragon_theme));
     let _my_dragon_entity = commands.spawn( (MyDragon, DragonBundle {
+        game_piece: GamePiece,
         sprite_bundle: SpriteBundle {
             texture: my_dragon_image.handle(), //dragon_images.get(&mydragon_theme).unwrap().image.file_handle.clone(),
             transform: Transform::from_translation(my_dragon_spawn_home),
@@ -29,7 +30,6 @@ pub fn setup_dragons(
             health: 10,
             max_health: 20,
             image: my_dragon_image,
-            game_piece: GamePiece,
             input: DragonInput::default(),
             action: DragonAction {
                 spawn_home: my_dragon_spawn_home,
@@ -72,6 +72,7 @@ pub fn setup_dragons(
     let ice_dragon_theme = ElementalTheme::Ice;
     let ice_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(ice_dragon_theme));
     commands.spawn( DragonBundle {
+            game_piece: GamePiece,
             sprite_bundle: SpriteBundle {
                 texture: ice_dragon_image.handle(), // dragon_images.get(&ice_dragon_theme).unwrap().image.file_handle.clone(),
                 transform: Transform::from_translation(ice_dragon_spawn_home),  //from_xyz(1200., 0., 0.),
@@ -79,7 +80,6 @@ pub fn setup_dragons(
             },
             dragon: Dragon {
                 my_dragon: None,
-                game_piece: GamePiece,
                 id: Uuid::new_v4(), 
                 elemental_theme: ice_dragon_theme,
                 health: 10,
@@ -127,6 +127,7 @@ pub fn setup_dragons(
     let rock_dragon_theme = ElementalTheme::Rock;
     let rock_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(rock_dragon_theme));
     commands.spawn( DragonBundle {
+            game_piece: GamePiece,
             sprite_bundle: SpriteBundle {
                 texture: rock_dragon_image.handle(),
                 transform: Transform::from_translation(rock_dragon_spawn_home),
@@ -134,7 +135,6 @@ pub fn setup_dragons(
             },
             dragon: Dragon {
                 my_dragon: None,
-                game_piece: GamePiece,
                 id: Uuid::new_v4(), 
                 elemental_theme: rock_dragon_theme,
                 health: 10,

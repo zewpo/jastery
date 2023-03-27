@@ -8,7 +8,9 @@ pub fn projectile_spawn_system(
     resource_cache: Res<ResourceCache>,
 ) {
     for (mut dragon, dragon_transform) in dragon_query.iter_mut() {
-    
+        if dragon.health <= 0 {
+           continue; 
+        }
         if dragon.input.fire && dragon.action.firerate_timer.tick(time.delta()).just_finished() { 
             // if let Some(projectile_image) = resource_cache.projectile_images.get(&dragon.elemental_theme) {
             let projectile_image = resource_cache.get_collidable_image(CollidableClassifier::Projectile(dragon.elemental_theme));
@@ -130,7 +132,7 @@ pub fn projectile_collision_system(
                         // Handle hit on the fire dragon
                         println!("Ouch...  My dragon hit! Health: {}",dragon.health);
                     } else {
-                        println!("Yay...  I hit the Ice dragon, Health: {}",dragon.health);
+                        println!("Yay...  I hit an enemy dragon, Health: {}",dragon.health);
                     }
                     // Remove the projectile after it has collided with a dragon of another kind.
                     commands.entity(projectile_entity).despawn();

@@ -28,29 +28,30 @@ fn game_over_trigger(
     // mut game_outcome:  ResMut<NextState<GameOutcome>>,
     mut game_status: ResMut<GameStatus>,
 ) {
-    // if game_status.phase != GamePhase::GameOver{
-        for (dragon, my_dragon) in dragon_query.iter() {
-            if dragon.health <=0 {
-                println!("Game Over.");
-                if let Some(_) = my_dragon {
-                    // game_outcome.set(GameOutcome::Lose);
-                    game_status.outcome = GameOutcome::Lose;
-                    println!("You Lose!");
-                } else {
-                    // game_outcome.set(GameOutcome::Win);
-                    game_status.outcome = GameOutcome::Win;
-                    println!("You Win!");
-                }
-                // game_status.phase = GamePhase::GameOver;
-                game_phase.set(GamePhase::GameOver);
-                break;
-            }
-        }
-    // }
 
-    // // todo separate the screen management from the game management
-    // if game_status.phase == GamePhase::GameOver{
-    //     next_screen.set(AppScreen::GameOver);
-    // }
+    let mut my_health = 0;
+    let mut enemy_dragon_health = 0;
+    // if game_status.phase != GamePhase::GameOver{
+    for (dragon, my_dragon) in dragon_query.iter() {
+        if let Some(_) = my_dragon {
+            my_health = dragon.health;
+        }
+        else {
+            enemy_dragon_health += dragon.health;
+        }
+    }
+
+    if my_health <= 0 {
+        game_status.outcome = GameOutcome::Lose;
+        println!("You Died");
+    } else if enemy_dragon_health <= 0 {
+        game_status.outcome = GameOutcome::Win;
+        println!("All Enemies Died!");
+    }
+
+    if game_status.outcome != GameOutcome::Undecided {
+        game_phase.set(GamePhase::GameOver);
+        println!("Game Over!");
+    }
             
 }

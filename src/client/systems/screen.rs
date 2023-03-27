@@ -478,8 +478,8 @@ fn cleanup_screen(
     game_piece_query: Query<Entity,With<GamePiece>>,
     screen_package: Res<ScreenPackage>
 ) {
-    for entity in game_piece_query.iter() {
-        commands.entity(entity).despawn_recursive();
+    for game_piece in game_piece_query.iter() {
+        commands.entity(game_piece).despawn_recursive();
     }
     commands.entity(screen_package.entity).despawn_recursive();
 

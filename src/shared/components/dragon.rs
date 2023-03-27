@@ -38,7 +38,6 @@ use super::*;
 
 #[derive(Component)]
 pub struct Dragon {
-    pub game_piece: GamePiece,
     pub input: DragonInput,
     pub action: DragonAction,
     pub id: Uuid,
@@ -72,6 +71,7 @@ pub struct DragonBundle {
     #[bundle]
     pub sprite_bundle: SpriteBundle,
     pub dragon: Dragon,
+    pub game_piece: GamePiece,
 }
 
 #[derive(Default)]

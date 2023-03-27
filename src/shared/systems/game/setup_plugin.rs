@@ -13,10 +13,14 @@ impl Plugin for GameSetupPlugin {
             setup_maze,
             setup_dragons,
         ).in_schedule(OnEnter(GamePhase::Setup)))
-        .add_system(setup_completion.in_set(OnUpdate(GamePhase::Setup)));
+        .add_system(start_game.in_set(OnUpdate(GamePhase::Setup)));
     }
 }
 
-fn setup_completion(mut game_phase: ResMut<NextState<GamePhase>>){
+fn start_game(
+    mut game_phase: ResMut<NextState<GamePhase>>,
+    mut game_status: ResMut<GameStatus>,
+){
+    game_status.outcome = GameOutcome::Undecided;
     game_phase.set(GamePhase::Playing);
 }

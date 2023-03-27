@@ -72,6 +72,11 @@ pub fn dragon_movement_system(
 ) {
     for (mut dragon, mut dragon_transform) in dragon_query.iter_mut() {
         
+        if dragon.health <= 0 {
+            dragon.action.velocity = Vec3::ZERO;
+            continue;
+        }
+
         let previous_velocity = dragon.action.velocity;
         
         // Change in motion

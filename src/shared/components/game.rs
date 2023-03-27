@@ -23,11 +23,11 @@ pub enum GamePhase {
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 pub enum GameOutcome {
     #[default]
-    ToBeDefined,
+    Undecided,
     Win,
     Lose,
 }
 
 // useful marker for pieces that can be despawned to clear out the game.
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct GamePiece;
