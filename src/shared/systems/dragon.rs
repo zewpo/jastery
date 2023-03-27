@@ -1,62 +1,40 @@
 use bevy::{prelude::*, sprite::collide_aabb::{collide, Collision}};
 // use image::{DynamicImage, GenericImageView};
-use std::collections::{HashMap, HashSet};
-use crate::shared::components::{dragon::*, resource_cache::*, wall::*};
+// use std::collections::{HashMap, HashSet};
+use crate::shared::components::{dragon::*, resource_cache::*, wall::*, CollidableImage};
 
 
-
-// fn pixel_collision(
-//     pos1: Vec3,
-//     opaque_pixel_cells1: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
-//     pos2: Vec3,
-//     img2_size: Vec2,
-//     cell_size: i32,
-// ) -> bool {
-//     let dx = (pos2.x - pos1.x).round() as i32;
-//     let dy = (pos2.y - pos1.y).round() as i32;
-//     let (width2, height2) = (img2_size.x as i32, img2_size.y as i32);
-
-//     // Check if the images overlap at all
-//     if pos1.x + (cell_size as f32) <= pos2.x || pos1.x >= pos2.x + (img2_size.x as f32) ||
-//         pos1.y + (cell_size as f32) <= pos2.y || pos1.y >= pos2.y + (img2_size.y as f32)
-//     {
-//         return false;
-//     }
-
-//     for ((cell_x1, cell_y1), pixels1) in opaque_pixel_cells1.iter() {
-//         for (x1, y1) in pixels1 {
-//             let x1_global = *x1 + *cell_x1 * cell_size;
-//             let y1_global = *y1 + *cell_y1 * cell_size;
-
-//             let x2_global = x1_global + dx;
-//             let y2_global = y1_global + dy;
-
-//             // Check if the global position of the pixel from image 1 is within the bounds of image 2
-//             if x2_global >= 0 && x2_global < width2 && y2_global >= 0 && y2_global < height2 {
-//                 return true;
-//             }
-//         }
-//     }
-
-//     false
-// }
 
 
 fn cell_collision(
-    pos1: (i32, i32),
-    opaque_pixel_cells1: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
-    pos2: (i32, i32),
-    opaque_pixel_cells2: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
+    pos1: Vec3,
+    image1: &CollidableImage,
+    pos2: Vec3,
+    image2: &CollidableImage,
     cell_size: i32,
 ) -> bool {
 
-    let dx = (pos1.0 - pos2.0) / cell_size;
-    let dy = (pos1.1 - pos2.1) / cell_size;
+    let dx = ((pos1.x - pos2.x) / cell_size as f32).round() as i32;
+    let dy = ((pos1.y - pos2.y) / cell_size as f32).round() as i32;
 
-    for ((cell_x1, cell_y1), _) in opaque_pixel_cells1.iter() {
-        let cell_x2 = dx + cell_x1;
-        let cell_y2 = dy + cell_y1;
-        if opaque_pixel_cells2.contains_key(&(cell_x2, cell_y2)) {
+    let adjustment1_x = (image1.width_i32() - cell_size) / 2;
+    let adjustment1_y = (image1.height_i32() - cell_size) / 2;
+
+    let adjustment2_x = (image2.width_i32() - cell_size) / 2;
+    let adjustment2_y = (image2.height_i32() - cell_size) / 2;
+
+    for ((cell_x1, cell_y1), _) in image1.opaque_pixel_cells.iter() {
+        let cell_x1 = cell_x1 * cell_size - adjustment1_x;
+        let cell_y1 = -1 * cell_y1 * cell_size + adjustment1_y;
+
+        let cell_x2 = dx * cell_size + cell_x1;
+        let cell_y2 = dy * cell_size + cell_y1;
+
+        let cell_x2 = (cell_x2 + adjustment2_x) / cell_size;
+        //let cell_y2 = (-1 * (cell_y2 + adjustment2_y)) / cell_size;
+        let cell_y2 = (-1 * (cell_y2 - adjustment2_y)) / cell_size;
+
+        if image2.opaque_pixel_cells.contains_key(&(cell_x2, cell_y2)) {
             return true;
         }
     }
@@ -129,39 +107,39 @@ pub fn dragon_movement_system(
                     ) {
                         // Check for cell collision
                         if cell_collision(
-                            (dragon_transform.translation.x as i32, dragon_transform.translation.y as i32) ,
-                            &dragon_image.opaque_pixel_cells ,
-                            (wall_transform.translation.x as i32, wall_transform.translation.y as i32),
-                            &wall_image.opaque_pixel_cells,
+                            dragon_transform.translation,
+                            &dragon_image ,
+                            wall_transform.translation,
+                            &wall_image,
                             CELL_SIZE
                         ) {
-                            let mut opposite_direction = -0.5 * dragon.action.velocity.normalize_or_zero();
-                            if opposite_direction == Vec3::ZERO {
-                                opposite_direction = Vec3::new(5.0, 0.0, 0.0);
-                            }
+                            // let mut opposite_direction = -0.5 * dragon.action.velocity.normalize_or_zero();
+                            // if opposite_direction == Vec3::ZERO {
+                            //     opposite_direction = Vec3::new(1.0, 0.0, 0.0);
+                            // }
                             // dragon.action.velocity = Vec3::ZERO;
-                            dragon.action.velocity = opposite_direction;
+                            dragon.action.velocity = Vec3::ZERO; //opposite_direction;
                             match collision {
                                 Collision::Left => {
-                                    dragon_transform.translation.x = wall_transform.translation.x - ((wall_image.width_i32() + dragon_image.width_i32()) as f32) / 2.0;
+                                    dragon_transform.translation.x -= 1.0; //CELL_SIZE as f32; // wall_transform.translation.x - ((wall_image.width_i32() + dragon_image.width_i32()) as f32) / 2.0;
                                     // dragon.action.velocity.x = -0.0;
                                 }
                                 Collision::Right => {
-                                    dragon_transform.translation.x = wall_transform.translation.x + ((wall_image.width_i32() + dragon_image.width_i32()) as f32) / 2.0;
+                                    dragon_transform.translation.x += 1.0; //CELL_SIZE as f32;  //wall_transform.translation.x + ((wall_image.width_i32() + dragon_image.width_i32()) as f32) / 2.0;
                                     // dragon.action.velocity.x = 0.0;
                                 }
                                 Collision::Top => {
-                                    dragon_transform.translation.y = wall_transform.translation.y + ((wall_image.height_i32() + dragon_image.height_i32()) as f32) / 2.0;
+                                    dragon_transform.translation.y += 1.0; //CELL_SIZE as f32; //wall_transform.translation.y + ((wall_image.height_i32() + dragon_image.height_i32()) as f32) / 2.0;
                                     // dragon.action.velocity.y = 0.0;
                                 }
                                 Collision::Bottom => {
-                                    dragon_transform.translation.y = wall_transform.translation.y - ((wall_image.height_i32() + dragon_image.height_i32()) as f32) / 2.0;
+                                    dragon_transform.translation.y -= 1.0; //CELL_SIZE as f32; // wall_transform.translation.y - ((wall_image.height_i32() + dragon_image.height_i32()) as f32) / 2.0;
                                     // dragon.action.velocity.y = -0.0;
                                 }
                                 Collision::Inside => {
                                     // Handle inside collision as appropriate for your game
                                     println!("Dragon inside wall collision!?");
-                                    dragon_transform.translation.x = wall_transform.translation.x + ((wall_image.width_i32() + dragon_image.width_i32()) as f32) / 2.0;
+                                    dragon_transform.translation.x += 2.0; //CELL_SIZE as f32; //wall_transform.translation.x + ((wall_image.width_i32() + dragon_image.width_i32()) as f32) / 2.0;
                                 }
                             }
                         }
@@ -180,32 +158,88 @@ pub fn dragon_movement_system(
             dragon.action.acceleration = dragon.action.velocity - previous_velocity;
         }
 
-        // Flip the dragon with an animation when it changes directions between left to right.
-        if dragon.action.flipping {
-            if dragon.action.flip_timer.tick(time.delta()).just_finished() {
-            // Finish the flipping animation.
-                dragon.action.flipping = false;
-                if dragon_transform.scale.x < 0.0{
-                    dragon_transform.scale.x = 1.0;
-                } else {
-                    dragon_transform.scale.x = -1.0;
-                }
-            } else {
-                // Continue the flipping animation.
-                let progress = dragon.action.flip_timer.percent();
-                dragon_transform.scale.x = dragon_transform.scale.x.signum() * (0.5 - 0.5 * (progress * std::f32::consts::PI).sin());
-            }
-        } else if (dragon.action.velocity.x > 0.0 && dragon_transform.scale.x < 0.0) || (dragon.action.velocity.x < 0.0 && dragon_transform.scale.x > 0.0) {
-            // Start the flipping animation.
-            dragon.action.flip_timer.reset();
-            dragon.action.flipping = true;
+        // // Flip the dragon with an animation when it changes directions between left to right.
+        // if dragon.action.flipping {
+        //     if dragon.action.flip_timer.tick(time.delta()).just_finished() {
+        //     // Finish the flipping animation.
+        //         dragon.action.flipping = false;
+        //         if dragon_transform.scale.x < 0.0{
+        //             dragon_transform.scale.x = 1.0;
+        //         } else {
+        //             dragon_transform.scale.x = -1.0;
+        //         }
+        //     } else {
+        //         // Continue the flipping animation.
+        //         let progress = dragon.action.flip_timer.percent();
+        //         dragon_transform.scale.x = dragon_transform.scale.x.signum() * (0.5 - 0.5 * (progress * std::f32::consts::PI).sin());
+        //     }
+        // } else if (dragon.action.velocity.x > 0.0 && dragon_transform.scale.x < 0.0) || (dragon.action.velocity.x < 0.0 && dragon_transform.scale.x > 0.0) {
+        //     // Start the flipping animation.
+        //     dragon.action.flip_timer.reset();
+        //     dragon.action.flipping = true;
+        // }
+    }
+}
+
+pub fn draw_cell_grids_system(
+    mut commands: Commands,
+    dragon_query: Query<(Entity, &Transform, &Dragon), With<MyDragon>>,
+    wall_query: Query<(&Transform, &Wall)>,
+) {
+    let cell_size = CELL_SIZE as f32; // Assuming CELL_SIZE is a constant defined elsewhere
+    let grid_color = Color::rgba(0.8, 0.2, 0.2, 0.95);
+
+    for (dragon_entity, transform, my_dragon) in dragon_query.iter() {
+        
+        let dx = (my_dragon.image.width_f32() - cell_size)/2.0;
+        let dy = (my_dragon.image.height_f32() - cell_size)/2.0;
+
+        for (cell_key, _) in my_dragon.image.opaque_pixel_cells.iter() {
+            let x = cell_key.0 as f32 * cell_size - dx;
+            let y = -1.0 * cell_key.1 as f32 * cell_size + dy;
+
+            let position = transform.translation + Vec3::new(x, y, 0.0);
+            draw_cell_grid(&mut commands, position, cell_size, grid_color, Some(dragon_entity));
+        }
+    }
+
+    for (transform, wall) in wall_query.iter() {
+        let dx = (wall.image.width_f32() - cell_size)/2.0;
+        let dy = (wall.image.height_f32() - cell_size)/2.0;
+        for (cell_key, _) in wall.image.opaque_pixel_cells.iter() {
+            let x = cell_key.0 as f32 * cell_size - dx;
+            let y = -1.0 * cell_key.1 as f32 * cell_size + dy;
+
+            let position = transform.translation + Vec3::new(x, y, 0.2);
+            draw_cell_grid(&mut commands, position, cell_size, grid_color, None);
         }
     }
 }
 
+fn draw_cell_grid(
+    commands: &mut Commands,
+    position: Vec3,
+    cell_size: f32,
+    grid_color: Color,
+    parent: Option<Entity>,
+) {
+    let mut cell_grid_entity = commands.spawn(SpriteBundle {
+        sprite: Sprite {
+            color: grid_color,
+            custom_size: Some(Vec2::new(cell_size, cell_size)),
+            ..default()
+        },
+        transform: Transform::from_translation(position),
+        ..default()
+    });
+
+    if let Some(parent_entity) = parent {
+        cell_grid_entity.set_parent(parent_entity);
+    }
+}
 
 
-// fn draw_cell_grids_system(
+// pub fn draw_cell_grids_system(
 //     mut commands: Commands,
 //     // asset_server: Res<AssetServer>,
 //     // mut materials: ResMut<Assets<ColorMaterial>>,
