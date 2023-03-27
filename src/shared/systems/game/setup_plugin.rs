@@ -20,7 +20,10 @@ impl Plugin for GameSetupPlugin {
 fn start_game(
     mut game_phase: ResMut<NextState<GamePhase>>,
     mut game_status: ResMut<GameStatus>,
+    my_dragon: Query<&Dragon, With<MyDragon>>
 ){
+    let my_dragon = my_dragon.single();
+    game_status.my_id = my_dragon.id;
     game_status.outcome = GameOutcome::Undecided;
     game_phase.set(GamePhase::Playing);
 }

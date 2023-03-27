@@ -154,6 +154,43 @@ pub fn setup_dragons(
                 },
             },
     });
+
+
+
+    // Spawn an enemy Water Dragon into the game.
+    let water_dragon_spawn_home = Vec3::new(-1000., 400., 0.);
+    let water_dragon_theme = ElementalTheme::Water;
+    let water_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(water_dragon_theme));
+    commands.spawn( DragonBundle {
+            game_piece: GamePiece,
+            sprite_bundle: SpriteBundle {
+                texture: water_dragon_image.handle(),
+                transform: Transform::from_translation(water_dragon_spawn_home),
+                ..default()
+            },
+            dragon: Dragon {
+                my_dragon: None,
+                id: Uuid::new_v4(), 
+                elemental_theme: water_dragon_theme,
+                health: 10,
+                max_health: 20,
+                image: water_dragon_image,
+            
+                input: DragonInput::default(),
+                action: DragonAction {
+                    spawn_home: water_dragon_spawn_home,
+                    velocity: Vec3::ZERO,
+                    acceleration: Vec3::ZERO,
+                    max_velocity: 5.0,
+                    motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+                    firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
+                    flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
+                    flipping: false,
+                },
+            },
+    });
+
+
     println!("Setup Dragons DONE.");
 }
 

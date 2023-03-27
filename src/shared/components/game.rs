@@ -1,12 +1,14 @@
 // src\shared\components\game.rs
 
 use bevy::prelude::*;
+use uuid::Uuid;
 
 #[derive(Resource, Default)]
 
 pub struct GameStatus {
     pub phase: GamePhase,
     pub outcome: GameOutcome,
+    pub my_id: Uuid,
 }
 
 

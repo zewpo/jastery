@@ -118,25 +118,38 @@ pub fn projectile_movement_system(
 pub fn projectile_collision_system(
     mut commands: Commands,
     mut projectile_query: Query<(Entity, &Transform, &Projectile), Without<Dragon>>,
-    mut dragon_query: Query<(&Transform, &mut Dragon, Option<&MyDragon>), With<Dragon>>,
+    mut dragon_query: Query<(&Transform, &mut Dragon), With<Dragon>>,
+    game_status: Res<GameStatus>,
 ) {
+    let my_dragon_id = game_status.my_id;
+
     for (projectile_entity, projectile_transform, projectile) in projectile_query.iter_mut() {
-        for (dragon_transform, mut dragon, my_dragon) in dragon_query.iter_mut() {
+        let mut despawned = false;
+        for (dragon_transform, mut dragon) in dragon_query.iter_mut() {
             let distance = projectile_transform.translation.distance(dragon_transform.translation);
 
             // Check if the projectile is close enough to the dragon to be considered a hit
             if distance < 100.0 {
                 if projectile.elemental_theme != dragon.elemental_theme { 
-                    dragon.health -= 1;
-                    if let Some(_my_dragon) = my_dragon {
-                        // Handle hit on the fire dragon
-                        println!("Ouch...  My dragon hit! Health: {}",dragon.health);
-                    } else {
-                        println!("Yay...  I hit an enemy dragon, Health: {}",dragon.health);
+                    if dragon.health > 0 {
+                        dragon.health -= 1;
+                        if let Some(_) = &dragon.my_dragon {
+                            // Handle hit on the fire dragon
+                            println!("Ouch...  Someone hit my dragon! Health: {}",dragon.health);
+                        } else {
+                            if projectile.shot_by == my_dragon_id {
+                                println!("Yay...  I hit an enemy dragon, Health: {}",dragon.health);
+                            } else {
+                                println!("Yay...  Someone hit an enemy dragon, Health: {}",dragon.health);
+                            }
+                        }
                     }
                     // Remove the projectile after it has collided with a dragon of another kind.
-                    commands.entity(projectile_entity).despawn();
-                    
+                    // Note, it might hit more than one other dragon, but can only despawn it once.
+                    if !despawned {
+                        commands.entity(projectile_entity).despawn();
+                        despawned = true;
+                    } 
                 } else {
                     // dragons projectiles don't hurt their own kind.
                 }
