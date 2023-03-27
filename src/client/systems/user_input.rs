@@ -19,16 +19,16 @@ pub fn keyboard_input_system (
     dragon.input.move_direction = Vec3::ZERO;
     dragon.input.fire_direction = Vec3::ZERO;
 
-    if keyboard_input.pressed(KeyCode::W) {
+    if keyboard_input.pressed(KeyCode::W) || keyboard_input.pressed(KeyCode::Up){
         dragon.input.move_direction.y += 1.0;
     }
-    if keyboard_input.pressed(KeyCode::S) {
+    if keyboard_input.pressed(KeyCode::S) || keyboard_input.pressed(KeyCode::Down) {
         dragon.input.move_direction.y -= 1.0;
     }
-    if keyboard_input.pressed(KeyCode::A)  {
+    if keyboard_input.pressed(KeyCode::A)  || keyboard_input.pressed(KeyCode::Left) {
         dragon.input.move_direction.x -= 1.0;
     }
-    if keyboard_input.pressed(KeyCode::D) {
+    if keyboard_input.pressed(KeyCode::D)  || keyboard_input.pressed(KeyCode::Right) {
         dragon.input.move_direction.x += 1.0;
     }
 

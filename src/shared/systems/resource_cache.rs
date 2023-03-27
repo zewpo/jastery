@@ -56,42 +56,45 @@ fn load_image_data(path: &str) -> DynamicImage {
 //     }
 //     opaque_pixel_cells
 // }
-
-
 fn get_opaque_pixel_cells(
     image: &DynamicImage,
-    cell_size: i32,
 ) -> HashMap<(i32, i32), HashSet<(i32, i32)>> {
-    let cell_size = cell_size as u32;
+    let cell_size = CELL_SIZE as u32;
     let mut opaque_pixel_cells: HashMap<(i32, i32), HashSet<(i32, i32)>> = HashMap::new();
     let (width, height) = image.dimensions();
+
+    let is_transparent = |x: u32, y: u32| image.get_pixel(x, y)[3] == 0;
 
     for y in 0..height {
         for x in 0..width {
             let pixel = image.get_pixel(x, y);
-            //let rgba = pixel.to_rgba8();
             if pixel[3] != 0 {
-                let cell_x = (x / cell_size) as i32;
-                let cell_y = (y / cell_size) as i32;
-                let cell_key = (cell_x, cell_y);
+                let neighbors = [
+                    (x.checked_sub(1).map_or(true, |nx| is_transparent(nx, y))),
+                    (x + 1 >= width || is_transparent(x + 1, y)),
+                    (y.checked_sub(1).map_or(true, |ny| is_transparent(x, ny))),
+                    (y + 1 >= height || is_transparent(x, y + 1)),
+                ];
 
-                let pixel_in_cell = ((x % cell_size) as i32, (y % cell_size) as i32);
+                let is_edge_pixel = neighbors.iter().any(|&is_transparent| is_transparent);
 
-                opaque_pixel_cells
-                    .entry(cell_key)
-                    .or_insert_with(HashSet::new)
-                    .insert(pixel_in_cell);
+                if is_edge_pixel {
+                    let cell_x = (x / cell_size) as i32;
+                    let cell_y = (y / cell_size) as i32;
+                    let cell_key = (cell_x, cell_y);
+
+                    let pixel_in_cell = ((x % cell_size) as i32, (y % cell_size) as i32);
+
+                    opaque_pixel_cells
+                        .entry(cell_key)
+                        .or_insert_with(HashSet::new)
+                        .insert(pixel_in_cell);
+                }
             }
         }
     }
     opaque_pixel_cells
 }
-
-//In this function, we use the GenericImageView::dimensions() method to get the width and height of the image, and then we iterate over the pixels using nested for loops. We use the GenericImageView::get_pixel() method to get the pixel at the current position, and then we check if its alpha value is not zero. If it's not transparent, we calculate the cell position and the pixel position within the cell, and then we store this information in the opaque_pixel_cells HashMap.
-
-
-
-
 
 
 
@@ -156,7 +159,7 @@ pub fn preload_resources(
         let size = ImageSizeI32::from(&pixel_data);// (pixel_data.width() as i32, pixel_data.height() as i32);
         //let wall_size = wall_image.size().extend(0.0) * wall_transform.scale.abs();
         
-        let opaque_pixel_cells = get_opaque_pixel_cells(&pixel_data, CELL_SIZE);
+        let opaque_pixel_cells = get_opaque_pixel_cells(&pixel_data);
         
         //////////////////////////////////////////////////////////////
         // debugging where the opaque cells are
@@ -233,7 +236,7 @@ pub fn preload_resources(
         let dragon_image_pixel_data = load_image_data(dragon_image_file_path);
         let dragon_image_size = ImageSizeI32::from(&dragon_image_pixel_data);  //  (pixel_data.width() as i32, pixel_data.height() as i32);
 
-        let dragon_image_opaque_pixel_cells = get_opaque_pixel_cells(&dragon_image_pixel_data, CELL_SIZE);
+        let dragon_image_opaque_pixel_cells = get_opaque_pixel_cells(&dragon_image_pixel_data);
 
         //////////////////////////////////////////////////////////////
         // debugging where the opaque cells are
@@ -295,7 +298,7 @@ pub fn preload_resources(
         //let projectile_size = Vec2::new(projectile_image_data.width() as f32, projectile_image_data.height() as f32);
         let projectile_image_size = ImageSizeI32::from(&projectile_image_pixel_data);
         
-        let projectile_image_opaque_pixel_cells = get_opaque_pixel_cells(&projectile_image_pixel_data, CELL_SIZE);
+        let projectile_image_opaque_pixel_cells = get_opaque_pixel_cells(&projectile_image_pixel_data);
 
         let projectile_image = Arc::new (CollidableImage {
             classifier: CollidableClassifier::Projectile(elemental_theme),

@@ -343,33 +343,33 @@ fn setup_game_over_screen(
 fn dragon_position_text_system(
     windows: Query<&Window>,
     mut query: Query<&mut Text>,
-    // mouse_button_input: Res<Input<MouseButton>>,
+    mouse_button_input: Res<Input<MouseButton>>,
     // mut mouse_motion_events: EventReader<MouseMotion>,
-    // mut cursor_moved_events: EventReader<CursorMoved>,
+    _cursor_moved_events: EventReader<CursorMoved>,
     dragon_query: Query<(&Transform, &Handle<Image>), (With<MyDragon>,Without<GameCamera>)>,
 ) {
     let window = windows.single();
-    let _window_size = Vec2::new(window.width(), window.height());
+    let window_size = Vec2::new(window.width(), window.height());
     
     let (dragon_transform, _dragon_handle) = dragon_query.single();
 
     // for event in mouse_motion_events.iter() {
     //     info!("{:?}", event);
-    // }
-
+    // 
+    // let mut pos = Vec2::ZERO;
     // for event in cursor_moved_events.iter() {
-    //     info!("{:?}", event );
-    //     // event.position - window_size / 2.0
+    //     pos = event.position - window_size / 2.0;
+    //     info!("{:?}", pos );
     // }
 
     if let Some(mut text) = query.iter_mut().next() {        
         text.sections[0].value = format!("Dragon Position: ({:.1}, {:.1})", dragon_transform.translation.x, dragon_transform.translation.y);
 
-        // if mouse_button_input.pressed(MouseButton::Left) {
-        //     let cursor_position = window.cursor_position().unwrap_or_default();
-        //     let world_position = cursor_position - window_size / 2.0;
-        //     text.sections[0].value = format!("Mouse Position: ({:.1}, {:.1})", world_position.x, world_position.y);
-        // }
+        if mouse_button_input.pressed(MouseButton::Left) {
+            let cursor_position = window.cursor_position().unwrap_or_default();
+            let world_position = cursor_position - window_size / 2.0;
+            text.sections[1].value = format!("Mouse Position: ({:.1}, {:.1})", world_position.x, world_position.y);
+        }
     }
 }
 
@@ -431,20 +431,31 @@ fn setup_game_play_screen(
 
     let font: Handle<Font> =  resource_cache.gui_fonts.get("FiraSans-Bold").unwrap().clone();
     
-    // Create a text element to display the mouse coordinates
+    let dragon_position_text_section: TextSection = TextSection::new(
+        "Dragon Position: ",
+        TextStyle {
+            font: font.clone(),
+            font_size: 30.0,
+            color: Color::WHITE,
+    });
+
+    let mouse_position_text_section: TextSection = TextSection::new(
+        "Mouse Position: ",
+        TextStyle {
+            font: font.clone(),
+            font_size: 30.0,
+            color: Color::WHITE,
+    });
+    // Create a text element to display things like the mouse coordinates
     commands.spawn(TextBundle {
         style: Style {
             align_self: AlignSelf::FlexEnd,
             ..Default::default()
         },
-        text: Text::from_section(
-            "Mouse Position: ",
-            TextStyle {
-                font: font.clone(),
-                font_size: 30.0,
-                color: Color::WHITE,
-            },
-        ),
+        text: Text::from_sections([
+            dragon_position_text_section,
+            mouse_position_text_section
+        ]),
         ..Default::default()
     });
 

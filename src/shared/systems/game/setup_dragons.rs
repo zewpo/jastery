@@ -12,7 +12,7 @@ pub fn setup_dragons(
     println!("Setup Dragons.");
     //let dragon_images = &resource_cache.dragon_images;
     
-    // Spawn the Fire Dragon into the game.
+    // Spawn My Fire Dragon into the game.
     let my_dragon_spawn_home = Vec3::new(0., 0., 0.);
     let my_dragon_theme = ElementalTheme::Fire;
     let my_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(my_dragon_theme));
@@ -27,7 +27,7 @@ pub fn setup_dragons(
             my_dragon: Some(MyDragon),
             id: Uuid::new_v4(),
             elemental_theme: my_dragon_theme,
-            health: 10,
+            health: 10000,
             max_health: 20,
             image: my_dragon_image,
             input: DragonInput::default(),
@@ -35,7 +35,7 @@ pub fn setup_dragons(
                 spawn_home: my_dragon_spawn_home,
                 velocity: Vec3::ZERO,
                 acceleration: Vec3::ZERO,
-                max_velocity: 15.0,
+                max_velocity: 20.0,
                 motion_timer: Timer::from_seconds(0.02, TimerMode::Repeating),
                 firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
                 flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
@@ -91,7 +91,7 @@ pub fn setup_dragons(
                     spawn_home: ice_dragon_spawn_home,
                     velocity: Vec3::ZERO,
                     acceleration: Vec3::ZERO,
-                    max_velocity: 8.0,
+                    max_velocity: 0.0,
                     motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
                     firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
                     flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
@@ -146,7 +146,7 @@ pub fn setup_dragons(
                     spawn_home: rock_dragon_spawn_home,
                     velocity: Vec3::ZERO,
                     acceleration: Vec3::ZERO,
-                    max_velocity: 5.0,
+                    max_velocity: 0.0,
                     motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
                     firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
                     flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
@@ -181,7 +181,7 @@ pub fn setup_dragons(
                     spawn_home: water_dragon_spawn_home,
                     velocity: Vec3::ZERO,
                     acceleration: Vec3::ZERO,
-                    max_velocity: 5.0,
+                    max_velocity: 0.0,
                     motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
                     firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
                     flip_timer: Timer::from_seconds(0.2, TimerMode::Once),

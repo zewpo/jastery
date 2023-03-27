@@ -16,8 +16,11 @@ impl Plugin for GamePlayPlugin {
             projectile_movement_system,
             projectile_collision_system,
             ice_dragon_ai_system,
-            game_over_trigger
-        ).in_set(OnUpdate(GamePhase::Playing)));
+            game_over_trigger,
+        ).in_set(OnUpdate(GamePhase::Playing)))
+
+        .add_system(draw_cell_grids_system.in_schedule(OnEnter(GamePhase::Playing)))
+        ;
     }
 }
 
