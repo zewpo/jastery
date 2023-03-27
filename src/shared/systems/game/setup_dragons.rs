@@ -1,28 +1,11 @@
-// src\shared\systems\game\setup.rs
+// src\shared\systems\game\setup_dragons.rs
 
 use bevy::prelude::*;
 use uuid::Uuid;
 
 use crate::shared::components::*;
 
-pub struct GameSetupPlugin;
-
-impl Plugin for GameSetupPlugin {
-    fn build(&self, app: &mut App) {
-        app
-        .add_systems((
-            setup_maze,
-            setup_dragons,
-        ).in_schedule(OnEnter(GamePhase::Setup)))
-        .add_system(setup_completion.in_set(OnUpdate(GamePhase::Setup)));
-    }
-}
-
-fn setup_completion(mut game_phase: ResMut<NextState<GamePhase>>){
-    game_phase.set(GamePhase::Playing);
-}
-
-fn setup_dragons(
+pub fn setup_dragons(
         mut commands: Commands,
         resource_cache: Res<ResourceCache>,
     ) {
@@ -108,7 +91,7 @@ fn setup_dragons(
                     spawn_home: ice_dragon_spawn_home,
                     velocity: Vec3::ZERO,
                     acceleration: Vec3::ZERO,
-                    max_velocity: 0.0,
+                    max_velocity: 8.0,
                     motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
                     firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
                     flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
@@ -139,31 +122,31 @@ fn setup_dragons(
 
 
 
-    // Spawn an enemy Fire Dragon into the game.
-    let fire_dragon_spawn_home = Vec3::new(1000., -400., 0.);
-    let fire_dragon_theme = ElementalTheme::Fire;
-    let fire_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(fire_dragon_theme));
+    // Spawn an enemy Rock Dragon into the game.
+    let rock_dragon_spawn_home = Vec3::new(1000., -400., 0.);
+    let rock_dragon_theme = ElementalTheme::Rock;
+    let rock_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(rock_dragon_theme));
     commands.spawn( DragonBundle {
             sprite_bundle: SpriteBundle {
-                texture: fire_dragon_image.handle(),
-                transform: Transform::from_translation(fire_dragon_spawn_home),
+                texture: rock_dragon_image.handle(),
+                transform: Transform::from_translation(rock_dragon_spawn_home),
                 ..default()
             },
             dragon: Dragon {
                 my_dragon: None,
                 game_piece: GamePiece,
                 id: Uuid::new_v4(), 
-                elemental_theme: fire_dragon_theme,
+                elemental_theme: rock_dragon_theme,
                 health: 10,
                 max_health: 20,
-                image: fire_dragon_image,
+                image: rock_dragon_image,
             
                 input: DragonInput::default(),
                 action: DragonAction {
-                    spawn_home: fire_dragon_spawn_home,
+                    spawn_home: rock_dragon_spawn_home,
                     velocity: Vec3::ZERO,
                     acceleration: Vec3::ZERO,
-                    max_velocity: 0.0,
+                    max_velocity: 5.0,
                     motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
                     firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
                     flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
@@ -173,65 +156,4 @@ fn setup_dragons(
     });
     println!("Setup Dragons DONE.");
 }
-
-
-fn setup_maze(
-    mut commands: Commands,
-    resource_cache: Res<ResourceCache>,
-) {
-    println!("Setup Maze");
-    //let wall_images = &resource_cache.wall_images;
-
-    let mut maze = [
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    ];
-    maze.reverse();
-
-    let wall_image = resource_cache.get_collidable_image(CollidableClassifier::Wall(WallShape::Straight));
-    let wall_width = wall_image.width_i32();
-    let wall_height = wall_image.height_i32();
-
-    // Spawn Wall blocks into the game.
-    for (i, row) in maze.iter().enumerate() {
-        for (j, cell) in row.iter().enumerate() {
-            if *cell == 1 {
-                let x = (j * wall_width as usize) as f32 - 1600.0;
-                let y = (i * wall_height as usize) as f32 - 1000.0;
-                commands.spawn(WallBundle {
-                    game_piece: GamePiece,
-                    sprite_bundle: SpriteBundle {
-                        texture: wall_image.handle(),
-                        transform: Transform::from_xyz(x, y, -1.0),
-                        ..default()
-                    },
-                    wall: Wall { 
-                        shape: WallShape::Straight,
-                        image: wall_image.clone(),
-                    },
-                });
-            }
-        }
-    }
-}
-
 
