@@ -1,38 +1,52 @@
+use std::sync::Arc;
+
 use bevy::prelude::*;
 
 use uuid::Uuid;
-use crate::shared::components::{
-    ElementalTheme,
-    CollidableImage,
-    GamePiece
-};
+use super::*;
+// use crate::shared::components::{
+//     ElementalTheme,
+//     CollidableImage,
+//     GamePiece
+// };
 //Dragon, DragonImage, MyDragon, MyDragonBundle, DragonBundle, DragonInput, and DragonAction 
 
 
 
-pub struct DragonImage {
-    pub elemental_theme: ElementalTheme,
-    pub image: CollidableImage
-}
+// pub struct DragonImage {
+//     pub elemental_theme: ElementalTheme,
+//     pub image: CollidableImage
+// }
 
-impl DragonImage {
-    pub fn height(&self) -> i32 {
-        self.image.height()
-    }
-    pub fn width(&self) -> i32 {
-        self.image.width()
-    }
-    pub fn size(&self) -> Vec2 {
-        Vec2::new(self.image.width() as f32, self.image.height() as f32)
-    }
-}
+// // impl DragonImage {
+//     pub fn height(&self) -> i32 {
+//         self.image.height()
+//     }
+//     pub fn width(&self) -> i32 {
+//         self.image.width()
+//     }
+//     pub fn size_vec2(&self) -> Vec2 {
+//         Vec2::new(self.image.width() as f32, self.image.height() as f32)
+//     }
+//     pub fn size_i32(&self) -> (i32, i32) {
+//         (self.image.width(), self.image.height())
+//     }
+//     pub fn handle(&self) -> Handle<Image> {
+//         self.image.file_handle
+//     }
+// // }
 
 #[derive(Component)]
-pub struct Dragon{
+pub struct Dragon {
+    pub game_piece: GamePiece,
+    pub input: DragonInput,
+    pub action: DragonAction,
     pub id: Uuid,
     pub elemental_theme: ElementalTheme,
     pub health: i32,
     pub max_health: i32,
+    pub image: Arc<CollidableImage>,
+    pub my_dragon: Option<MyDragon>,
 }
 
 // struct HealthText {
@@ -46,24 +60,21 @@ pub struct HealthText;
 #[derive(Component)]
 pub struct MyDragon;
 
-#[derive(Bundle)]
-pub struct MyDragonBundle {
-    #[bundle]
-    pub dragon_bundle: DragonBundle,
-    pub my_dragon: MyDragon,
-}
+// #[derive(Bundle)]
+// pub struct MyDragonBundle {
+//     #[bundle]
+//     pub dragon_bundle: DragonBundle,
+//     pub my_dragon: MyDragon,
+// }
 
 #[derive(Bundle)]
 pub struct DragonBundle {
-    pub game_piece: GamePiece,
     #[bundle]
     pub sprite_bundle: SpriteBundle,
-    pub input: DragonInput,
-    pub movement: DragonAction,
     pub dragon: Dragon,
 }
 
-#[derive(Component, Default)]
+#[derive(Default)]
 pub struct DragonInput {
     pub move_direction: Vec3,
     pub fire_direction: Vec3,
@@ -72,7 +83,7 @@ pub struct DragonInput {
     pub fire: bool,
 }
 
-#[derive(Component)]
+// #[derive(Component)]
 pub struct DragonAction {
     pub spawn_home: Vec3,
     pub velocity: Vec3,

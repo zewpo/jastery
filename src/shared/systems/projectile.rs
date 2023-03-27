@@ -1,35 +1,35 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide};
-use crate::shared::components::{dragon::*, resource_cache::*, projectile::*, wall::*, game::*};
+use crate::shared::components::{dragon::*, resource_cache::*, projectile::*, wall::*, game::*, CollidableClassifier};
 
 pub fn projectile_spawn_system(
     time: Res<Time>,
-    mut dragon_query: Query<(&Dragon, &mut DragonAction, &mut DragonInput, &Transform)>,
+    mut dragon_query: Query<(&mut Dragon, &Transform)>,
     mut commands: Commands,
     resource_cache: Res<ResourceCache>,
 ) {
-    for (dragon, mut dragon_action, dragon_input, dragon_transform) in dragon_query.iter_mut() {
+    for (mut dragon, dragon_transform) in dragon_query.iter_mut() {
     
-        if dragon_input.fire && dragon_action.firerate_timer.tick(time.delta()).just_finished() { 
-            if let Some(projectile_image) = resource_cache.projectile_images.get(&dragon.elemental_theme) {
-            
+        if dragon.input.fire && dragon.action.firerate_timer.tick(time.delta()).just_finished() { 
+            // if let Some(projectile_image) = resource_cache.projectile_images.get(&dragon.elemental_theme) {
+            let projectile_image = resource_cache.get_collidable_image(CollidableClassifier::Projectile(dragon.elemental_theme));
                 //let mut projectile_direction = dragon_action.velocity.normalize_or_zero();
 
-                let mut projectile_direction = dragon_input.fire_direction.normalize_or_zero();
+                let mut projectile_direction = dragon.input.fire_direction.normalize_or_zero();
 
                 if projectile_direction == Vec3::ZERO {
-                    if dragon_input.move_direction == Vec3::ZERO {
-                        if dragon_action.velocity == Vec3::ZERO {
+                    if dragon.input.move_direction == Vec3::ZERO {
+                        if dragon.action.velocity == Vec3::ZERO {
                             projectile_direction.x = 1.0 * dragon_transform.scale.x.signum();
                         } else {
-                            projectile_direction = dragon_action.velocity.normalize_or_zero();
+                            projectile_direction = dragon.action.velocity.normalize_or_zero();
                         }
                     } else {
-                        projectile_direction = dragon_input.move_direction.normalize_or_zero();
+                        projectile_direction = dragon.input.move_direction.normalize_or_zero();
                     }
                 }
 
                 // Calculate the speed of the projectile based on the dragon's velocity.
-                let projectile_speed = (projectile_direction * 500.0) + 10.0*dragon_action.velocity;//(250.0 + 75.0 * dragon_action.velocity.length());
+                let projectile_speed = (projectile_direction * 500.0) + 10.0*dragon.action.velocity;//(250.0 + 75.0 * dragon_action.velocity.length());
 
                 // Calculate the rotation of the projectile image, based on its velocity direction.
                 let projectile_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), projectile_direction.truncate().extend(0.));
@@ -38,7 +38,7 @@ pub fn projectile_spawn_system(
                 commands.spawn(ProjectileBundle {
                     game_piece: GamePiece,
                     sprite_bundle: SpriteBundle {
-                        texture: projectile_image.file_handle.clone(),
+                        texture: projectile_image.handle(),
                         transform: Transform {
                             translation: dragon_transform.translation + Vec3::new(110.0 * dragon_transform.scale.x.signum(), 30.0, 0.0),
                             rotation: projectile_rotation,
@@ -50,9 +50,13 @@ pub fn projectile_spawn_system(
                         speed: projectile_speed,
                         despawn_timer: Timer::from_seconds(2.4, TimerMode::Once), // Set the timeout duration here
                     },
-                    projectile: Projectile { elemental_theme: dragon.elemental_theme }
+                    projectile: Projectile { 
+                        elemental_theme: dragon.elemental_theme,
+                        image: projectile_image,
+                        shot_by: dragon.id, 
+                        }
                 });
-            }
+            // }
         }
     }
 }

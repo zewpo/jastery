@@ -6,15 +6,16 @@ use std::collections::{HashMap, HashSet};
 // use std::fs::File;
 use std::fs::File;
 use std::io::Write;
+use std::sync::Arc;
 
-use crate::shared::components::CollidableImage;
-use crate::shared::components::I32ImageSize;
-// use image::GenericImageView;
-use crate::shared::components::dragon::*;
-use crate::shared::components::elemental_theme::*;
-use crate::shared::components::projectile::*;
-use crate::shared::components::resource_cache::*;
-use crate::shared::components::wall::*;
+use crate::shared::components::*;
+// use crate::shared::components::I32ImageSize;
+// // use image::GenericImageView;
+// use crate::shared::components::dragon::*;
+// use crate::shared::components::elemental_theme::*;
+// use crate::shared::components::projectile::*;
+// use crate::shared::components::resource_cache::*;
+// use crate::shared::components::wall::*;
 
 pub struct ResourceCachePlugin;
 
@@ -150,52 +151,13 @@ pub fn preload_resources(
 
     // Preload the walls
     for (shape, path) in wall_shape_file_names {
-        let file_handle: Handle<Image> = asset_server.load(path);
+        let image_handle: Handle<Image> = asset_server.load(path);
         let pixel_data = load_image_data(path);
-        let size = I32ImageSize::from(&pixel_data);// (pixel_data.width() as i32, pixel_data.height() as i32);
+        let size = ImageSizeI32::from(&pixel_data);// (pixel_data.width() as i32, pixel_data.height() as i32);
         //let wall_size = wall_image.size().extend(0.0) * wall_transform.scale.abs();
         
         let opaque_pixel_cells = get_opaque_pixel_cells(&pixel_data, CELL_SIZE);
         
-        // let mut cell_keys: Vec<&(i32, i32)> = opaque_pixel_cells.keys().collect();
-        // cell_keys.sort();
-
-        // for cell_key in cell_keys {
-        //     println!("Cell key: {:?}", cell_key);
-        // }
-
-        // for (cell_key, pixel_set) in opaque_pixel_cells.iter() {
-        //     println!("Cell key: {:?}", cell_key);
-        //     // println!("Pixel set: {:?}", pixel_set);
-        // }
-        
-        let wall_image = WallImage {
-            shape,
-            image:  CollidableImage {
-                size,
-                pixel_data,
-                file_handle,
-                opaque_pixel_cells
-            }
-            // size: wall_size,
-            // image: wall_image_data,
-            // file_handle: wall_handle,
-            // opaque_pixel_cells,
-        };
-
-        resource_cache.wall_images.insert(shape, wall_image);
-    }
-
-    // Preload the Dragons and the Projectiles
-    for (elemental_theme, dragon_image_file_path, projectile_image_file_path) in theme_image_file_names {
-        
-        let file_handle: Handle<Image> = asset_server.load(dragon_image_file_path);
-        let pixel_data = load_image_data(dragon_image_file_path);
-        let size = I32ImageSize::from(&pixel_data);  //  (pixel_data.width() as i32, pixel_data.height() as i32);
-
-        let opaque_pixel_cells = get_opaque_pixel_cells(&pixel_data, CELL_SIZE);
-
-
         //////////////////////////////////////////////////////////////
         // debugging where the opaque cells are
         let mut cell_keys: Vec<&(i32, i32)> = opaque_pixel_cells.keys().collect();
@@ -205,7 +167,7 @@ pub fn preload_resources(
         let mut prev_cell_x: Option<i32> = None;
 
         // Create a new file or truncate an existing file
-        let mut file = File::create("output.txt").expect("Unable to create file");
+        let mut file = File::create("wall_output.txt").expect("Unable to create file");
 
         writeln!(&mut file, "\n\n").expect("Unable to write to file");
         for cell_key in cell_keys {
@@ -241,28 +203,107 @@ pub fn preload_resources(
         /////////////////////////////////////////////////////
 
 
-        let dragon_image = DragonImage {
-            elemental_theme,
-            image:  CollidableImage {
+
+        // let mut cell_keys: Vec<&(i32, i32)> = opaque_pixel_cells.keys().collect();
+        // cell_keys.sort();
+
+        // for cell_key in cell_keys {
+        //     println!("Cell key: {:?}", cell_key);
+        // }
+
+        // for (cell_key, pixel_set) in opaque_pixel_cells.iter() {
+        //     println!("Cell key: {:?}", cell_key);
+        //     // println!("Pixel set: {:?}", pixel_set);
+        // }
+        
+        let wall_image = Arc::new(CollidableImage {
                 size,
                 pixel_data,
-                file_handle,
-                opaque_pixel_cells
+                image_handle,
+                opaque_pixel_cells,
+                classifier: CollidableClassifier::Wall(WallShape::Straight),
+        });
+        resource_cache.wall_images.insert(shape, wall_image);
+    }
+
+    // Preload the Dragons and the Projectiles
+    for (elemental_theme, dragon_image_file_path, projectile_image_file_path) in theme_image_file_names {
+        
+        let dragon_image_handle: Handle<Image> = asset_server.load(dragon_image_file_path);
+        let dragon_image_pixel_data = load_image_data(dragon_image_file_path);
+        let dragon_image_size = ImageSizeI32::from(&dragon_image_pixel_data);  //  (pixel_data.width() as i32, pixel_data.height() as i32);
+
+        let dragon_image_opaque_pixel_cells = get_opaque_pixel_cells(&dragon_image_pixel_data, CELL_SIZE);
+
+        //////////////////////////////////////////////////////////////
+        // debugging where the opaque cells are
+        let mut cell_keys: Vec<&(i32, i32)> = dragon_image_opaque_pixel_cells.keys().collect();
+        cell_keys.sort_by(|a, b| (a.1, a.0).cmp(&(b.1, b.0)));
+
+        let mut current_cell_y = None;
+        let mut prev_cell_x: Option<i32> = None;
+
+        // Create a new file or truncate an existing file
+        let mut file = File::create("dragon_output.txt").expect("Unable to create file");
+
+        writeln!(&mut file, "\n\n").expect("Unable to write to file");
+        for cell_key in cell_keys {
+            if current_cell_y.is_some() && current_cell_y != Some(cell_key.1) {
+                writeln!(&mut file, "").expect("Unable to write to file");
+                prev_cell_x = None;
             }
-        };
-       
+
+            // Print X number of tabs at the beginning of the line when starting a new line
+            if current_cell_y != Some(cell_key.1) {
+                for _ in 0..cell_key.0 {
+                    write!(&mut file, "\t").expect("Unable to write to file");
+                }
+            }
+
+            // Insert tab characters based on the difference in x values of consecutive cells
+            if let Some(prev_x) = prev_cell_x {
+                for _ in 0..(cell_key.0 - prev_x - 1) {
+                    write!(&mut file, "\t").expect("Unable to write to file");
+                }
+            }
+
+            current_cell_y = Some(cell_key.1);
+            prev_cell_x = Some(cell_key.0);
+
+            // Format cell_key with fixed width of 8 characters
+            let formatted_cell_key = format!("({:2},{:2})", cell_key.0, cell_key.1);
+            write!(&mut file, "{:8}", formatted_cell_key).expect("Unable to write to file");
+        }
+        writeln!(&mut file, "\n\n").expect("Unable to write to file");
+
+
+        /////////////////////////////////////////////////////
+
+
+        let dragon_image = Arc::new(CollidableImage {
+            classifier: CollidableClassifier::Dragon(elemental_theme),
+            size: dragon_image_size,
+            pixel_data: dragon_image_pixel_data,
+            image_handle: dragon_image_handle,
+            opaque_pixel_cells: dragon_image_opaque_pixel_cells,
+        });
         resource_cache.dragon_images.insert(elemental_theme, dragon_image);
 
-        let projectile_handle: Handle<Image> = asset_server.load(projectile_image_file_path);
-        let projectile_image_data = load_image_data(projectile_image_file_path);
-        let projectile_size = Vec2::new(projectile_image_data.width() as f32, projectile_image_data.height() as f32);
 
-        let projectile_image = ProjectileImage {
-            size: projectile_size,
-            image: projectile_image_data,
-            file_handle: projectile_handle,
-            elemental_theme,
-        };
+        let projectile_image_handle: Handle<Image> = asset_server.load(projectile_image_file_path);
+        let projectile_image_pixel_data = load_image_data(projectile_image_file_path);
+        //let projectile_size = Vec2::new(projectile_image_data.width() as f32, projectile_image_data.height() as f32);
+        let projectile_image_size = ImageSizeI32::from(&projectile_image_pixel_data);
+        
+        let projectile_image_opaque_pixel_cells = get_opaque_pixel_cells(&projectile_image_pixel_data, CELL_SIZE);
+
+        let projectile_image = Arc::new (CollidableImage {
+            classifier: CollidableClassifier::Projectile(elemental_theme),
+            size: projectile_image_size,
+            image_handle: projectile_image_handle,
+            pixel_data: projectile_image_pixel_data,
+            opaque_pixel_cells: projectile_image_opaque_pixel_cells,
+        });
         resource_cache.projectile_images.insert(elemental_theme, projectile_image);
     }
 

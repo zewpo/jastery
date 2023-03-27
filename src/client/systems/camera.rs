@@ -8,7 +8,7 @@ pub struct GameCameraPlugin;
 impl Plugin for GameCameraPlugin {
     fn build(&self, app: &mut App) {
         app
-            .insert_resource(CameraScale(3.0))
+            .insert_resource(CameraScale(1.0))
             .add_startup_system(setup_camera)
             .add_system(camera_follow_system.in_set(OnUpdate(GamePhase::Playing)));
     }
@@ -30,21 +30,21 @@ pub fn setup_camera(
             scale: camera_scale.0,
         },
     ));
+
 }
 
 pub fn camera_follow_system(
     time: Res<Time>,
-    dragon_query: Query<(&Transform, &Handle<Image>, &DragonAction), (With<MyDragon>,Without<GameCamera>)>,
-    mut camera_query: Query<(&mut Transform, &GameCamera), With<GameCamera>>,
+    dragon_query: Query<(&mut Dragon, &Transform), (With<MyDragon>,Without<GameCamera>)>,
+    mut camera_query: Query<(&GameCamera, &mut Transform), With<GameCamera>>,
     windows: Query<&Window>,
-    images: Res<Assets<Image>>,
+    // images: Res<Assets<Image>>,
 ) {
     let window = windows.single();
-    let (mut camera_transform, game_camera) = camera_query.single_mut();
-    let (dragon_transform, dragon_handle, _dragon_action) = dragon_query.single();
+    let (game_camera, mut camera_transform ) = camera_query.single_mut();
+    let (dragon, dragon_transform) = dragon_query.single();
 
-    let dragon_image = images.get(dragon_handle).unwrap();
-    let scaled_dragon_size = Vec2::new(dragon_image.size().x * dragon_transform.scale.x.abs(), dragon_image.size().y * dragon_transform.scale.y.abs());
+    let scaled_dragon_size = Vec2::new(dragon.image.width_f32() * dragon_transform.scale.x.abs(), dragon.image.height_f32() * dragon_transform.scale.y.abs());
 
     let dragon_left_edge = dragon_transform.translation.x - (scaled_dragon_size.x / 2.0);
     let dragon_right_edge = dragon_left_edge + scaled_dragon_size.x;

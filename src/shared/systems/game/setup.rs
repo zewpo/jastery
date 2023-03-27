@@ -3,13 +3,7 @@
 use bevy::prelude::*;
 use uuid::Uuid;
 
-use crate::shared::components::{
-    ResourceCache,
-    ElementalTheme, 
-    dragon::*,
-    game::*, 
-    wall::*
-};
+use crate::shared::components::*;
 
 pub struct GameSetupPlugin;
 
@@ -33,23 +27,29 @@ fn setup_dragons(
         resource_cache: Res<ResourceCache>,
     ) {
     println!("Setup Dragons.");
-    let dragon_images = &resource_cache.dragon_images;
-
+    //let dragon_images = &resource_cache.dragon_images;
+    
     // Spawn the Fire Dragon into the game.
-    let mydragon_spawn_home = Vec3::new(100., 0., 0.);
-    let mydragon_theme = ElementalTheme::Fire;
-    let _dragon_entity = commands.spawn(MyDragonBundle {
-        my_dragon: MyDragon,
-        dragon_bundle: DragonBundle {
+    let my_dragon_spawn_home = Vec3::new(0., 0., 0.);
+    let my_dragon_theme = ElementalTheme::Fire;
+    let my_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(my_dragon_theme));
+    let _my_dragon_entity = commands.spawn( (MyDragon, DragonBundle {
+        sprite_bundle: SpriteBundle {
+            texture: my_dragon_image.handle(), //dragon_images.get(&mydragon_theme).unwrap().image.file_handle.clone(),
+            transform: Transform::from_translation(my_dragon_spawn_home),
+            ..default()
+        },
+        dragon: Dragon {
+            my_dragon: Some(MyDragon),
+            id: Uuid::new_v4(),
+            elemental_theme: my_dragon_theme,
+            health: 10,
+            max_health: 20,
+            image: my_dragon_image,
             game_piece: GamePiece,
-            sprite_bundle: SpriteBundle {
-                texture: dragon_images.get(&mydragon_theme).unwrap().image.file_handle.clone(),
-                transform: Transform::from_translation(mydragon_spawn_home),
-                ..default()
-            },
             input: DragonInput::default(),
-            movement: DragonAction {
-                spawn_home: mydragon_spawn_home,
+            action: DragonAction {
+                spawn_home: my_dragon_spawn_home,
                 velocity: Vec3::ZERO,
                 acceleration: Vec3::ZERO,
                 max_velocity: 15.0,
@@ -58,12 +58,10 @@ fn setup_dragons(
                 flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
                 flipping: false,
             },
-            dragon: Dragon {
-                id: Uuid::new_v4(),
-                elemental_theme: mydragon_theme,
-                health: 10,
-                max_health: 20,
-            },
+        },
+         
+            // },
+            
             // health_text_bundle: Text2dBundle { 
             //     text: Text::from_section(
             //         format!("HealthX: {}", 10),
@@ -82,40 +80,43 @@ fn setup_dragons(
             //     // visibility: (), 
             //     // computed_visibility: () 
             // },
-        },
-    }).id();
+    } )).id();
 
 
 
-    // Spawn an Ice Dragon into the game.
-    let icedragon_spawn_home = Vec3::new(1400., 0., 0.);
+    // Spawn an enemy Ice Dragon into the game.
+    let ice_dragon_spawn_home = Vec3::new(1400., 0., 0.);
     let ice_dragon_theme = ElementalTheme::Ice;
-
+    let ice_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(ice_dragon_theme));
     commands.spawn( DragonBundle {
-            game_piece: GamePiece,
             sprite_bundle: SpriteBundle {
-                // texture: asset_server.load("sprites/ice-dragon.png"),
-                texture: dragon_images.get(&ice_dragon_theme).unwrap().image.file_handle.clone(),
-                transform: Transform::from_translation(icedragon_spawn_home),  //from_xyz(1200., 0., 0.),
+                texture: ice_dragon_image.handle(), // dragon_images.get(&ice_dragon_theme).unwrap().image.file_handle.clone(),
+                transform: Transform::from_translation(ice_dragon_spawn_home),  //from_xyz(1200., 0., 0.),
                 ..default()
             },
-            input: DragonInput::default(),
-            movement: DragonAction {
-                spawn_home: icedragon_spawn_home,
-                velocity: Vec3::ZERO,
-                acceleration: Vec3::ZERO,
-                max_velocity: 0.0,
-                motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
-                firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
-                flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
-                flipping: false,
-            },
-            dragon: Dragon { 
+            dragon: Dragon {
+                my_dragon: None,
+                game_piece: GamePiece,
                 id: Uuid::new_v4(), 
                 elemental_theme: ice_dragon_theme,
                 health: 10,
                 max_health: 20,
+                image: ice_dragon_image,
+            
+                input: DragonInput::default(),
+                action: DragonAction {
+                    spawn_home: ice_dragon_spawn_home,
+                    velocity: Vec3::ZERO,
+                    acceleration: Vec3::ZERO,
+                    max_velocity: 0.0,
+                    motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+                    firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
+                    flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
+                    flipping: false,
+                },
+                
             },
+
             // health_text_bundle: Text2dBundle { 
             //     text: Text::from_section(
             //         format!("Health: {}", 10),
@@ -135,6 +136,41 @@ fn setup_dragons(
             //     // computed_visibility: () 
             // }
     });
+
+
+
+    // Spawn an enemy Fire Dragon into the game.
+    let fire_dragon_spawn_home = Vec3::new(1000., -400., 0.);
+    let fire_dragon_theme = ElementalTheme::Fire;
+    let fire_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(fire_dragon_theme));
+    commands.spawn( DragonBundle {
+            sprite_bundle: SpriteBundle {
+                texture: fire_dragon_image.handle(),
+                transform: Transform::from_translation(fire_dragon_spawn_home),
+                ..default()
+            },
+            dragon: Dragon {
+                my_dragon: None,
+                game_piece: GamePiece,
+                id: Uuid::new_v4(), 
+                elemental_theme: fire_dragon_theme,
+                health: 10,
+                max_health: 20,
+                image: fire_dragon_image,
+            
+                input: DragonInput::default(),
+                action: DragonAction {
+                    spawn_home: fire_dragon_spawn_home,
+                    velocity: Vec3::ZERO,
+                    acceleration: Vec3::ZERO,
+                    max_velocity: 0.0,
+                    motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+                    firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
+                    flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
+                    flipping: false,
+                },
+            },
+    });
     println!("Setup Dragons DONE.");
 }
 
@@ -144,7 +180,7 @@ fn setup_maze(
     resource_cache: Res<ResourceCache>,
 ) {
     println!("Setup Maze");
-    let wall_images = &resource_cache.wall_images;
+    //let wall_images = &resource_cache.wall_images;
 
     let mut maze = [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -156,9 +192,9 @@ fn setup_maze(
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -171,35 +207,31 @@ fn setup_maze(
     ];
     maze.reverse();
 
-    if let Some(wall_image) =  wall_images.get(&WallShape::Straight) {
-        let wall_width = wall_image.width();
-        let wall_height = wall_image.height();
+    let wall_image = resource_cache.get_collidable_image(CollidableClassifier::Wall(WallShape::Straight));
+    let wall_width = wall_image.width_i32();
+    let wall_height = wall_image.height_i32();
 
-        // Spawn Wall blocks into the game.
-        for (i, row) in maze.iter().enumerate() {
-            for (j, cell) in row.iter().enumerate() {
-                if *cell == 1 {
-                    let x = (j * wall_width as usize) as f32 - 1600.0;
-                    let y = (i * wall_height as usize) as f32 - 1000.0;
-                    commands.spawn(WallBundle {
-                        game_piece: GamePiece,
-                        sprite_bundle: SpriteBundle {
-                            texture: wall_image.image.file_handle.clone(),
-                            transform: Transform::from_xyz(x, y, -1.0),
-                            ..default()
-                        },
-                        wall: Wall { shape: WallShape::Straight },
-                    });
-                }
+    // Spawn Wall blocks into the game.
+    for (i, row) in maze.iter().enumerate() {
+        for (j, cell) in row.iter().enumerate() {
+            if *cell == 1 {
+                let x = (j * wall_width as usize) as f32 - 1600.0;
+                let y = (i * wall_height as usize) as f32 - 1000.0;
+                commands.spawn(WallBundle {
+                    game_piece: GamePiece,
+                    sprite_bundle: SpriteBundle {
+                        texture: wall_image.handle(),
+                        transform: Transform::from_xyz(x, y, -1.0),
+                        ..default()
+                    },
+                    wall: Wall { 
+                        shape: WallShape::Straight,
+                        image: wall_image.clone(),
+                    },
+                });
             }
         }
-
-       
-    } else {
-        println!("Setup Maze - Image not loaded yet...");
     }
-    println!("Setup Maze DONE.");
-    // next_state.set(AppState::Running);
 }
 
 

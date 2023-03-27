@@ -6,8 +6,9 @@ use bevy::{
     ui::Interaction,
 };
 
+use crate::client::components::game_camera::GameCamera;
 use crate::shared::components::resource_cache::ResourceCache;
-use crate::shared::components::game::*;
+use crate::shared::components::{game::*, MyDragon};
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
@@ -57,6 +58,7 @@ impl Plugin for ScreenManagerPlugin {
 
             .add_system(setup_game_play_screen.in_schedule(OnEnter(AppScreen::InPlay)))
             .add_system(game_monitor.in_set(OnUpdate(AppScreen::InPlay)))
+            .add_system(dragon_position_text_system.in_set(OnUpdate(GamePhase::Playing)))
 
             .add_system(setup_game_over_screen.in_schedule(OnEnter(AppScreen::GameOver)))
             .add_system(handle_menu_interaction.in_set(OnUpdate(AppScreen::GameOver)))
@@ -338,6 +340,39 @@ fn setup_game_over_screen(
 }
 
 
+fn dragon_position_text_system(
+    windows: Query<&Window>,
+    mut query: Query<&mut Text>,
+    // mouse_button_input: Res<Input<MouseButton>>,
+    // mut mouse_motion_events: EventReader<MouseMotion>,
+    // mut cursor_moved_events: EventReader<CursorMoved>,
+    dragon_query: Query<(&Transform, &Handle<Image>), (With<MyDragon>,Without<GameCamera>)>,
+) {
+    let window = windows.single();
+    let _window_size = Vec2::new(window.width(), window.height());
+    
+    let (dragon_transform, _dragon_handle) = dragon_query.single();
+
+    // for event in mouse_motion_events.iter() {
+    //     info!("{:?}", event);
+    // }
+
+    // for event in cursor_moved_events.iter() {
+    //     info!("{:?}", event );
+    //     // event.position - window_size / 2.0
+    // }
+
+    if let Some(mut text) = query.iter_mut().next() {        
+        text.sections[0].value = format!("Dragon Position: ({:.1}, {:.1})", dragon_transform.translation.x, dragon_transform.translation.y);
+
+        // if mouse_button_input.pressed(MouseButton::Left) {
+        //     let cursor_position = window.cursor_position().unwrap_or_default();
+        //     let world_position = cursor_position - window_size / 2.0;
+        //     text.sections[0].value = format!("Mouse Position: ({:.1}, {:.1})", world_position.x, world_position.y);
+        // }
+    }
+}
+
 // fn handle_game_over_input(
 //     mut next_state: ResMut<NextState<AppState>>,
 //     keyboard_input: Res<Input<KeyCode>>,
@@ -385,13 +420,35 @@ fn handle_menu_interaction(
     }
 }
 
-fn setup_game_play_screen( 
+fn setup_game_play_screen(
+    mut commands: Commands,
     // app_screen: Res<State<AppScreen>>, 
     // mut next_app_screen: ResMut<NextState<AppScreen>>,
     mut game_phase: ResMut<NextState<GamePhase>>,
-    // game_status: Res<GameStatus>,
+    resource_cache: Res<ResourceCache>,
 ){
     println!("setup_game_play_screen");
+
+    let font: Handle<Font> =  resource_cache.gui_fonts.get("FiraSans-Bold").unwrap().clone();
+    
+    // Create a text element to display the mouse coordinates
+    commands.spawn(TextBundle {
+        style: Style {
+            align_self: AlignSelf::FlexEnd,
+            ..Default::default()
+        },
+        text: Text::from_section(
+            "Mouse Position: ",
+            TextStyle {
+                font: font.clone(),
+                font_size: 30.0,
+                color: Color::WHITE,
+            },
+        ),
+        ..Default::default()
+    });
+
+
     // if game_status.phase == GamePhase::ToBeDefined {
         game_phase.set(GamePhase::Setup);
     // }

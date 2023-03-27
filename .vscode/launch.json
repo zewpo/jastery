@@ -13,8 +13,6 @@
                     "build",
                     "--bin=jastery",
                     "--package=jastery",
-                    "--manifest-path",
-                    "${workspaceFolder}/Cargo.toml"
                 ],
                 "filter": {
                     "name": "jastery",
@@ -23,9 +21,9 @@
             },
             "args": [],
             "cwd": "${workspaceFolder}",
-            // "env": {
-            //     "CARGO_MANIFEST_DIR": "${workspaceFolder}",
-            // }
+            "env": {
+                "CARGO_MANIFEST_DIR": "${workspaceFolder}",
+            }
         },
         {
             "type": "lldb",

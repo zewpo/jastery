@@ -28,9 +28,10 @@ fn main() {
             }),
             ..default()
         }))
+        // .add_plugin(DebugLinesPlugin)
         .add_plugin(UIPlugin)
         .add_plugin(ResourceCachePlugin)
-        .add_plugin(GamePlugin)
+        .add_plugin(GamePlugin)        
         .run();
 }
 
