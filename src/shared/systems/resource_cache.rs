@@ -33,35 +33,40 @@ impl Plugin for ResourceCachePlugin {
     }
 }
 
-fn load_image_data(path: &str) -> DynamicImage {
+
+fn load_collidable_image(
+    asset_server: &AssetServer,
+    path: &str,
+    classifier: CollidableClassifier,
+) -> Arc<CollidableImage> {
+
+    let image_handle: Handle<Image> = asset_server.load(path);
     let image_bytes = std::fs::read( "assets/".to_owned() + path).expect("Failed to read image file");
-    let image_data = image::load_from_memory(&image_bytes).expect("Failed to load image data");
-    
-    image_data
+    let pixel_data = image::load_from_memory(&image_bytes).expect("Failed to load image data");
+
+    let size: ImageSizeI32 = ImageSizeI32::from(&pixel_data);
+
+    let opaque_pixel_cells: HashMap<(i32, i32), HashSet<(i32, i32)>> = get_opaque_pixel_cells(&pixel_data);
+
+    Arc::new(CollidableImage {
+        size,
+        pixel_data,
+        image_handle,
+        opaque_pixel_cells,
+        classifier,
+    })
+
 }
 
-
-// fn find_opaque_pixel_cells(image: &DynamicImage) -> std::collections::HashSet<(u32, u32)> {
-//     let mut opaque_pixel_cells = std::collections::HashSet::new();
-//     let width = image.width();
-//     let height = image.height();
-
-//     for x in 0..width {
-//         for y in 0..height {
-//             let pixel = image.get_pixel(x, y);
-//             if pixel[3] != 0 { // If the alpha channel is not transparent
-//                 opaque_pixel_cells.insert((x, y));
-//             }
-//         }
-//     }
-//     opaque_pixel_cells
-// }
 fn get_opaque_pixel_cells(
     image: &DynamicImage,
 ) -> HashMap<(i32, i32), HashSet<(i32, i32)>> {
-    let cell_size = CELL_SIZE as u32;
+    // let cell_size = CELL_SIZE as u32;
     let mut opaque_pixel_cells: HashMap<(i32, i32), HashSet<(i32, i32)>> = HashMap::new();
     let (width, height) = image.dimensions();
+
+    let half_width = width as f32 / 2.0;
+    let half_height = height as f32 / 2.0;
 
     let is_transparent = |x: u32, y: u32| image.get_pixel(x, y)[3] == 0;
 
@@ -79,11 +84,11 @@ fn get_opaque_pixel_cells(
                 let is_edge_pixel = neighbors.iter().any(|&is_transparent| is_transparent);
 
                 if is_edge_pixel {
-                    let cell_x = (x / cell_size) as i32;
-                    let cell_y = (y / cell_size) as i32;
-                    let cell_key = (cell_x, cell_y);
+                    let cell_i = ((x as f32 - half_width) / CELL_SIZE as f32).floor() as i32;
+                    let cell_j = ((half_height - y as f32) / CELL_SIZE as f32).floor() as i32;
+                    let cell_key = (cell_i, cell_j);
 
-                    let pixel_in_cell = ((x % cell_size) as i32, (y % cell_size) as i32);
+                    let pixel_in_cell = ((x as i32 - half_width as i32) % CELL_SIZE, (half_height as i32 - y as i32) % CELL_SIZE);
 
                     opaque_pixel_cells
                         .entry(cell_key)
@@ -97,40 +102,54 @@ fn get_opaque_pixel_cells(
 }
 
 
+fn debug_opaque_pixel_cells(
+    opaque_pixel_cells: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
+    filename: &str,
+) {
+        // debugging where the opaque cells are
+        let mut cell_keys: Vec<&(i32, i32)> = opaque_pixel_cells.keys().collect();
+        cell_keys.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
 
-// fn get_opaque_pixel_cells(image: &DynamicImage, cell_size: u32) -> HashMap<(u32, u32), HashSet<(u32, u32)>> {
-//     let mut opaque_pixel_cells: HashMap<(u32, u32), HashSet<(u32, u32)>> = HashMap::new();
+        let min_i = cell_keys.iter().min_by_key(|key| key.0).unwrap().0;
 
-//     for (x, y, pixel) in image.enumerate_pixels() {
-//         if pixel[3] != 0 {
-//             let cell_x = x / cell_size;
-//             let cell_y = y / cell_size;
-//             let cell_key = (cell_x, cell_y);
+        let mut current_cell_j = None;
+        let mut prev_cell_i: Option<i32> = None;
 
-//             let pixel_in_cell = (x % cell_size, y % cell_size);
+        // Create a new file or truncate an existing file
+        let mut file = File::create(filename).expect("Unable to create file");
 
-//             opaque_pixel_cells.entry(cell_key).or_insert_with(HashSet::new).insert(pixel_in_cell);
-//         }
-//     }
+        writeln!(&mut file, "\n\n").expect("Unable to write to file");
+        for cell_key in cell_keys {
+            let (i, j) = (cell_key.0,cell_key.1);
 
-//     opaque_pixel_cells
-// }
+            if current_cell_j.is_some() && current_cell_j != Some(j) {
+                writeln!(&mut file, "").expect("Unable to write to file");
+                prev_cell_i = None;
+            }
 
+            // Print min_i to i number of tabs at the beginning of the line when starting a new line
+            if current_cell_j != Some(j) {
+                for _ in min_i..i {
+                    write!(&mut file, "\t").expect("Unable to write to file");
+                }
+            }
 
-// fn precompute_opaque_pixel_cells(image: &DynamicImage, cell_size: u32) -> HashSet<(u32, u32)> {
-//     let mut opaque_pixel_cells = HashSet::new();
-//     let width = image.width();
-//     let height = image.height();
+            // Insert tab characters based on the difference in i values of consecutive cells
+            if let Some(prev_i) = prev_cell_i {
+                for _ in 0..(i - prev_i - 1) {
+                    write!(&mut file, "\t").expect("Unable to write to file");
+                }
+            }
 
-//     for y in (0..height).step_by(cell_size as usize) {
-//         for x in (0..width).step_by(cell_size as usize) {
-//             if cell_has_opaque_pixel_cells(image, x, y, cell_size) {
-//                 opaque_pixel_cells.insert((x, y));
-//             }
-//         }
-//     }
-//     opaque_pixel_cells
-// }
+            current_cell_j = Some(j);
+            prev_cell_i = Some(i);
+
+            // Format cell_key with fixed width of 8 characters
+            let formatted_cell_key = format!("({:2},{:2})", i, j);
+            write!(&mut file, "{:8}", formatted_cell_key).expect("Unable to write to file");
+        }
+        writeln!(&mut file, "\n\n").expect("Unable to write to file");
+}
 
 pub fn preload_resources(
     mut _commands: Commands, 
@@ -153,160 +172,28 @@ pub fn preload_resources(
     ];
 
     // Preload the walls
-    for (shape, path) in wall_shape_file_names {
-        let image_handle: Handle<Image> = asset_server.load(path);
-        let pixel_data = load_image_data(path);
-        let size = ImageSizeI32::from(&pixel_data);// (pixel_data.width() as i32, pixel_data.height() as i32);
-        //let wall_size = wall_image.size().extend(0.0) * wall_transform.scale.abs();
-        
-        let opaque_pixel_cells = get_opaque_pixel_cells(&pixel_data);
-        
-        //////////////////////////////////////////////////////////////
-        // debugging where the opaque cells are
-        let mut cell_keys: Vec<&(i32, i32)> = opaque_pixel_cells.keys().collect();
-        cell_keys.sort_by(|a, b| (a.1, a.0).cmp(&(b.1, b.0)));
+    for (wall_shape, path) in wall_shape_file_names {
 
-        let mut current_cell_y = None;
-        let mut prev_cell_x: Option<i32> = None;
-
-        // Create a new file or truncate an existing file
-        let mut file = File::create("wall_output.txt").expect("Unable to create file");
-
-        writeln!(&mut file, "\n\n").expect("Unable to write to file");
-        for cell_key in cell_keys {
-            if current_cell_y.is_some() && current_cell_y != Some(cell_key.1) {
-                writeln!(&mut file, "").expect("Unable to write to file");
-                prev_cell_x = None;
-            }
-
-            // Print X number of tabs at the beginning of the line when starting a new line
-            if current_cell_y != Some(cell_key.1) {
-                for _ in 0..cell_key.0 {
-                    write!(&mut file, "\t").expect("Unable to write to file");
-                }
-            }
-
-            // Insert tab characters based on the difference in x values of consecutive cells
-            if let Some(prev_x) = prev_cell_x {
-                for _ in 0..(cell_key.0 - prev_x - 1) {
-                    write!(&mut file, "\t").expect("Unable to write to file");
-                }
-            }
-
-            current_cell_y = Some(cell_key.1);
-            prev_cell_x = Some(cell_key.0);
-
-            // Format cell_key with fixed width of 8 characters
-            let formatted_cell_key = format!("({:2},{:2})", cell_key.0, cell_key.1);
-            write!(&mut file, "{:8}", formatted_cell_key).expect("Unable to write to file");
-        }
-        writeln!(&mut file, "\n\n").expect("Unable to write to file");
-
-
+        let wall_image = load_collidable_image(&asset_server, path, CollidableClassifier::Wall(WallShape::Straight));
         /////////////////////////////////////////////////////
-
-
-
-        // let mut cell_keys: Vec<&(i32, i32)> = opaque_pixel_cells.keys().collect();
-        // cell_keys.sort();
-
-        // for cell_key in cell_keys {
-        //     println!("Cell key: {:?}", cell_key);
-        // }
-
-        // for (cell_key, pixel_set) in opaque_pixel_cells.iter() {
-        //     println!("Cell key: {:?}", cell_key);
-        //     // println!("Pixel set: {:?}", pixel_set);
-        // }
-        
-        let wall_image = Arc::new(CollidableImage {
-                size,
-                pixel_data,
-                image_handle,
-                opaque_pixel_cells,
-                classifier: CollidableClassifier::Wall(WallShape::Straight),
-        });
-        resource_cache.wall_images.insert(shape, wall_image);
+        // debugging where the opaque cells are
+        debug_opaque_pixel_cells(&wall_image.opaque_pixel_cells,"wall_output.txt");
+        /////////////////////////////////////////////////////
+        resource_cache.wall_images.insert(wall_shape, wall_image);
     }
 
-    // Preload the Dragons and the Projectiles
+    // Preload the Dragons and their themed Projectiles
     for (elemental_theme, dragon_image_file_path, projectile_image_file_path) in theme_image_file_names {
         
-        let dragon_image_handle: Handle<Image> = asset_server.load(dragon_image_file_path);
-        let dragon_image_pixel_data = load_image_data(dragon_image_file_path);
-        let dragon_image_size = ImageSizeI32::from(&dragon_image_pixel_data);  //  (pixel_data.width() as i32, pixel_data.height() as i32);
-
-        let dragon_image_opaque_pixel_cells = get_opaque_pixel_cells(&dragon_image_pixel_data);
-
+        let dragon_image = load_collidable_image(&asset_server, dragon_image_file_path, CollidableClassifier::Dragon(elemental_theme));
         //////////////////////////////////////////////////////////////
         // debugging where the opaque cells are
-        let mut cell_keys: Vec<&(i32, i32)> = dragon_image_opaque_pixel_cells.keys().collect();
-        cell_keys.sort_by(|a, b| (a.1, a.0).cmp(&(b.1, b.0)));
-
-        let mut current_cell_y = None;
-        let mut prev_cell_x: Option<i32> = None;
-
-        // Create a new file or truncate an existing file
-        let mut file = File::create("dragon_output.txt").expect("Unable to create file");
-
-        writeln!(&mut file, "\n\n").expect("Unable to write to file");
-        for cell_key in cell_keys {
-            if current_cell_y.is_some() && current_cell_y != Some(cell_key.1) {
-                writeln!(&mut file, "").expect("Unable to write to file");
-                prev_cell_x = None;
-            }
-
-            // Print X number of tabs at the beginning of the line when starting a new line
-            if current_cell_y != Some(cell_key.1) {
-                for _ in 0..cell_key.0 {
-                    write!(&mut file, "\t").expect("Unable to write to file");
-                }
-            }
-
-            // Insert tab characters based on the difference in x values of consecutive cells
-            if let Some(prev_x) = prev_cell_x {
-                for _ in 0..(cell_key.0 - prev_x - 1) {
-                    write!(&mut file, "\t").expect("Unable to write to file");
-                }
-            }
-
-            current_cell_y = Some(cell_key.1);
-            prev_cell_x = Some(cell_key.0);
-
-            // Format cell_key with fixed width of 8 characters
-            let formatted_cell_key = format!("({:2},{:2})", cell_key.0, cell_key.1);
-            write!(&mut file, "{:8}", formatted_cell_key).expect("Unable to write to file");
-        }
-        writeln!(&mut file, "\n\n").expect("Unable to write to file");
-
-
-        /////////////////////////////////////////////////////
-
-
-        let dragon_image = Arc::new(CollidableImage {
-            classifier: CollidableClassifier::Dragon(elemental_theme),
-            size: dragon_image_size,
-            pixel_data: dragon_image_pixel_data,
-            image_handle: dragon_image_handle,
-            opaque_pixel_cells: dragon_image_opaque_pixel_cells,
-        });
+        debug_opaque_pixel_cells(&dragon_image.opaque_pixel_cells,"dragon_output.txt");
+        //////////////////////////////////////////////////////////////
         resource_cache.dragon_images.insert(elemental_theme, dragon_image);
 
 
-        let projectile_image_handle: Handle<Image> = asset_server.load(projectile_image_file_path);
-        let projectile_image_pixel_data = load_image_data(projectile_image_file_path);
-        //let projectile_size = Vec2::new(projectile_image_data.width() as f32, projectile_image_data.height() as f32);
-        let projectile_image_size = ImageSizeI32::from(&projectile_image_pixel_data);
-        
-        let projectile_image_opaque_pixel_cells = get_opaque_pixel_cells(&projectile_image_pixel_data);
-
-        let projectile_image = Arc::new (CollidableImage {
-            classifier: CollidableClassifier::Projectile(elemental_theme),
-            size: projectile_image_size,
-            image_handle: projectile_image_handle,
-            pixel_data: projectile_image_pixel_data,
-            opaque_pixel_cells: projectile_image_opaque_pixel_cells,
-        });
+        let projectile_image = load_collidable_image(&asset_server, projectile_image_file_path, CollidableClassifier::Projectile(elemental_theme));
         resource_cache.projectile_images.insert(elemental_theme, projectile_image);
     }
 

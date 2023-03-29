@@ -12,7 +12,7 @@ use crate::shared::components::ElementalTheme;
 
 use super::*;
 
-pub const CELL_SIZE: i32 = 16;
+pub const CELL_SIZE: i32 = 100;
 
 #[derive(Resource)]
 pub struct ResourceCache {
