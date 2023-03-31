@@ -36,7 +36,7 @@ use super::*;
 //     }
 // // }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct Dragon {
     pub input: DragonInput,
     pub action: DragonAction,
@@ -56,7 +56,7 @@ pub struct Dragon {
 pub struct HealthText;
 
 // Marker to query the dragon to control by the local system.
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct MyDragon;
 
 // #[derive(Bundle)]
@@ -74,7 +74,7 @@ pub struct DragonBundle {
     pub game_piece: GamePiece,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct DragonInput {
     pub move_direction: Vec3,
     pub fire_direction: Vec3,
@@ -84,6 +84,7 @@ pub struct DragonInput {
 }
 
 // #[derive(Component)]
+#[derive(Clone)]
 pub struct DragonAction {
     pub spawn_home: Vec3,
     pub velocity: Vec3,
