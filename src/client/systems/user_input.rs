@@ -18,17 +18,30 @@ pub fn keyboard_input_system (
     let mut dragon = dragon_query.single_mut();
     dragon.input.move_direction = Vec3::ZERO;
     dragon.input.fire_direction = Vec3::ZERO;
+    
 
-    if keyboard_input.pressed(KeyCode::W) || keyboard_input.pressed(KeyCode::Up){
+    let mut wasd_movement = false;
+    if  keyboard_input.pressed(KeyCode::W)
+      || keyboard_input.pressed(KeyCode::A)
+      || keyboard_input.pressed(KeyCode::S)
+      || keyboard_input.pressed(KeyCode::D) {
+        wasd_movement = true;
+    }
+
+    if keyboard_input.pressed(KeyCode::W) 
+        || ( !wasd_movement && keyboard_input.pressed(KeyCode::Up) ) {
         dragon.input.move_direction.y += 1.0;
     }
-    if keyboard_input.pressed(KeyCode::S) || keyboard_input.pressed(KeyCode::Down) {
+    if keyboard_input.pressed(KeyCode::S) 
+        || ( !wasd_movement && keyboard_input.pressed(KeyCode::Down) ) {
         dragon.input.move_direction.y -= 1.0;
     }
-    if keyboard_input.pressed(KeyCode::A)  || keyboard_input.pressed(KeyCode::Left) {
+    if keyboard_input.pressed(KeyCode::A)  
+        || ( !wasd_movement && keyboard_input.pressed(KeyCode::Left) ) {
         dragon.input.move_direction.x -= 1.0;
     }
-    if keyboard_input.pressed(KeyCode::D)  || keyboard_input.pressed(KeyCode::Right) {
+    if keyboard_input.pressed(KeyCode::D)  
+        || ( !wasd_movement && keyboard_input.pressed(KeyCode::Right) ) {
         dragon.input.move_direction.x += 1.0;
     }
 

@@ -19,8 +19,8 @@ pub fn projectile_spawn_system(
                 let mut projectile_direction = dragon.input.fire_direction.normalize_or_zero();
 
                 if projectile_direction == Vec3::ZERO {
-                    if dragon.input.move_direction == Vec3::ZERO {
-                        if dragon.action.velocity == Vec3::ZERO {
+                    if dragon.input.move_direction.normalize_or_zero() == Vec3::ZERO {
+                        if dragon.action.velocity.normalize_or_zero() == Vec3::ZERO {
                             projectile_direction.x = 1.0 * dragon_transform.scale.x.signum();
                         } else {
                             projectile_direction = dragon.action.velocity.normalize_or_zero();
@@ -30,8 +30,20 @@ pub fn projectile_spawn_system(
                     }
                 }
 
-                // Calculate the speed of the projectile based on the dragon's velocity.
-                let projectile_speed = (projectile_direction * 500.0) + 10.0*dragon.action.velocity;//(250.0 + 75.0 * dragon_action.velocity.length());
+                if projectile_direction.normalize_or_zero() == Vec3::ZERO {
+                    projectile_direction.x = 1.0;
+                }
+
+
+                // Calculate the speed of the projectile based on the dragon's velocity.  and if moving opposite direcrtion.
+                let moving_opposite_direction_x = projectile_direction.x.signum() * dragon.action.velocity.x.signum();
+                let moving_opposite_direction_y = projectile_direction.y.signum() * dragon.action.velocity.y.signum();
+
+                let mut projectile_speed = (projectile_direction * 500.0) + 25.0 * Vec3::new(dragon.action.velocity.x * moving_opposite_direction_x, dragon.action.velocity.y * moving_opposite_direction_y, 0.0 );//(250.0 + 75.0 * dragon_action.velocity.length());
+                
+                while projectile_speed.length() < 80.0 {
+                    projectile_speed += 20.0;
+                }
 
                 // Calculate the rotation of the projectile image, based on its velocity direction.
                 let projectile_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), projectile_direction.truncate().extend(0.));
