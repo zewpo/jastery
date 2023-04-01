@@ -132,8 +132,27 @@ pub fn projectile_movement_system(
     }
 }
 
+pub fn projectile_projectile_collision_system(
+    mut commands: Commands,
+    mut projectile_query: Query<(Entity, &Transform, &Projectile), Without<Dragon>>,
+    // game_status: Res<GameStatus>,
+) {
 
-pub fn projectile_collision_system(
+        // iter_combinations_mut checks for all unique pairs.
+    let mut combinations = projectile_query.iter_combinations_mut();
+    while let Some([(projectile_entity_a, projectile_transform_a, projectile_a), 
+                    (projectile_entity_b, projectile_transform_b, projectile_b)]) 
+            = combinations.fetch_next() {
+                if projectile_a.elemental_theme != projectile_b.elemental_theme {
+                    if 50.0 > (projectile_transform_a.translation - projectile_transform_b.translation).length() {
+                        commands.entity(projectile_entity_a).despawn();
+                        commands.entity(projectile_entity_b).despawn();
+                    }
+                }
+    }
+}
+
+pub fn projectile_dragon_collision_system(
     mut commands: Commands,
     mut projectile_query: Query<(Entity, &Transform, &Projectile), Without<Dragon>>,
     mut dragon_query: Query<(&Transform, &mut Dragon), With<Dragon>>,

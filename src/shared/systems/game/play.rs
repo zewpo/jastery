@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 use crate::shared::{components::{dragon::*, game::*}, systems::{projectile::*, dragon::*}};
 
-use super::icedragon_ai::*;
+use super::enemy_dragon_ai::*;
 
 pub struct GamePlayPlugin;
 
@@ -14,8 +14,9 @@ impl Plugin for GamePlayPlugin {
             dragon_movement_system,
             projectile_spawn_system,
             projectile_movement_system,
-            projectile_collision_system,
-            ice_dragon_ai_system,
+            projectile_dragon_collision_system,
+            projectile_projectile_collision_system,
+            enemy_dragon_ai_system,
             game_over_trigger,
         ).in_set(OnUpdate(GamePhase::Playing)))
         // .add_system(draw_cell_grids_system.in_schedule(OnEnter(GamePhase::Playing)))
