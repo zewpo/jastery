@@ -1,6 +1,6 @@
-use std::sync::Arc;
-use std::{collections::HashSet, process, fs::File};
-use std::io::Write;
+// use std::sync::Arc;
+// use std::{collections::HashSet, process, fs::File};
+// use std::io::Write;
 
 use bevy::{prelude::*, sprite::collide_aabb::Collision};
 // use image::{DynamicImage, GenericImageView};
@@ -525,7 +525,7 @@ pub fn dragon_movement_system(
             let face_dir_x = dragon_transform.scale.x.signum();
             let vel_dir_x = dragon.action.velocity.x.signum();
             let fire_dir_x_zero = dragon.input.fire_direction.x == 0.0;
-            let vel_dir_x_zero = dragon.action.velocity.x.abs() < 10.0;
+            let vel_dir_x_zero = dragon.action.velocity.x.abs() < 7.0;
 
             if (!fire_dir_x_zero && dragon.input.fire_direction.x != face_dir_x)
                 || (fire_dir_x_zero && !vel_dir_x_zero && vel_dir_x != face_dir_x)

@@ -348,10 +348,10 @@ fn dragon_position_text_system(
     // mut mouse_motion_events: EventReader<MouseMotion>,
     _cursor_moved_events: EventReader<CursorMoved>,
     dragon_query: Query<(&Dragon, &Transform), (With<MyDragon>,Without<GameCamera>)>,
-    camera_query: Query<(&GameCamera, &mut Transform), With<GameCamera>>,
+    camera_query: Query<&mut Transform, With<GameCamera>>,
 ) {
     
-    let (game_camera, mut camera_transform ) = camera_query.single();
+    let camera_transform = camera_query.single();
     let window = windows.single();
     let window_size = Vec2::new(window.width(), window.height());
     
