@@ -39,7 +39,7 @@ pub fn projectile_spawn_system(
                 let moving_opposite_direction_x = projectile_direction.x.signum() * dragon.action.velocity.x.signum();
                 let moving_opposite_direction_y = projectile_direction.y.signum() * dragon.action.velocity.y.signum();
 
-                let mut projectile_speed = (projectile_direction * 500.0) + 25.0 * Vec3::new(dragon.action.velocity.x * moving_opposite_direction_x, dragon.action.velocity.y * moving_opposite_direction_y, 0.0 );//(250.0 + 75.0 * dragon_action.velocity.length());
+                let mut projectile_speed = (projectile_direction * 500.0) + 90.0 * Vec3::new(dragon.action.velocity.x * moving_opposite_direction_x, dragon.action.velocity.y * moving_opposite_direction_y, 0.0 );//(250.0 + 75.0 * dragon_action.velocity.length());
                 
                 while projectile_speed.length() < 80.0 {
                     projectile_speed += 20.0;
@@ -47,6 +47,12 @@ pub fn projectile_spawn_system(
 
                 // Calculate the rotation of the projectile image, based on its velocity direction.
                 let projectile_rotation = Quat::from_rotation_arc(Vec3::new(1.0,0.0,0.0), projectile_direction.truncate().extend(0.));
+                
+                let dx_spawn = if projectile_speed.y == 0.0 {
+                    110.0 * dragon_transform.scale.x.signum()
+                } else {
+                    0.0
+                };
 
                 // Spawn the projectile into the game.
                 commands.spawn(ProjectileBundle {
@@ -54,7 +60,7 @@ pub fn projectile_spawn_system(
                     sprite_bundle: SpriteBundle {
                         texture: projectile_image.handle(),
                         transform: Transform {
-                            translation: dragon_transform.translation + Vec3::new(110.0 * dragon_transform.scale.x.signum(), 30.0, 0.0),
+                            translation: dragon_transform.translation + Vec3::new(dx_spawn, 30.0, 0.0),
                             rotation: projectile_rotation,
                             ..default()
                         },
@@ -62,7 +68,7 @@ pub fn projectile_spawn_system(
                     },
                     movement: ProjectileMovement { 
                         speed: projectile_speed,
-                        despawn_timer: Timer::from_seconds(2.4, TimerMode::Once), // Set the timeout duration here
+                        despawn_timer: Timer::from_seconds(1.5, TimerMode::Once), // Set the timeout duration here
                     },
                     projectile: Projectile { 
                         elemental_theme: dragon.elemental_theme,

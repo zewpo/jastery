@@ -6,9 +6,9 @@ use bevy::{
     ui::Interaction,
 };
 
-use crate::client::components::game_camera::GameCamera;
-use crate::shared::components::resource_cache::ResourceCache;
-use crate::shared::components::{game::*, MyDragon};
+use crate::client::components::*;
+use crate::shared::components::*;
+use crate::shared::components::game::*;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
@@ -342,16 +342,20 @@ fn setup_game_over_screen(
 
 fn dragon_position_text_system(
     windows: Query<&Window>,
-    mut query: Query<&mut Text>,
+    camera_scale: Res<CameraScale>,
+    mut text_query: Query<&mut Text>,
     mouse_button_input: Res<Input<MouseButton>>,
     // mut mouse_motion_events: EventReader<MouseMotion>,
     _cursor_moved_events: EventReader<CursorMoved>,
-    dragon_query: Query<(&Transform, &Handle<Image>), (With<MyDragon>,Without<GameCamera>)>,
+    dragon_query: Query<(&Dragon, &Transform), (With<MyDragon>,Without<GameCamera>)>,
+    camera_query: Query<(&GameCamera, &mut Transform), With<GameCamera>>,
 ) {
+    
+    let (game_camera, mut camera_transform ) = camera_query.single();
     let window = windows.single();
     let window_size = Vec2::new(window.width(), window.height());
     
-    let (dragon_transform, _dragon_handle) = dragon_query.single();
+    let (dragon, dragon_transform) = dragon_query.single();
 
     // for event in mouse_motion_events.iter() {
     //     info!("{:?}", event);
@@ -362,13 +366,14 @@ fn dragon_position_text_system(
     //     info!("{:?}", pos );
     // }
 
-    if let Some(mut text) = query.iter_mut().next() {        
-        text.sections[0].value = format!("Dragon Position: ({:.1}, {:.1})", dragon_transform.translation.x, dragon_transform.translation.y);
-
+    if let Some(mut text) = text_query.iter_mut().next() {        
+        //text.sections[0].value = format!("Dragon Position: ({:.1}, {:.1})", dragon_transform.translation.x, dragon_transform.translation.y);
+        text.sections[0].value = format!("Position: {:.1}, {:.1}", dragon_transform.translation.x, dragon_transform.translation.y);
+        text.sections[1].value = format!("\nHealth: {}/{}", dragon.health, dragon.max_health );
         if mouse_button_input.pressed(MouseButton::Left) {
             let cursor_position = window.cursor_position().unwrap_or_default();
-            let world_position = cursor_position - window_size / 2.0;
-            text.sections[1].value = format!("Mouse Position: ({:.1}, {:.1})", world_position.x, world_position.y);
+            let world_position =  camera_transform.translation.truncate() + ((cursor_position - window_size / 2.0) * camera_scale.0 ) ;
+            text.sections[2].value = format!("\nMouse Click: {:.1}, {:.1}", world_position.x, world_position.y);
         }
     }
 }
@@ -439,6 +444,14 @@ fn setup_game_play_screen(
             color: Color::WHITE,
     });
 
+    let dragon_health_text_section: TextSection = TextSection::new(
+        "Dragon Health: ",
+        TextStyle {
+            font: font.clone(),
+            font_size: 30.0,
+            color: Color::WHITE,
+    });
+
     let mouse_position_text_section: TextSection = TextSection::new(
         "Mouse Position: ",
         TextStyle {
@@ -454,6 +467,7 @@ fn setup_game_play_screen(
         },
         text: Text::from_sections([
             dragon_position_text_section,
+            dragon_health_text_section,
             mouse_position_text_section
         ]),
         ..Default::default()

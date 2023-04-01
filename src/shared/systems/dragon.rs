@@ -7,137 +7,137 @@ use bevy::{prelude::*, sprite::collide_aabb::Collision};
 // use std::collections::{HashMap, HashSet};
 use crate::shared::components::{dragon::*, resource_cache::*, wall::*, CollidableImage};
 
-fn pixel_collision(
-    cell1_pos: (f32, f32),
-    pixels1: &HashSet<(i32, i32)>,
-    cell2_pos: (f32, f32),
-    pixels2: &HashSet<(i32, i32)>,
-) -> bool {
-    let (cell1_x, cell1_y) = cell1_pos;
-    let (cell2_x, cell2_y) = cell2_pos;
+// fn pixel_collision(
+//     cell1_pos: (f32, f32),
+//     pixels1: &HashSet<(i32, i32)>,
+//     cell2_pos: (f32, f32),
+//     pixels2: &HashSet<(i32, i32)>,
+// ) -> bool {
+//     let (cell1_x, cell1_y) = cell1_pos;
+//     let (cell2_x, cell2_y) = cell2_pos;
 
-    // let dx = cell2_x - cell1_x;
-    // let dy = cell2_y - cell1_y;
+//     // let dx = cell2_x - cell1_x;
+//     // let dy = cell2_y - cell1_y;
 
-    let mut pixels1_vec: Vec<(i32, i32)> = pixels1.iter().copied().collect();
-    pixels1_vec.sort_unstable_by_key(|&(x, y)| (x, y));
-    let min1_x = pixels1_vec[0].0;
-    let max1_x = pixels1_vec[pixels1_vec.len() - 1].0;
-    pixels1_vec.sort_unstable_by_key(|&(x, y)| (y, x));
-    let min1_y = pixels1_vec[0].1;
-    let max1_y = pixels1_vec[pixels1_vec.len() - 1].1;
+//     let mut pixels1_vec: Vec<(i32, i32)> = pixels1.iter().copied().collect();
+//     pixels1_vec.sort_unstable_by_key(|&(x, y)| (x, y));
+//     let min1_x = pixels1_vec[0].0;
+//     let max1_x = pixels1_vec[pixels1_vec.len() - 1].0;
+//     pixels1_vec.sort_unstable_by_key(|&(x, y)| (y, x));
+//     let min1_y = pixels1_vec[0].1;
+//     let max1_y = pixels1_vec[pixels1_vec.len() - 1].1;
 
-    let mut pixels2_vec: Vec<(i32, i32)> = pixels2.iter().copied().collect();
-    pixels2_vec.sort_unstable_by_key(|&(x, y)| (x, y));
-    let min2_x = pixels2_vec[0].0;
-    let max2_x = pixels2_vec[pixels2_vec.len() - 1].0;
-    pixels2_vec.sort_unstable_by_key(|&(x, y)| (y, x));
-    let min2_y = pixels2_vec[0].1;
-    let max2_y = pixels2_vec[pixels2_vec.len() - 1].1;
+//     let mut pixels2_vec: Vec<(i32, i32)> = pixels2.iter().copied().collect();
+//     pixels2_vec.sort_unstable_by_key(|&(x, y)| (x, y));
+//     let min2_x = pixels2_vec[0].0;
+//     let max2_x = pixels2_vec[pixels2_vec.len() - 1].0;
+//     pixels2_vec.sort_unstable_by_key(|&(x, y)| (y, x));
+//     let min2_y = pixels2_vec[0].1;
+//     let max2_y = pixels2_vec[pixels2_vec.len() - 1].1;
 
 
-    let output_path = "pixels-output.txt";
-    let mut file = File::create(output_path).unwrap();
+//     let output_path = "pixels-output.txt";
+//     let mut file = File::create(output_path).unwrap();
 
-    writeln!(file, "---pixels-1--BEGIN----------------------------------------------------").unwrap();
-    writeln!(file, ": cell1_pos {:?}", cell1_pos).unwrap();
+//     writeln!(file, "---pixels-1--BEGIN----------------------------------------------------").unwrap();
+//     writeln!(file, ": cell1_pos {:?}", cell1_pos).unwrap();
     
-    for j1 in (min1_y..=max1_y).rev() {
-        for i1 in min1_x..=max1_x {
-            if pixels1.get(&(i1, j1)).is_some() {
-                write!(file, "({:>3},{:>3})", i1, j1).unwrap();
-            } else {
-                write!(file, "         ").unwrap();
-            }
-        }
-        writeln!(file, "").unwrap();
-    }
-    writeln!(file, "---pixels-1--END----------------------------------------------------").unwrap();
+//     for j1 in (min1_y..=max1_y).rev() {
+//         for i1 in min1_x..=max1_x {
+//             if pixels1.get(&(i1, j1)).is_some() {
+//                 write!(file, "({:>3},{:>3})", i1, j1).unwrap();
+//             } else {
+//                 write!(file, "         ").unwrap();
+//             }
+//         }
+//         writeln!(file, "").unwrap();
+//     }
+//     writeln!(file, "---pixels-1--END----------------------------------------------------").unwrap();
 
-    writeln!(file, "---pixels-2--BEGIN----------------------------------------------------").unwrap();
-    writeln!(file, ": cell2_pos {:?}", cell2_pos).unwrap();
-    for j2 in (min2_y..=max2_y).rev() {
-        for i2 in min2_x..=max2_x {
-            if pixels2.get(&(i2, j2)).is_some() {
-                write!(file, "({:>3},{:>3})", i2, j2).unwrap();
-            } else {
-                write!(file, "         ").unwrap();
-            }
-        }
-        writeln!(file, "").unwrap();
-    }
-    writeln!(file, "---pixels-2--END----------------------------------------------------").unwrap();
+//     writeln!(file, "---pixels-2--BEGIN----------------------------------------------------").unwrap();
+//     writeln!(file, ": cell2_pos {:?}", cell2_pos).unwrap();
+//     for j2 in (min2_y..=max2_y).rev() {
+//         for i2 in min2_x..=max2_x {
+//             if pixels2.get(&(i2, j2)).is_some() {
+//                 write!(file, "({:>3},{:>3})", i2, j2).unwrap();
+//             } else {
+//                 write!(file, "         ").unwrap();
+//             }
+//         }
+//         writeln!(file, "").unwrap();
+//     }
+//     writeln!(file, "---pixels-2--END----------------------------------------------------").unwrap();
 
-    let mut collision = false;
-    let mut overlapping_pixels = HashSet::new();
+//     let mut collision = false;
+//     let mut overlapping_pixels = HashSet::new();
 
-    for (pi1, pj1) in pixels1 {
-        let global_px1 = (cell1_x + *pi1 as f32) as i32;
-        let global_py1 = (cell1_y + *pj1 as f32) as i32; // Changed from subtraction to addition
+//     for (pi1, pj1) in pixels1 {
+//         let global_px1 = (cell1_x + *pi1 as f32) as i32;
+//         let global_py1 = (cell1_y + *pj1 as f32) as i32; // Changed from subtraction to addition
 
-        for (pi2, pj2) in pixels2 {
-            let global_px2 = (cell2_x + *pi2 as f32) as i32;
-            let global_py2 = (cell2_y + *pj2 as f32) as i32; // Changed from subtraction to addition
+//         for (pi2, pj2) in pixels2 {
+//             let global_px2 = (cell2_x + *pi2 as f32) as i32;
+//             let global_py2 = (cell2_y + *pj2 as f32) as i32; // Changed from subtraction to addition
 
-            if global_px1 == global_px2 && global_py1 == global_py2 {
-                //println!("cell_pos1:{:?}, cell_pos2:{:?},pi1: {}, pj1: {}, pi2: {}, pj2: {},  global_px1: {}, global_py1:{}", cell_pos1, cell_pos2, pi1, pj1, pi2, pj2, global_px1, global_py1 );
-                writeln!(file, "Pixel collision detected:").unwrap();
-                writeln!(file, "cell1_pos:{:?}, p1:({},{}), global_p1:({},{})", cell1_pos, pi1, pj1, global_px1, global_py1).unwrap();
-                writeln!(file, "cell2_pos:{:?}, p2:({},{}), global_p2:({},{})", cell2_pos, pi2, pj2, global_px2, global_py2).unwrap();
-                //return true;
-                overlapping_pixels.insert((global_px1, global_py1));
-                collision = true;
-            }
-        }
-    }
+//             if global_px1 == global_px2 && global_py1 == global_py2 {
+//                 //println!("cell_pos1:{:?}, cell_pos2:{:?},pi1: {}, pj1: {}, pi2: {}, pj2: {},  global_px1: {}, global_py1:{}", cell_pos1, cell_pos2, pi1, pj1, pi2, pj2, global_px1, global_py1 );
+//                 writeln!(file, "Pixel collision detected:").unwrap();
+//                 writeln!(file, "cell1_pos:{:?}, p1:({},{}), global_p1:({},{})", cell1_pos, pi1, pj1, global_px1, global_py1).unwrap();
+//                 writeln!(file, "cell2_pos:{:?}, p2:({},{}), global_p2:({},{})", cell2_pos, pi2, pj2, global_px2, global_py2).unwrap();
+//                 //return true;
+//                 overlapping_pixels.insert((global_px1, global_py1));
+//                 collision = true;
+//             }
+//         }
+//     }
 
-    println!("collision = {:?}" , collision);
+//     println!("collision = {:?}" , collision);
 
-    println!("TEST 1234");
-    if overlapping_pixels.len() > 0 {
+//     println!("TEST 1234");
+//     if overlapping_pixels.len() > 0 {
 
-        let min_x = overlapping_pixels.iter().map(|&(x, _)| x).min().unwrap();
-        println!("TEST MIN_X");
+//         let min_x = overlapping_pixels.iter().map(|&(x, _)| x).min().unwrap();
+//         println!("TEST MIN_X");
 
-        let max_x = overlapping_pixels.iter().map(|&(x, _)| x).max().unwrap();
-        println!("TEST MAX_X");
+//         let max_x = overlapping_pixels.iter().map(|&(x, _)| x).max().unwrap();
+//         println!("TEST MAX_X");
 
-        let min_y = overlapping_pixels.iter().map(|&(_, y)| y).min().unwrap();
-        println!("TEST MIN_Y");
+//         let min_y = overlapping_pixels.iter().map(|&(_, y)| y).min().unwrap();
+//         println!("TEST MIN_Y");
         
-        let max_y = overlapping_pixels.iter().map(|&(_, y)| y).max().unwrap();
-        println!("TEST MAX_Y");
+//         let max_y = overlapping_pixels.iter().map(|&(_, y)| y).max().unwrap();
+//         println!("TEST MAX_Y");
 
-        println!("TEST 5678");
+//         println!("TEST 5678");
 
-        if collision{
-            writeln!(file, "---overlapping-pixels------------------------------------").unwrap();
-            for j in (min_y..=max_y).rev() {
-                for i in min_x..=max_x {
-                    if overlapping_pixels.contains(&(i, j)) {
-                        write!(file, "({},{})", i, j).unwrap();
-                    } else {
-                        write!(file, " ").unwrap();
-                    }
-                }
-                writeln!(file,"").unwrap();
-            }
-            writeln!(file, "----------------------------------------------------").unwrap();
-        }
+//         if collision{
+//             writeln!(file, "---overlapping-pixels------------------------------------").unwrap();
+//             for j in (min_y..=max_y).rev() {
+//                 for i in min_x..=max_x {
+//                     if overlapping_pixels.contains(&(i, j)) {
+//                         write!(file, "({},{})", i, j).unwrap();
+//                     } else {
+//                         write!(file, " ").unwrap();
+//                     }
+//                 }
+//                 writeln!(file,"").unwrap();
+//             }
+//             writeln!(file, "----------------------------------------------------").unwrap();
+//         }
 
-        process::exit(1);
-    }
+//         process::exit(1);
+//     }
     
     
-    println!("TEST 9999");
+//     println!("TEST 9999");
 
-        // if collision{
-                // Exit with code 1
-            // process::exit(1);
-        // }
-    // false
-    collision
-}
+//         // if collision{
+//                 // Exit with code 1
+//             // process::exit(1);
+//         // }
+//     // false
+//     collision
+// }
 
 
 
@@ -155,24 +155,27 @@ fn cell_collision(
 
     let dx = (pos1.x - pos2.x).floor();
     let dy = (pos1.y - pos2.y).floor();
-
-    // let adjustment1_x = (image1.width_i32() - CELL_SIZE) as f32 / 2.0;
-    // let adjustment1_y = (image1.height_i32() - CELL_SIZE) as f32 / 2.0;
-
-    // let adjustment2_x = (image2.width_i32() - CELL_SIZE)  as f32 / 2.0;
-    // let adjustment2_y = (image2.height_i32() - CELL_SIZE)  as f32 / 2.0;
+    
+    let flipped1 = transform1.scale.x < 0.0;
+    let flipped2 = transform2.scale.x < 0.0;
 
     for (cell1_key, _pixels1) in image1.opaque_pixel_cells.iter() {
         let (cell1_i, cell1_j) = cell1_key;
-        let cell1_x = 
-            if transform1.scale.x < 0.0 && transform2.scale.x > 0.0 {
-                -1.0 * ((cell1_i+1) * CELL_SIZE) as f32
-            } else {
-                (cell1_i * CELL_SIZE) as f32
+
+        // distance relative to center of parent image 1.
+        let cell1_x = if flipped1 {
+            -1.0 * ((cell1_i + 1) * CELL_SIZE) as f32
+        } else {
+            (cell1_i * CELL_SIZE) as f32
         };
         let cell1_y = (cell1_j * CELL_SIZE) as f32;
 
-        let cell2_x = dx + cell1_x;
+        // distance relative to center of parent image 2.
+        let cell2_x = if flipped2 {
+           -1.0 * (dx + cell1_x) - CELL_SIZE as f32
+        } else {
+            dx + cell1_x
+        };
         let cell2_y = dy + cell1_y;
 
         let cell2_i = ((cell2_x) / (CELL_SIZE as f32)) as i32;
@@ -252,26 +255,22 @@ pub fn collide_detail(a_pos: Vec3, a_size: Vec2, b_pos: Vec3, b_size: Vec2) -> (
 
 pub fn dragon_movement_system(
     time: Res<Time>,
-    mut dragon_query: Query<(Entity, &mut Dragon, &mut Transform)>,
+    mut dragon_query: Query<(&mut Dragon, &mut Transform)>,
     wall_query: Query<(&Wall, &Transform), Without<Dragon>>,
     // resource_cache: Res<ResourceCache>,
 ) {
 
-    // let mut dragons:  Vec<(Entity, Arc<Dragon>, Transform)> = Vec::new();
-    // for (dragon_entity, dragon, dragon_transform) in dragon_query.iter() {
-    //     dragons.push((dragon_entity, Arc::new(dragon), *dragon_transform));
-    // }
-
-
+    // Check for collisions between dragongs.
+    // iter_combinations_mut checks for all unique pairs.
     let mut combinations = dragon_query.iter_combinations_mut();
-    while let Some([(dragon_entity_a, mut dragon_a, mut dragon_transform_a), 
-                    (dragon_entity_b, mut dragon_b, mut dragon_transform_b)]) 
+    while let Some([(mut dragon_a, mut dragon_transform_a), 
+                    (mut dragon_b, mut dragon_transform_b)]) 
             = combinations.fetch_next() {
                 
         let dragon_image_a = dragon_a.image.clone();
         let dragon_image_b = dragon_b.image.clone();
             
-                //         // check for sprite boundary collision.
+        // check for sprite boundary collision.
         if let (Some(collision), mut depth) = collide_detail(
             dragon_transform_a.translation,
             dragon_image_a.size_vec2(),
@@ -320,18 +319,17 @@ pub fn dragon_movement_system(
                 if total_adjustment.length() > CELL_SIZE as f32 {
                     total_adjustment = total_adjustment.normalize_or_zero();// * (CELL_SIZE as f32)/3.0;
                 }
-
+                // total_adjustment *= 0.2;
                 // Apply the total adjustment
                 dragon_transform_a.translation += total_adjustment;
                 dragon_transform_b.translation -= total_adjustment;
 
             }
         }
-        
     }
 
 
-    for (_i,(_dragon_entity, mut dragon, mut dragon_transform)) in dragon_query.iter_mut().enumerate() {
+    for (mut dragon, mut dragon_transform) in dragon_query.iter_mut() {
     //for ((dragon_entity, mut dragon, mut dragon_transform), (other_dragon_entity, other_dragon, other_dragon_transform)) in dragon_query.iter_combinations_mut() {
         
         if dragon.health <= 0 {
@@ -343,26 +341,35 @@ pub fn dragon_movement_system(
         
         // Change in motion
         if dragon.action.motion_timer.tick(time.delta()).just_finished() {
-            let acceleration_rate = 0.45;
-            let decceleration_rate = acceleration_rate;
-
+            let acceleration_rate = 1.45;
+            
             if dragon.input.move_direction.x != 0.0 {
-                dragon.action.velocity.x += dragon.input.move_direction.x * acceleration_rate;
+                dragon.action.velocity.x += dragon.input.move_direction.x;
+                if dragon.action.velocity.x.signum() == dragon.input.move_direction.x.signum() {
+                    dragon.action.velocity.x *= acceleration_rate;
+                } else {
+                    dragon.action.velocity.x /= acceleration_rate;
+                }
             } else {
-                dragon.action.velocity.x *= decceleration_rate;
+                dragon.action.velocity.x /= acceleration_rate;
             }
 
             if dragon.input.move_direction.y != 0.0 {
-                dragon.action.velocity.y += dragon.input.move_direction.y * acceleration_rate;
+                dragon.action.velocity.y += dragon.input.move_direction.y;
+                if dragon.action.velocity.y.signum() == dragon.input.move_direction.y.signum() {
+                    dragon.action.velocity.y *= acceleration_rate;
+                } else {
+                    dragon.action.velocity.y /= acceleration_rate;
+                }
             } else {
-                dragon.action.velocity.y *= decceleration_rate;
+                    dragon.action.velocity.y /= acceleration_rate;
             }
 
-            if dragon.input.move_direction.z != 0.0 {
-                dragon.action.velocity.z += dragon.input.move_direction.z * acceleration_rate;
-            } else {
-                dragon.action.velocity.z *= decceleration_rate;
-            }
+            // if dragon.input.move_direction.z != 0.0 {
+            //     dragon.action.velocity.z += dragon.input.move_direction.z * acceleration_rate;
+            // } else {
+            //     dragon.action.velocity.z *= decceleration_rate;
+            // }
 
             if dragon.input.brake {
                 dragon.action.velocity *= 0.5;
@@ -384,68 +391,6 @@ pub fn dragon_movement_system(
         let dragon_image = dragon.image.clone();
 
         let mut total_adjustment = Vec3::ZERO;
-
-        // // Check for collision with Other dragons
-        // for (dragon_entity_other, dragon_other, dragon_transform_other, ) in dragons[i + 1..].iter_mut() {
-
-        //     //let mut dragon_other = dragon_query.get_component_mut::<Dragon>(*dragon_entity_other).unwrap();
-
-        //     if let Some(dragon_image_other) = resource_cache.dragon_images.get(&dragon_other.elemental_theme) {
-        //         // check for sprite boundary collision.
-        //         if let (Some(collision), mut depth) = collide_detail(
-        //             dragon_transform.translation,
-        //             dragon_image.size_vec2(),
-        //             dragon_transform_other.translation,
-        //             dragon_image_other.size_vec2()
-        //         ) {
-        //             // Check for cell collision
-        //             if cell_collision(
-        //                 &dragon_transform,
-        //                 &dragon_image,
-        //                 &dragon_transform_other,
-        //                 &dragon_image_other
-        //             ) {
-        //                 dragon.action.velocity = Vec3::ZERO;
-        //                 match collision {
-        //                     Collision::Left | Collision::Right => {
-        //                         total_adjustment.x += depth.x;
-        //                     }
-        //                     // Collision::Right  => {
-        //                     //     total_adjustment.x += depth.x;
-        //                     // }
-        //                     Collision::Bottom | Collision::Top => {
-        //                         total_adjustment.y += depth.y;
-        //                     }
-        //                     // Collision::Top => {
-        //                     //     total_adjustment.y += depth.y;
-        //                     // }
-        //                     Collision::Inside => {
-        //                         println!("Dragon inside wall collision!?");
-        //                         if depth.length() < 1.0 as f32 {
-        //                             depth = depth.normalize_or_zero();
-        //                             if depth == Vec2::ZERO {
-        //                                 depth.x = 2.0*CELL_SIZE as f32;
-        //                             }
-        //                         }
-        //                         total_adjustment += depth.extend(0.0);
-        //                     }
-        //                     // _ => {
-        //                     //     total_adjustment += depth.extend(0.0);
-        //                     // }
-        //                 }
-        //             }
-        //         }
-        //     }
-
-        //     collisions.push((*dragon_entity_other,total_adjustment,Vec3::ZERO));
-
-        //         // if total_adjustment.length() > CELL_SIZE as f32 {
-        //         //     total_adjustment = total_adjustment.normalize_or_zero();// * (CELL_SIZE as f32)/3.0;
-        //         // }
-
-        //         // // Apply the total adjustment
-        //         // dragon_transform_other.translation += total_adjustment;
-        // }
 
         // Check for collision with Walls
         for (wall, wall_transform) in wall_query.iter() {
@@ -580,7 +525,7 @@ pub fn dragon_movement_system(
             let face_dir_x = dragon_transform.scale.x.signum();
             let vel_dir_x = dragon.action.velocity.x.signum();
             let fire_dir_x_zero = dragon.input.fire_direction.x == 0.0;
-            let vel_dir_x_zero = dragon.action.velocity.x == 0.0;
+            let vel_dir_x_zero = dragon.action.velocity.x.abs() < 10.0;
 
             if (!fire_dir_x_zero && dragon.input.fire_direction.x != face_dir_x)
                 || (fire_dir_x_zero && !vel_dir_x_zero && vel_dir_x != face_dir_x)
@@ -592,56 +537,56 @@ pub fn dragon_movement_system(
     }
 }
 
-pub fn draw_cell_grids_system(
-    mut commands: Commands,
-    dragon_query: Query<(Entity, &Transform, &Dragon)>,
-    wall_query: Query<(&Transform, &Wall)>,
-) {
-    //let cell_size = CELL_SIZE as f32; // Assuming CELL_SIZE is a constant defined elsewhere
-    let grid_color = Color::rgba(0.8, 0.2, 0.2, 0.7);
+// pub fn draw_cell_grids_system(
+//     mut commands: Commands,
+//     dragon_query: Query<(Entity, &Transform, &Dragon)>,
+//     wall_query: Query<(&Transform, &Wall)>,
+// ) {
+//     //let cell_size = CELL_SIZE as f32; // Assuming CELL_SIZE is a constant defined elsewhere
+//     let grid_color = Color::rgba(0.6, 0.6, 0.9, 0.7);
 
-    for (dragon_entity, _transform, dragon) in dragon_query.iter() {
+//     for (dragon_entity, _transform, dragon) in dragon_query.iter() {
 
-        for (cell_key, _) in dragon.image.opaque_pixel_cells.iter() {
-            let (i ,j) = (cell_key.0, cell_key.1);
-            let x = (i * CELL_SIZE) as f32  + (CELL_SIZE/2) as f32;
-            let y = (j * CELL_SIZE) as f32  + (CELL_SIZE/2) as f32;
+//         for (cell_key, _) in dragon.image.opaque_pixel_cells.iter() {
+//             let (i ,j) = (cell_key.0, cell_key.1);
+//             let x = (i * CELL_SIZE) as f32  + (CELL_SIZE/2) as f32;
+//             let y = (j * CELL_SIZE) as f32  + (CELL_SIZE/2) as f32;
 
-            //let position = transform.translation + Vec3::new(x, y, 0.0);
-            let position = Vec3::new(x, y, 0.0);
-            draw_cell_grid(&mut commands, position, grid_color, Some(dragon_entity));
-        }
-    }
+//             //let position = transform.translation + Vec3::new(x, y, 0.0);
+//             let position = Vec3::new(x, y, 0.0);
+//             draw_cell_grid(&mut commands, position, grid_color, Some(dragon_entity));
+//         }
+//     }
 
-    for (transform, wall) in wall_query.iter() {
-        for (cell_key, _) in wall.image.opaque_pixel_cells.iter() {
-            let (i ,j) = (cell_key.0, cell_key.1);
-            let x = (i * CELL_SIZE) as f32  + (CELL_SIZE/2) as f32;
-            let y = (j * CELL_SIZE) as f32  + (CELL_SIZE/2) as f32;
+//     for (transform, wall) in wall_query.iter() {
+//         for (cell_key, _) in wall.image.opaque_pixel_cells.iter() {
+//             let (i ,j) = (cell_key.0, cell_key.1);
+//             let x = (i * CELL_SIZE) as f32  + (CELL_SIZE/2) as f32;
+//             let y = (j * CELL_SIZE) as f32  + (CELL_SIZE/2) as f32;
 
-            let position = transform.translation + Vec3::new(x, y, 0.2);
-            draw_cell_grid(&mut commands, position, grid_color, None);
-        }
-    }
-}
+//             let position = transform.translation + Vec3::new(x, y, 0.2);
+//             draw_cell_grid(&mut commands, position, grid_color, None);
+//         }
+//     }
+// }
 
-fn draw_cell_grid(
-    commands: &mut Commands,
-    position: Vec3,
-    grid_color: Color,
-    parent: Option<Entity>,
-) {
-    let mut cell_grid_entity = commands.spawn(SpriteBundle {
-        sprite: Sprite {
-            color: grid_color,
-            custom_size: Some(Vec2::new(CELL_SIZE as f32, CELL_SIZE as f32)),
-            ..default()
-        },
-        transform: Transform::from_translation(position),
-        ..default()
-    });
+// fn draw_cell_grid(
+//     commands: &mut Commands,
+//     position: Vec3,
+//     grid_color: Color,
+//     parent: Option<Entity>,
+// ) {
+//     let mut cell_grid_entity = commands.spawn(SpriteBundle {
+//         sprite: Sprite {
+//             color: grid_color,
+//             custom_size: Some(Vec2::new(CELL_SIZE as f32, CELL_SIZE as f32)),
+//             ..default()
+//         },
+//         transform: Transform::from_translation(position),
+//         ..default()
+//     });
 
-    if let Some(parent_entity) = parent {
-        cell_grid_entity.set_parent(parent_entity);
-    }
-}
+//     if let Some(parent_entity) = parent {
+//         cell_grid_entity.set_parent(parent_entity);
+//     }
+// }

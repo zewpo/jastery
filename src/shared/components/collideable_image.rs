@@ -8,7 +8,7 @@ use std::convert::From;
 use super::*;
 // use super::WallShape;
 
-pub struct ImageSizeI32 {
+pub struct CollidableImageSize {
     pub width: i32,
     pub height: i32,
 }
@@ -17,13 +17,13 @@ trait ToSizeVec2 {
     fn size_vec2(self) -> Vec2;
 }
 
-impl ToSizeVec2 for ImageSizeI32 {
+impl ToSizeVec2 for CollidableImageSize {
     fn size_vec2(self) -> Vec2 {
         Vec2::new(self.width as f32, self.height as f32)
     }
 }
 
-impl From<(i32, i32)> for ImageSizeI32 {
+impl From<(i32, i32)> for CollidableImageSize {
     fn from(tuple: (i32, i32)) -> Self {
         Self {
             width: tuple.0,
@@ -32,7 +32,7 @@ impl From<(i32, i32)> for ImageSizeI32 {
     }
 }
 
-impl From<Vec2> for ImageSizeI32 {
+impl From<Vec2> for CollidableImageSize {
     fn from(vec2: Vec2) -> Self {
         Self {
             width: vec2.x as i32,
@@ -41,7 +41,7 @@ impl From<Vec2> for ImageSizeI32 {
     }
 }
 
-impl From<&DynamicImage> for ImageSizeI32 {
+impl From<&DynamicImage> for CollidableImageSize {
     fn from(image: &DynamicImage) -> Self {
         Self {
             width: image.width() as i32,
@@ -59,7 +59,7 @@ pub enum CollidableClassifier {
 pub struct CollidableImage {
     pub classifier: CollidableClassifier,
     // pub size: (i32, i32),
-    pub size: ImageSizeI32,
+    pub size: CollidableImageSize,
     pub pixel_data: DynamicImage,
     pub image_handle: Handle<Image>,
     pub opaque_pixel_cells: HashMap<(i32, i32), HashSet<(i32, i32)>>,

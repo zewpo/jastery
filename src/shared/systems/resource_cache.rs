@@ -44,7 +44,7 @@ fn load_collidable_image(
     let image_bytes = std::fs::read( "assets/".to_owned() + path).expect("Failed to read image file");
     let pixel_data = image::load_from_memory(&image_bytes).expect("Failed to load image data");
 
-    let size: ImageSizeI32 = ImageSizeI32::from(&pixel_data);
+    let size: CollidableImageSize = CollidableImageSize::from(&pixel_data);
 
     let opaque_pixel_cells: HashMap<(i32, i32), HashSet<(i32, i32)>> = get_opaque_pixel_cells(&pixel_data);
 
