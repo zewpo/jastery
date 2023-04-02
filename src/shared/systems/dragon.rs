@@ -231,6 +231,7 @@ pub fn detect_collision_depth(a_pos: Vec3, a_size: Vec2, b_pos: Vec3, b_size: Ve
     info!("B ... ");
     // check to see if the two rectangles are intersecting
     if a_min.x < b_max.x && a_max.x > b_min.x && a_min.y < b_max.y && a_max.y > b_min.y {
+        println!(" detect_collision_depth ...");
         info!("C ... ");
         // println!("Sprite - Collision checker...");
         // check to see if we hit on the left or right side
@@ -276,7 +277,7 @@ pub fn dragon_movement_system(
     time: Res<Time>,
     mut dragon_query: Query<(&mut Dragon, &mut Transform)>,
     wall_query: Query<(&Wall, &Transform), Without<Dragon>>,
-    // resource_cache: Res<ResourceCache>,
+    resource_cache: Res<ResourceCache>,
 ) {
 
     // // Check for collisions between dragons.
@@ -406,76 +407,77 @@ pub fn dragon_movement_system(
         // let mut collisions: Vec<(Entity, Vec3, Vec3)> = Vec::new();
 
         // Check for collisions
-        //if let Some(dragon_image) = resource_cache.dragon_images.get(&dragon.elemental_theme) {
-        let dragon_image = dragon.image.clone();
+        if let Some(dragon_image) = resource_cache.dragon_images.get(&dragon.elemental_theme) {
+            // let dragon_image = dragon.image.clone();
 
-        let mut total_adjustment = Vec3::ZERO;
+            let mut total_adjustment = Vec3::ZERO;
 
-        // Check for collision with Walls
-        for (wall, wall_transform) in wall_query.iter() {
-            // if let Some(wall_image) = resource_cache.wall_images.get(&wall.shape) {
-            let wall_image = wall.image.clone();
-            // If the collision occurs on multiple sides, the side with the deepest penetration is returned.
-            // If all sides are involved, `Inside` is returned.
-            if let (Some(collision), mut depth) = detect_collision_depth(
-                dragon_transform.translation,
-                dragon_image.size_vec2(),
-                wall_transform.translation,
-                wall_image.size_vec2()
-            ) {
-                println!("Dragon - wall collision!?");
-                // Check for opaque cell collision
-                if detect_collision_of_opaque_image_cells(
-                    &dragon_transform,
-                    &dragon_image,
-                    &wall_transform,
-                    &wall_image
-                ) {
-                    dragon.action.velocity = Vec3::ZERO;
-                    match collision {
-                        Collision::Left => {
-                            total_adjustment.x += depth.x;
-                            println!("Dragon Left of wall collision!?");
-                        }
-                        Collision::Right  => {
-                            total_adjustment.x += depth.x;
-                            println!("Dragon Right of wall collision!?");
-                        }
-                        Collision::Bottom => {
-                            total_adjustment.y += depth.y;
-                            println!("Dragon Bottom of wall collision!?");
-                        }
-                        Collision::Top => {
-                            total_adjustment.y += depth.y;
-                            println!("Dragon Top of wall collision!?");
-                        }
-                        Collision::Inside => {
-                            println!("Dragon inside of wall collision!?");
-                            if depth.length() < 1.0 as f32 {
-                                depth = depth.normalize_or_zero();
-                                if depth == Vec2::ZERO {
-                                    depth.x = 2.0*CELL_SIZE as f32;
+            // Check for collision with Walls
+            for (wall, wall_transform) in wall_query.iter() {
+                if let Some(wall_image) = resource_cache.wall_images.get(&wall.shape) {
+
+                    //let wall_image = wall.image.clone();
+                    // If the collision occurs on multiple sides, the side with the deepest penetration is returned.
+                    // If all sides are involved, `Inside` is returned.
+                    if let (Some(collision), mut depth) = detect_collision_depth(
+                        dragon_transform.translation,
+                        dragon_image.size_vec2(),
+                        wall_transform.translation,
+                        wall_image.size_vec2()
+                    ) {
+                        println!("Dragon - wall collision!?");
+                        // Check for opaque cell collision
+                        if detect_collision_of_opaque_image_cells(
+                            &dragon_transform,
+                            &dragon_image,
+                            &wall_transform,
+                            &wall_image
+                        ) {
+                            dragon.action.velocity = Vec3::ZERO;
+                            match collision {
+                                Collision::Left => {
+                                    total_adjustment.x += depth.x;
+                                    println!("Dragon Left of wall collision!?");
                                 }
+                                Collision::Right  => {
+                                    total_adjustment.x += depth.x;
+                                    println!("Dragon Right of wall collision!?");
+                                }
+                                Collision::Bottom => {
+                                    total_adjustment.y += depth.y;
+                                    println!("Dragon Bottom of wall collision!?");
+                                }
+                                Collision::Top => {
+                                    total_adjustment.y += depth.y;
+                                    println!("Dragon Top of wall collision!?");
+                                }
+                                Collision::Inside => {
+                                    println!("Dragon inside of wall collision!?");
+                                    if depth.length() < 1.0 as f32 {
+                                        depth = depth.normalize_or_zero();
+                                        if depth == Vec2::ZERO {
+                                            depth.x = 2.0*CELL_SIZE as f32;
+                                        }
+                                    }
+                                    total_adjustment += depth.extend(0.0);
+                                }
+                                // _ => {
+                                //     total_adjustment += depth.extend(0.0);
+                                // }
                             }
-                            total_adjustment += depth.extend(0.0);
                         }
-                        // _ => {
-                        //     total_adjustment += depth.extend(0.0);
-                        // }
                     }
                 }
             }
-        }
-        
-        //total_adjustment = total_adjustment.clamp_length(1.0, CELL_SIZE);
+            //total_adjustment = total_adjustment.clamp_length(1.0, CELL_SIZE);
 
-        if total_adjustment.length() > CELL_SIZE as f32 {
-            total_adjustment = total_adjustment.normalize_or_zero() * (CELL_SIZE as f32);
-        }
+            if total_adjustment.length() > CELL_SIZE as f32 {
+                total_adjustment = total_adjustment.normalize_or_zero() * (CELL_SIZE as f32);
+            }
 
-        // Apply the total adjustment
-        dragon_transform.translation += total_adjustment;
-    
+            // Apply the total adjustment
+            dragon_transform.translation += total_adjustment;
+        }
 
         // Move the dragon sprite.
         if dragon.action.velocity != Vec3::ZERO {
