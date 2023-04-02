@@ -3,6 +3,7 @@
 //use std::cell::Cell;
 
 use std::fmt;
+//use std::io::Write;
 
 use bevy::prelude::*;
 use crate::shared::components::*;
@@ -105,7 +106,7 @@ impl Grid {
             .map(|pos| (pos, 1))
             .collect();
 
-        println!("Neighbors of {:?}: {:?}", pos, valid_neighbors);
+        // println!("Neighbors of {:?}: {:?}", pos, valid_neighbors);
         valid_neighbors
     }
 
@@ -269,7 +270,7 @@ pub fn setup_maze(
     //let wall_images = &resource_cache.wall_images;
 
     // distance from world center 0,0 to bottom left of maze.
-    let world_offset:Vec2 = Vec2::new(-1600.0, -1000.0);
+    let world_offset:Vec2 = Vec2::new(-1600.0, -3000.0);
 
     // let mut maze = [
     let mut maze_array = vec![

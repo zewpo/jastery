@@ -44,6 +44,8 @@ pub struct Dragon {
     pub elemental_theme: ElementalTheme,
     pub health: i32,
     pub max_health: i32,
+    pub max_velocity: f32,
+    pub shooting_frequence: f32, // a decimal number representing percent of time it can shoot for.
     pub image: Arc<CollidableImage>,
     pub my_dragon: Option<MyDragon>,
 }
@@ -89,7 +91,6 @@ pub struct DragonAction {
     pub spawn_home: Vec3,
     pub velocity: Vec3,
     pub acceleration: Vec3,
-    pub max_velocity: f32,
     pub motion_timer: Timer,
     pub flip_timer: Timer,
     pub firerate_timer: Timer,

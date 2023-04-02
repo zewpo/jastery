@@ -69,7 +69,7 @@ pub fn enemy_dragon_ai_system(
             let goal = grid.world_to_grid(my_dragon_position);
             // Check if start or goal is outside the grid
             let is_start_outside_grid = !grid.is_inside_grid(enemy_dragon_transform.translation);
-            let is_goal_outside_grid = !grid.is_inside_grid(my_dragon_transform.translation);
+            //let is_goal_outside_grid = !grid.is_inside_grid(my_dragon_transform.translation);
             // println!("Start: {:?}", start); // Debugging line
             // println!("Goal: {:?}", goal); // Debugging line
             
@@ -98,7 +98,7 @@ pub fn enemy_dragon_ai_system(
                 //     }
                 // }
                 if let Some((path, _cost)) = result {
-                    println!("Start: {:?}:{:?}, Goal: {:?}:{:?}, Path: {:?}, Cost: {:?}", start, enemy_dragon_position, goal, my_dragon_position, path, _cost);
+                    //println!("Start: {:?}:{:?}, Goal: {:?}:{:?}, Path: {:?}, Cost: {:?}", start, enemy_dragon_position, goal, my_dragon_position, path, _cost);
                     if path.len() > 1 {
                         let grid_direction = (path[1].0 as f32 - path[0].0 as f32, path[1].1 as f32 - path[0].1 as f32);
                         let direction = Vec3::new(grid_direction.0, grid_direction.1, 0.0);
@@ -106,13 +106,13 @@ pub fn enemy_dragon_ai_system(
                         // let next_step_world = grid.grid_to_world(path[1]);
                         // let direction = next_step_world - enemy_dragon_position;
                         // enemy_dragon.input.move_direction = direction.normalize_or_zero();
-                        println!("Direction: {:?}\n", direction.normalize_or_zero()); // Debugging line
+                        //println!("Direction: {:?}\n", direction.normalize_or_zero()); // Debugging line
                     }
                 }
             }
             // Randomly decide when to shoot, using a random probability
             let shoot_probability = rng.gen_range(0.0..1.0);
-            if shoot_probability < 0.5 {
+            if shoot_probability < enemy_dragon.shooting_frequence {
                 enemy_dragon.input.fire = true;
             } else {
                 enemy_dragon.input.fire = false;

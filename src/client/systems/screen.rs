@@ -453,7 +453,7 @@ fn setup_game_play_screen(
     });
 
     let mouse_position_text_section: TextSection = TextSection::new(
-        "Mouse Position: ",
+        "\nMouse Position: ",
         TextStyle {
             font: font.clone(),
             font_size: 30.0,
