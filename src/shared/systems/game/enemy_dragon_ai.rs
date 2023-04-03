@@ -18,6 +18,7 @@ pub fn scaled_chebyshev_distance(a: &(i32, i32), b: &(i32, i32)) -> usize {
 
 
 pub fn enemy_dragon_ai_movement_system(
+    grid: Res<Grid>,
     mut enemy_dragon_query: Query<(&mut Dragon, &Transform), Without<MyDragon>>,
     my_dragon_query: Query<&Transform, With<MyDragon>>,
 ) {
@@ -29,19 +30,42 @@ pub fn enemy_dragon_ai_movement_system(
         for (mut enemy_dragon, enemy_dragon_transform) in enemy_dragon_query.iter_mut() {
             
 
-            if let Some(path) = &enemy_dragon.action.path{
-                if path.len() > 1 {
-                    let grid_direction = (path[1].0 as f32 - path[0].0 as f32, path[1].1 as f32 - path[0].1 as f32);
-                    let direction = Vec3::new(grid_direction.0, grid_direction.1, 0.0);
-                    enemy_dragon.input.move_direction = direction.normalize_or_zero();
+            let my_dragon_position = my_dragon_transform.translation;
+            let enemy_dragon_position = enemy_dragon_transform.translation;
+            // Calculate direction towards the player dragon
+            let direction = my_dragon_position - enemy_dragon_position;
+            
+            enemy_dragon.input.fire_direction = direction.normalize_or_zero();
+
+ 
+            if let Some(path) = &enemy_dragon.action.path {
+                if path.len() > 0 {
+                    // let path_0_pos = grid.grid_to_world(path[0]);
+                    // let delta_from_path = path_0_pos - enemy_dragon_position;
+                    // let max_distance = 500.0;
+                    // // let min_threshold = 100.0;
+                    // // let max_threshold = 5000.0;
+                    // //let wall_in_neighbor = grid.neighbors(&path[0]).iter().any(|&((x, y), _cost)| !grid.is_walkable((x, y)));
+
+                    // if delta_from_path.length() > min_distance {
+                    //     let direction = delta_from_path.normalize_or_zero();
+                    //     println!("ai move dragon @: {:?} , start {:?}", enemy_dragon_position, path_0_pos);
+                    //     println!("ai move direction: {:?} , delta {:?} : {:?}", direction, delta_from_path.length(), delta_from_path);
+                    //     enemy_dragon.input.move_direction = direction;
+                    //     enemy_dragon.input.brake = true;
+                    // } else 
+                    
+                    if path.len() > 1 {
+                        let grid_direction = (path[1].0 as f32 - path[0].0 as f32, path[1].1 as f32 - path[0].1 as f32);
+                        let direction = Vec3::new(grid_direction.0, grid_direction.1, 0.0);
+                        enemy_dragon.input.move_direction = direction.normalize_or_zero();
+                    }
                 } else {
-                    let my_dragon_position = my_dragon_transform.translation;
-                    let enemy_dragon_position = enemy_dragon_transform.translation;
-                    // Calculate direction towards the player dragon
-                    let direction = my_dragon_position - enemy_dragon_position;
                     enemy_dragon.input.move_direction = direction.normalize_or_zero();
                 }
-            } 
+            } else if !grid.is_inside_grid(enemy_dragon_position) {
+                enemy_dragon.input.move_direction = direction.normalize_or_zero();
+            }
 
             // Randomly decide when to shoot, using a random probability
             let shoot_probability = rng.gen_range(0.0..1.0);
@@ -85,7 +109,7 @@ pub fn enemy_dragon_ai_pathfinding_system(
                 println!("Not walkable: {:?} [{:?}]",goal ,my_dragon_position );
             }
             // Check if start or goal is outside the grid
-            let is_start_outside_grid = !grid.is_inside_grid(enemy_dragon_transform.translation);
+            let is_start_outside_grid = !grid.is_inside_grid(enemy_dragon_position);
             
             if is_goal_walkable && !is_start_outside_grid {
                 // Use pathfinding to navigate the grid
@@ -98,6 +122,9 @@ pub fn enemy_dragon_ai_pathfinding_system(
                     println!("PATH: {:?}",path);
                     enemy_dragon.action.path = Some(path);
                 }
+            } else {
+                println!("PATH: Direct");
+                enemy_dragon.action.path = None;
             }
         }
     }

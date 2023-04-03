@@ -88,7 +88,7 @@ pub fn setup_dragons(
                 elemental_theme: ice_dragon_theme,
                 health: 10,
                 max_health: 20,
-                max_velocity: 5.0,
+                max_velocity: 15.0,
                 shooting_frequence: 0.3,
                 image: ice_dragon_image,
             
@@ -102,7 +102,7 @@ pub fn setup_dragons(
                     flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
                     flipping: false,
                     path: Some(Vec::new()),
-                    pathfinding_timer: Some(Timer::from_seconds(1.0, TimerMode::Repeating)),
+                    pathfinding_timer: Some(Timer::from_seconds(0.2, TimerMode::Repeating)),
                 },
                 
             },

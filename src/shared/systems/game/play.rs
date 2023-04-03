@@ -13,6 +13,7 @@ impl Plugin for GamePlayPlugin {
         .add_systems((
             dragon_movement_system,
             dragon_dragon_collision_system,
+            dragon_wall_collision_system,
             projectile_spawn_system,
             projectile_movement_system,
             projectile_dragon_collision_system,
