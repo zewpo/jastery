@@ -36,6 +36,7 @@ use super::*;
 //     }
 // // }
 
+
 #[derive(Component, Clone)]
 pub struct Dragon {
     pub input: DragonInput,
@@ -95,4 +96,6 @@ pub struct DragonAction {
     pub flip_timer: Timer,
     pub firerate_timer: Timer,
     pub flipping: bool,
+    pub pathfinding_timer: Option<Timer>,
+    pub path: Option<Vec<(i32, i32)>>,
 }

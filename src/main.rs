@@ -17,6 +17,7 @@ use shared::systems::{
 };
 
 use std::fmt::Write;
+use std::env;
 
 use tracing_appender::{
     non_blocking::{NonBlockingBuilder, WorkerGuard},
@@ -111,6 +112,8 @@ fn setup_logger(log_file: &str) -> WorkerGuard {
 
 fn main() {
     
+    println!("Current working directory: {:?}", env::current_dir().unwrap());
+
     let log_guard = setup_logger("log.txt");
 
     App::new()
@@ -128,7 +131,7 @@ fn main() {
                 }),
                 ..default()
             })
-            // .disable::<bevy::log::LogPlugin>()
+            .disable::<bevy::log::LogPlugin>()
         )
         .add_plugin(UIPlugin)
         .add_plugin(ResourceCachePlugin)

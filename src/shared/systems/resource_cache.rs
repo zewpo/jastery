@@ -159,7 +159,8 @@ pub fn preload_resources(
 
 
     let wall_shape_file_names = vec![
-        (WallShape::Straight, "sprites/wall-straight.png"),
+        // (WallShape::Straight, "sprites/wall-straight.png"),
+        (WallShape::Straight, "sprites/wall-block.png"),
         // Add more wall types and their paths here
     ];
 

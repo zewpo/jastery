@@ -41,6 +41,8 @@ pub fn setup_dragons(
                 firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
                 flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
                 flipping: false,
+                path: None,
+                pathfinding_timer: None,
             },
         },
          
@@ -66,7 +68,7 @@ pub fn setup_dragons(
             // },
     } )).id();
 
-
+    // let new_path: Option<Vec<(i32, i32)>> = Some(Vec::new());
 
     // Spawn an enemy Ice Dragon into the game.
     // let ice_dragon_spawn_home = Vec3::new(1400., 0., 0.);
@@ -86,7 +88,7 @@ pub fn setup_dragons(
                 elemental_theme: ice_dragon_theme,
                 health: 10,
                 max_health: 20,
-                max_velocity: 0.0,
+                max_velocity: 5.0,
                 shooting_frequence: 0.3,
                 image: ice_dragon_image,
             
@@ -99,6 +101,8 @@ pub fn setup_dragons(
                     firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
                     flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
                     flipping: false,
+                    path: Some(Vec::new()),
+                    pathfinding_timer: Some(Timer::from_seconds(1.0, TimerMode::Repeating)),
                 },
                 
             },
@@ -155,6 +159,7 @@ pub fn setup_dragons(
     //                 firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
     //                 flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
     //                 flipping: false,
+    //                 path: Some(Vec::new()),
     //             },
     //         },
     // });
@@ -191,6 +196,7 @@ pub fn setup_dragons(
     //                 firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
     //                 flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
     //                 flipping: false,
+    //                 path: Some(Vec::new()),
     //             },
     //         },
     // });
