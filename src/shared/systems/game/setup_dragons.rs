@@ -27,8 +27,8 @@ pub fn setup_dragons(
             my_dragon: Some(MyDragon),
             id: Uuid::new_v4(),
             elemental_theme: my_dragon_theme,
-            health: 10000,
-            max_health: 20,
+            health: 10,
+            max_health: 10,
             max_velocity: 50.0,
             shooting_frequence: 1.0, // 100%
             image: my_dragon_image,
@@ -102,7 +102,7 @@ pub fn setup_dragons(
                     flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
                     flipping: false,
                     path: Some(Vec::new()),
-                    pathfinding_timer: Some(Timer::from_seconds(0.2, TimerMode::Repeating)),
+                    pathfinding_timer: Some(Timer::from_seconds(0.05, TimerMode::Repeating)),
                 },
                 
             },
@@ -129,77 +129,79 @@ pub fn setup_dragons(
 
 
 
-    // // Spawn an enemy Rock Dragon into the game.
-    // let rock_dragon_spawn_home = Vec3::new(1000., -400., 0.);
-    // let rock_dragon_theme = ElementalTheme::Rock;
-    // let rock_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(rock_dragon_theme));
-    // commands.spawn( DragonBundle {
-    //         game_piece: GamePiece,
-    //         sprite_bundle: SpriteBundle {
-    //             texture: rock_dragon_image.handle(),
-    //             transform: Transform::from_translation(rock_dragon_spawn_home),
-    //             ..default()
-    //         },
-    //         dragon: Dragon {
-    //             my_dragon: None,
-    //             id: Uuid::new_v4(), 
-    //             elemental_theme: rock_dragon_theme,
-    //             health: 10,
-    //             max_health: 20,
-    //             max_velocity: 15.0,
-    //             shooting_frequence: 0.3,
-    //             image: rock_dragon_image,
+    // Spawn an enemy Rock Dragon into the game.
+    let rock_dragon_spawn_home = Vec3::new(1000., -400., 0.);
+    let rock_dragon_theme = ElementalTheme::Rock;
+    let rock_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(rock_dragon_theme));
+    commands.spawn( DragonBundle {
+            game_piece: GamePiece,
+            sprite_bundle: SpriteBundle {
+                texture: rock_dragon_image.handle(),
+                transform: Transform::from_translation(rock_dragon_spawn_home),
+                ..default()
+            },
+            dragon: Dragon {
+                my_dragon: None,
+                id: Uuid::new_v4(), 
+                elemental_theme: rock_dragon_theme,
+                health: 10,
+                max_health: 20,
+                max_velocity: 15.0,
+                shooting_frequence: 0.3,
+                image: rock_dragon_image,
             
-    //             input: DragonInput::default(),
-    //             action: DragonAction {
-    //                 spawn_home: rock_dragon_spawn_home,
-    //                 velocity: Vec3::ZERO,
-    //                 acceleration: Vec3::ZERO,
-    //                 motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
-    //                 firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
-    //                 flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
-    //                 flipping: false,
-    //                 path: Some(Vec::new()),
-    //             },
-    //         },
-    // });
+                input: DragonInput::default(),
+                action: DragonAction {
+                    spawn_home: rock_dragon_spawn_home,
+                    velocity: Vec3::ZERO,
+                    acceleration: Vec3::ZERO,
+                    motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+                    firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
+                    flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
+                    flipping: false,
+                    path: Some(Vec::new()),
+                    pathfinding_timer: Some(Timer::from_seconds(0.06, TimerMode::Repeating)),
+                },
+            },
+    });
 
 
 
-    // // Spawn an enemy Water Dragon into the game.
-    // let water_dragon_spawn_home = Vec3::new(-1000., 400., 0.);
-    // let water_dragon_theme = ElementalTheme::Water;
-    // let water_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(water_dragon_theme));
-    // commands.spawn( DragonBundle {
-    //         game_piece: GamePiece,
-    //         sprite_bundle: SpriteBundle {
-    //             texture: water_dragon_image.handle(),
-    //             transform: Transform::from_translation(water_dragon_spawn_home),
-    //             ..default()
-    //         },
-    //         dragon: Dragon {
-    //             my_dragon: None,
-    //             id: Uuid::new_v4(), 
-    //             elemental_theme: water_dragon_theme,
-    //             health: 10,
-    //             max_health: 20,
-    //             max_velocity: 18.0,
-    //             shooting_frequence: 0.3,
-    //             image: water_dragon_image,
+    // Spawn an enemy Water Dragon into the game.
+    let water_dragon_spawn_home = Vec3::new(-1000., 400., 0.);
+    let water_dragon_theme = ElementalTheme::Water;
+    let water_dragon_image = resource_cache.get_collidable_image(CollidableClassifier::Dragon(water_dragon_theme));
+    commands.spawn( DragonBundle {
+            game_piece: GamePiece,
+            sprite_bundle: SpriteBundle {
+                texture: water_dragon_image.handle(),
+                transform: Transform::from_translation(water_dragon_spawn_home),
+                ..default()
+            },
+            dragon: Dragon {
+                my_dragon: None,
+                id: Uuid::new_v4(), 
+                elemental_theme: water_dragon_theme,
+                health: 10,
+                max_health: 20,
+                max_velocity: 40.0,
+                shooting_frequence: 0.3,
+                image: water_dragon_image,
             
-    //             input: DragonInput::default(),
-    //             action: DragonAction {
-    //                 spawn_home: water_dragon_spawn_home,
-    //                 velocity: Vec3::ZERO,
-    //                 acceleration: Vec3::ZERO,
-    //                 motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
-    //                 firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
-    //                 flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
-    //                 flipping: false,
-    //                 path: Some(Vec::new()),
-    //             },
-    //         },
-    // });
+                input: DragonInput::default(),
+                action: DragonAction {
+                    spawn_home: water_dragon_spawn_home,
+                    velocity: Vec3::ZERO,
+                    acceleration: Vec3::ZERO,
+                    motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+                    firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
+                    flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
+                    flipping: false,
+                    path: Some(Vec::new()),
+                    pathfinding_timer: Some(Timer::from_seconds(0.07, TimerMode::Repeating)),
+                },
+            },
+    });
 
 
     println!("Setup Dragons DONE.");

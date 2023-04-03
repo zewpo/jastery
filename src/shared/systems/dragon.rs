@@ -382,7 +382,7 @@ pub fn dragon_wall_collision_system(
                     if let Some(path) = &dragon.action.path {
                         if path.len() > 0 {
                             let cell_pos = grid.grid_to_world(path[0]);
-                            total_adjustment += (cell_pos - dragon_transform.translation).normalize_or_zero();
+                            total_adjustment += cell_pos - dragon_transform.translation;
                             bumped = true
                         }
                     }
