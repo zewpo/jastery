@@ -52,24 +52,39 @@ impl Grid {
     }
 
     pub fn world_to_grid(&self, position: Vec3) -> (i32,i32) {
-        let x = ((position.x - self.world_offset.x) / self.cell_width).floor() as i32;
-        let y = ((position.y - self.world_offset.y) / self.cell_height).floor() as i32;
+        let x = (((position.x - self.world_offset.x) / self.cell_width) + 0.5).floor() as i32;
+        let y = (((position.y - self.world_offset.y) / self.cell_height) + 0.5).floor() as i32;
         (x, y)
     }
 
     pub fn neighbors(&self, pos: &(i32, i32)) -> Vec<((i32, i32), usize)> {
         let &(x, y) = pos;
         let directions = vec![
-            (x - 1, y),
-            (x + 1, y),
-            (x, y - 1),
-            (x, y + 1),
+            (x - 1, y, 1000),
+            (x + 1, y, 1000),
+            (x, y - 1, 1000),
+            (x, y + 1, 1000),
+            (x - 1, y - 1, 1414),
+            (x + 1, y - 1, 1414),
+            (x - 1, y + 1, 1414),
+            (x + 1, y + 1, 1414),
         ];
 
         let valid_neighbors = directions
             .into_iter()
-            .filter(|&(nx, ny)| self.is_walkable((nx, ny)))
-            .map(|pos| (pos, 1))
+  //          .filter(|&(nx, ny, _)| self.is_walkable((nx, ny)))
+            .filter(|&(nx, ny, _cost)| {
+                if self.is_walkable((nx, ny)) {
+                    if _cost == 1414 {
+                        self.is_walkable((nx, y)) && self.is_walkable((x, ny))
+                    } else {
+                        true
+                    }
+                } else {
+                    false
+                }
+            })
+            .map(|(nx, ny, cost)| ((nx, ny), cost))
             .collect();
 
         // println!("Neighbors of {:?}: {:?}", pos, valid_neighbors);
@@ -100,15 +115,27 @@ impl Grid {
 impl fmt::Debug for Grid {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Grid ({} rows, {} columns):", self.rows, self.columns)?;
+
+        // Print column numbers across the top
+        write!(f, "    ")?;
+        for x in 0..self.columns {
+            write!(f, "{:4}", x)?;
+        }
+        writeln!(f)?;
+
+        // Print the grid with row numbers on the left
         for y in (0..self.rows).rev() {
-            let row: Vec<u32> = (0..self.columns)
-                .map(|x| self.data[y * self.columns + x])
-                .collect();
-            writeln!(f, "{:?}", row)?;
+            write!(f, "{:2}:", y)?;
+            for x in 0..self.columns {
+                let index = y * self.columns + x;
+                write!(f, "{:4}", self.data[index])?;
+            }
+            writeln!(f)?;
         }
         Ok(())
     }
 }
+
 
 
 

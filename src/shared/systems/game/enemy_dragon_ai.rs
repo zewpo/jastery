@@ -4,11 +4,18 @@ use rand::Rng;
 use pathfinding::prelude::astar;
 use super::Grid;
 
-fn manhattan_distance(a: &(i32, i32), b: &(i32, i32)) -> usize {
-    let dx = (a.0 as isize - b.0 as isize).abs() as usize;
-    let dy = (a.1 as isize - b.1 as isize).abs() as usize;
-    dx + dy
+// fn manhattan_distance(a: &(i32, i32), b: &(i32, i32)) -> usize {
+//     let dx = (a.0 as isize - b.0 as isize).abs() as usize;
+//     let dy = (a.1 as isize - b.1 as isize).abs() as usize;
+//     dx + dy
+// }
+
+pub fn scaled_chebyshev_distance(a: &(i32, i32), b: &(i32, i32)) -> usize {
+    let dx = (a.0 - b.0).abs() as usize;
+    let dy = (a.1 - b.1).abs() as usize;
+    dx.max(dy) * 1000
 }
+
 
 pub fn enemy_dragon_ai_movement_system(
     mut enemy_dragon_query: Query<(&mut Dragon, &Transform), Without<MyDragon>>,
@@ -74,6 +81,9 @@ pub fn enemy_dragon_ai_pathfinding_system(
             let goal = grid.world_to_grid(my_dragon_position);
 
             let is_goal_walkable = grid.is_walkable(goal);
+            if !is_goal_walkable {
+                println!("Not walkable: {:?} [{:?}]",goal ,my_dragon_position );
+            }
             // Check if start or goal is outside the grid
             let is_start_outside_grid = !grid.is_inside_grid(enemy_dragon_transform.translation);
             
@@ -82,9 +92,10 @@ pub fn enemy_dragon_ai_pathfinding_system(
                 if let Some((path, _cost)) = astar(
                     &start,
                     |pos| grid.neighbors(pos),
-                    |pos| manhattan_distance(pos, &goal),
+                    |pos| scaled_chebyshev_distance(pos, &goal),
                     |pos| *pos == goal,
                 ) {
+                    println!("PATH: {:?}",path);
                     enemy_dragon.action.path = Some(path);
                 }
             }

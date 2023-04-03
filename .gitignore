@@ -4,3 +4,4 @@ wall_output.txt
 .gitignore
 pixels-output.txt
 log.txt
+flamegraph.svg
