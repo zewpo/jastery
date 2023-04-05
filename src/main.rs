@@ -2,6 +2,7 @@ mod client;
 mod server;
 mod shared;
 
+mod generated;
 
 use bevy::{
     prelude::*,
@@ -33,88 +34,88 @@ use tracing_subscriber::{
 };
 
 
-struct CustomFormatter;
+// struct CustomFormatter;
 
-struct FieldFormatter<'a> {
-    buffer: &'a mut String,
-}
+// struct FieldFormatter<'a> {
+//     buffer: &'a mut String,
+// }
 
-impl<'a> Visit for FieldFormatter<'a> {
-    fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
-        // write!(self.buffer, "{}={:?}; ", field.name(), value).unwrap();
-        if field.name() == "message" {
-            write!(self.buffer, "{:?} ", value).unwrap();
-        } else {
-            write!(self.buffer, "{}={:?}; ", field.name(), value).unwrap();
-        }
-    }
-}
+// impl<'a> Visit for FieldFormatter<'a> {
+//     fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
+//         // write!(self.buffer, "{}={:?}; ", field.name(), value).unwrap();
+//         if field.name() == "message" {
+//             write!(self.buffer, "{:?} ", value).unwrap();
+//         } else {
+//             write!(self.buffer, "{}={:?}; ", field.name(), value).unwrap();
+//         }
+//     }
+// }
 
-impl<S, N> FormatEvent<S, N> for CustomFormatter
-where
-    S: tracing::Subscriber + for<'a> LookupSpan<'a>,
-    N: for<'a> FormatFields<'a> + 'static,
-{
-    fn format_event(
-        &self,
-        _ctx: &tracing_subscriber::fmt::FmtContext<S, N>,
-        mut writer: tracing_subscriber::fmt::format::Writer<'_>,
-        event: &tracing::Event<'_>,
-    ) -> std::fmt::Result {
-
-
-        let mut fields_buffer = String::new();
-        let mut field_formatter = FieldFormatter { buffer: &mut fields_buffer };
-        event.record(&mut field_formatter);
-
-        writeln!(
-            writer,
-            "{} [{}] {}: {}",
-            chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
-            event.metadata().level(),
-            event.metadata().target(),
-            fields_buffer
-        )
-    }
-}
-
-fn setup_logger(log_file: &str) -> WorkerGuard {
-    // let file_appender = RollingFileAppender::new(tracing_appender::rolling::Rotation::NEVER, ".", log_file);
-    let file_appender = tracing_appender::rolling::never(".", log_file);
-
-    let (non_blocking, guard) = NonBlockingBuilder::default()
-        .lossy(false)
-        .buffered_lines_limit(1000)
-        .finish(file_appender);
-
-    let fmt_layer = tracing_subscriber::fmt::layer()
-        .with_target(false)
-        .with_writer(non_blocking)
-        .with_ansi(false)
-        .event_format(CustomFormatter);
-
-    let filter_layer = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info"))
-        .add_directive("wgpu=error".parse().unwrap())
-        .add_directive("bevy_render=info".parse().unwrap())
-        .add_directive("bevy_ecs=info".parse().unwrap());
+// impl<S, N> FormatEvent<S, N> for CustomFormatter
+// where
+//     S: tracing::Subscriber + for<'a> LookupSpan<'a>,
+//     N: for<'a> FormatFields<'a> + 'static,
+// {
+//     fn format_event(
+//         &self,
+//         _ctx: &tracing_subscriber::fmt::FmtContext<S, N>,
+//         mut writer: tracing_subscriber::fmt::format::Writer<'_>,
+//         event: &tracing::Event<'_>,
+//     ) -> std::fmt::Result {
 
 
-    tracing_subscriber::registry()
-        .with(filter_layer)
-        .with(fmt_layer)
-        .init();
+//         let mut fields_buffer = String::new();
+//         let mut field_formatter = FieldFormatter { buffer: &mut fields_buffer };
+//         event.record(&mut field_formatter);
 
-    info!("Logging to file: {}", log_file);
+//         writeln!(
+//             writer,
+//             "{} [{}] {}: {}",
+//             chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+//             event.metadata().level(),
+//             event.metadata().target(),
+//             fields_buffer
+//         )
+//     }
+// }
 
-    guard
-}
+// fn setup_logger(log_file: &str) -> WorkerGuard {
+//     // let file_appender = RollingFileAppender::new(tracing_appender::rolling::Rotation::NEVER, ".", log_file);
+//     let file_appender = tracing_appender::rolling::never(".", log_file);
+
+//     let (non_blocking, guard) = NonBlockingBuilder::default()
+//         .lossy(false)
+//         .buffered_lines_limit(1000)
+//         .finish(file_appender);
+
+//     let fmt_layer = tracing_subscriber::fmt::layer()
+//         .with_target(false)
+//         .with_writer(non_blocking)
+//         .with_ansi(false)
+//         .event_format(CustomFormatter);
+
+//     let filter_layer = EnvFilter::try_from_default_env()
+//         .unwrap_or_else(|_| EnvFilter::new("info"))
+//         .add_directive("wgpu=error".parse().unwrap())
+//         .add_directive("bevy_render=info".parse().unwrap())
+//         .add_directive("bevy_ecs=info".parse().unwrap());
+
+
+//     tracing_subscriber::registry()
+//         .with(filter_layer)
+//         .with(fmt_layer)
+//         .init();
+
+//     info!("Logging to file: {}", log_file);
+
+//     guard
+// }
 
 fn main() {
     
-    println!("Current working directory: {:?}", env::current_dir().unwrap());
+    // println!("Current working directory: {:?}", env::current_dir().unwrap());
 
-    let log_guard = setup_logger("log.txt");
+    // let log_guard = setup_logger("log.txt");
 
     App::new()
         .add_plugins(DefaultPlugins
@@ -131,7 +132,7 @@ fn main() {
                 }),
                 ..default()
             })
-            .disable::<bevy::log::LogPlugin>()
+            // .disable::<bevy::log::LogPlugin>()
         )
         .add_plugin(UIPlugin)
         .add_plugin(ResourceCachePlugin)
@@ -139,7 +140,7 @@ fn main() {
         .run();
 
     // This will ensure logs are flushed before the application exits
-    drop(log_guard);
+    // drop(log_guard);
 }
 
 

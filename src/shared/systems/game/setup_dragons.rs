@@ -29,7 +29,7 @@ pub fn setup_dragons(
             elemental_theme: my_dragon_theme,
             health: 10,
             max_health: 10,
-            max_velocity: 50.0,
+            max_velocity: 40.0,
             shooting_frequence: 1.0, // 100%
             image: my_dragon_image,
             input: DragonInput::default(),
@@ -184,7 +184,7 @@ pub fn setup_dragons(
                 elemental_theme: water_dragon_theme,
                 health: 10,
                 max_health: 20,
-                max_velocity: 40.0,
+                max_velocity: 12.0,
                 shooting_frequence: 0.3,
                 image: water_dragon_image,
             

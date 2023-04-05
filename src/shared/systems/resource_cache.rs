@@ -1,13 +1,17 @@
 use bevy::prelude::*;
+use bevy::text;
 use image::DynamicImage;
 use image::GenericImageView;
+use wasm_bindgen_futures::JsFuture;
+// use core::slice::SlicePattern;
 // use bevy::utils::HashMap;
 use std::collections::{HashMap, HashSet};
 // use std::fs::File;
-use std::fs::File;
-use std::io::Write;
+// use std::fs::File;
+// use std::io::Write;
 use std::sync::Arc;
 
+use crate::generated::ASSET_DATA;
 use crate::shared::components::*;
 // use crate::shared::components::I32ImageSize;
 // // use image::GenericImageView;
@@ -16,6 +20,7 @@ use crate::shared::components::*;
 // use crate::shared::components::projectile::*;
 // use crate::shared::components::resource_cache::*;
 // use crate::shared::components::wall::*;
+
 
 pub struct ResourceCachePlugin;
 
@@ -34,18 +39,36 @@ impl Plugin for ResourceCachePlugin {
 }
 
 
-fn load_collidable_image(
+
+// async fn load_image_from_url(url: &str) -> Result<Vec<u8>, JsValue> {
+//     let response = web_sys::window()
+//         .unwrap()
+//         .fetch_with_str(url)
+//         .await?; // use await inside async function
+
+//     let array_buffer = JsFuture::from(response.array_buffer().unwrap())
+//         .await?; // use await inside async function
+
+//     let js_array = js_sys::Uint8Array::new(&array_buffer);
+//     Ok((&js_array).to_vec())
+// }
+
+// fn load_image_from_path(path: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+//     let bytes = include_bytes!("assets/".to_owned() + path);
+//     Ok(bytes.to_vec())
+// }
+
+fn preload_collidable_image(
     asset_server: &AssetServer,
     path: &str,
     classifier: CollidableClassifier,
 ) -> Arc<CollidableImage> {
 
     let image_handle: Handle<Image> = asset_server.load(path);
-    let image_bytes = std::fs::read( "assets/".to_owned() + path).expect("Failed to read image file");
+    let image_bytes = ASSET_DATA.get(path).unwrap();
+
     let pixel_data = image::load_from_memory(&image_bytes).expect("Failed to load image data");
-
     let size: CollidableImageSize = CollidableImageSize::from(&pixel_data);
-
     let opaque_pixel_cells: HashMap<(i32, i32), HashSet<(i32, i32)>> = get_opaque_pixel_cells(&pixel_data);
 
     Arc::new(CollidableImage {
@@ -55,7 +78,6 @@ fn load_collidable_image(
         opaque_pixel_cells,
         classifier,
     })
-
 }
 
 fn get_opaque_pixel_cells(
@@ -102,57 +124,56 @@ fn get_opaque_pixel_cells(
 }
 
 
-fn debug_opaque_pixel_cells(
-    opaque_pixel_cells: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
-    filename: &str,
-) {
-        // debugging where the opaque cells are
-        let mut cell_keys: Vec<&(i32, i32)> = opaque_pixel_cells.keys().collect();
-        cell_keys.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+// fn debug_opaque_pixel_cells(
+//     opaque_pixel_cells: &HashMap<(i32, i32), HashSet<(i32, i32)>>,
+//     filename: &str,
+// ) {
+//         // debugging where the opaque cells are
+//         let mut cell_keys: Vec<&(i32, i32)> = opaque_pixel_cells.keys().collect();
+//         cell_keys.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
 
-        let min_i = cell_keys.iter().min_by_key(|key| key.0).unwrap().0;
+//         let min_i = cell_keys.iter().min_by_key(|key| key.0).unwrap().0;
 
-        let mut current_cell_j = None;
-        let mut prev_cell_i: Option<i32> = None;
+//         let mut current_cell_j = None;
+//         let mut prev_cell_i: Option<i32> = None;
 
-        // Create a new file or truncate an existing file
-        let mut file = File::create(filename).expect("Unable to create file");
+//         // Create a new file or truncate an existing file
+//         let mut file = File::create(filename).expect("Unable to create file");
 
-        writeln!(&mut file, "\n\n").expect("Unable to write to file");
-        for cell_key in cell_keys {
-            let (i, j) = (cell_key.0,cell_key.1);
+//         writeln!(&mut file, "\n\n").expect("Unable to write to file");
+//         for cell_key in cell_keys {
+//             let (i, j) = (cell_key.0,cell_key.1);
 
-            if current_cell_j.is_some() && current_cell_j != Some(j) {
-                writeln!(&mut file, "").expect("Unable to write to file");
-                prev_cell_i = None;
-            }
+//             if current_cell_j.is_some() && current_cell_j != Some(j) {
+//                 writeln!(&mut file, "").expect("Unable to write to file");
+//                 prev_cell_i = None;
+//             }
 
-            // Print min_i to i number of tabs at the beginning of the line when starting a new line
-            if current_cell_j != Some(j) {
-                for _ in min_i..i {
-                    write!(&mut file, "\t").expect("Unable to write to file");
-                }
-            }
+//             // Print min_i to i number of tabs at the beginning of the line when starting a new line
+//             if current_cell_j != Some(j) {
+//                 for _ in min_i..i {
+//                     write!(&mut file, "\t").expect("Unable to write to file");
+//                 }
+//             }
 
-            // Insert tab characters based on the difference in i values of consecutive cells
-            if let Some(prev_i) = prev_cell_i {
-                for _ in 0..(i - prev_i - 1) {
-                    write!(&mut file, "\t").expect("Unable to write to file");
-                }
-            }
+//             // Insert tab characters based on the difference in i values of consecutive cells
+//             if let Some(prev_i) = prev_cell_i {
+//                 for _ in 0..(i - prev_i - 1) {
+//                     write!(&mut file, "\t").expect("Unable to write to file");
+//                 }
+//             }
 
-            current_cell_j = Some(j);
-            prev_cell_i = Some(i);
+//             current_cell_j = Some(j);
+//             prev_cell_i = Some(i);
 
-            // Format cell_key with fixed width of 8 characters
-            let formatted_cell_key = format!("({:2},{:2})", i, j);
-            write!(&mut file, "{:8}", formatted_cell_key).expect("Unable to write to file");
-        }
-        writeln!(&mut file, "\n\n").expect("Unable to write to file");
-}
+//             // Format cell_key with fixed width of 8 characters
+//             let formatted_cell_key = format!("({:2},{:2})", i, j);
+//             write!(&mut file, "{:8}", formatted_cell_key).expect("Unable to write to file");
+//         }
+//         writeln!(&mut file, "\n\n").expect("Unable to write to file");
+// }
 
 pub fn preload_resources(
-    mut _commands: Commands, 
     asset_server: Res<AssetServer>,
     mut resource_cache: ResMut<ResourceCache>
 ) { 
@@ -175,10 +196,10 @@ pub fn preload_resources(
     // Preload the walls
     for (wall_shape, path) in wall_shape_file_names {
 
-        let wall_image = load_collidable_image(&asset_server, path, CollidableClassifier::Wall(WallShape::Straight));
+        let wall_image = preload_collidable_image(&asset_server,path, CollidableClassifier::Wall(WallShape::Straight));
         /////////////////////////////////////////////////////
         // debugging where the opaque cells are
-        debug_opaque_pixel_cells(&wall_image.opaque_pixel_cells,"wall_output.txt");
+        // debug_opaque_pixel_cells(&wall_image.opaque_pixel_cells,"wall_output.txt");
         /////////////////////////////////////////////////////
         resource_cache.wall_images.insert(wall_shape, wall_image);
     }
@@ -186,40 +207,59 @@ pub fn preload_resources(
     // Preload the Dragons and their themed Projectiles
     for (elemental_theme, dragon_image_file_path, projectile_image_file_path) in theme_image_file_names {
         
-        let dragon_image = load_collidable_image(&asset_server, dragon_image_file_path, CollidableClassifier::Dragon(elemental_theme));
+        let dragon_image = preload_collidable_image(&asset_server,dragon_image_file_path, CollidableClassifier::Dragon(elemental_theme));
         //////////////////////////////////////////////////////////////
         // debugging where the opaque cells are
-        debug_opaque_pixel_cells(&dragon_image.opaque_pixel_cells,"dragon_output.txt");
+        // debug_opaque_pixel_cells(&dragon_image.opaque_pixel_cells,"dragon_output.txt");
         //////////////////////////////////////////////////////////////
         resource_cache.dragon_images.insert(elemental_theme, dragon_image);
 
 
-        let projectile_image = load_collidable_image(&asset_server, projectile_image_file_path, CollidableClassifier::Projectile(elemental_theme));
+        let projectile_image = preload_collidable_image(&asset_server,projectile_image_file_path, CollidableClassifier::Projectile(elemental_theme));
         resource_cache.projectile_images.insert(elemental_theme, projectile_image);
     }
 
 
     // preloads all the ttf file handles from the assets/fonts/ directory.
-    let dir = std::path::Path::new("assets/fonts/");
-    let paths = std::fs::read_dir(dir).unwrap();
+    // for entry in paths {
+    //     let path = entry.unwrap().path();
+    //     if path.is_file() {
+    //         if let Some(extension) = path.extension() {
+    //             if extension == "ttf" {
+    //                 if let Some(file_name) = path.file_name() {
+    //                     if let Some(file_name_str) = file_name.to_str() {
+                            let handle: Handle<Font> = asset_server.load("fonts/FiraSans-Bold.ttf");
+                            resource_cache.gui_fonts.insert("FiraSans-Bold".to_owned(), handle);
+                            
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
-    for entry in paths {
-        let path = entry.unwrap().path();
-        if path.is_file() {
-            if let Some(extension) = path.extension() {
-                if extension == "ttf" {
-                    if let Some(file_name) = path.file_name() {
-                        if let Some(file_name_str) = file_name.to_str() {
-                            let handle: Handle<Font> = asset_server.load("fonts/".to_owned() + file_name_str);
-                            if let Some(file_stem) = path.file_stem() {
-                                if let Some(file_stem_str) = file_stem.to_str() {
-                                    resource_cache.gui_fonts.insert(file_stem_str.to_string(), handle);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+
+    // // preloads all the ttf file handles from the assets/fonts/ directory.
+    // let dir = std::path::Path::new("assets/fonts/");
+    // let paths = std::fs::read_dir(dir).unwrap();
+
+    // for entry in paths {
+    //     let path = entry.unwrap().path();
+    //     if path.is_file() {
+    //         if let Some(extension) = path.extension() {
+    //             if extension == "ttf" {
+    //                 if let Some(file_name) = path.file_name() {
+    //                     if let Some(file_name_str) = file_name.to_str() {
+    //                         let handle: Handle<Font> = asset_server.load("fonts/".to_owned() + file_name_str);
+    //                         if let Some(file_stem) = path.file_stem() {
+    //                             if let Some(file_stem_str) = file_stem.to_str() {
+    //                                 resource_cache.gui_fonts.insert(file_stem_str.to_string(), handle);
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
