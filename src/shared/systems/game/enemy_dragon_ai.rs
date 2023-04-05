@@ -70,7 +70,7 @@ pub fn enemy_dragon_ai_movement_system(
             // Randomly decide when to shoot, using a random probability
             let shoot_probability = rng.gen_range(0.0..1.0);
             if shoot_probability < enemy_dragon.shooting_frequence {
-                enemy_dragon.input.fire = true;
+                // enemy_dragon.input.fire = true;
             } else {
                 enemy_dragon.input.fire = false;
             }

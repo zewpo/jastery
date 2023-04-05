@@ -1,7 +1,9 @@
 // src\client\systems\screen.rs
 
-use bevy::app::AppExit;
+// use bevy::app::AppExit;
 use bevy::{
+    app::AppExit,
+    input::touch::*,
     prelude::*,
     ui::Interaction,
 };
@@ -345,13 +347,14 @@ fn dragon_position_text_system(
     camera_scale: Res<CameraScale>,
     mut text_query: Query<&mut Text>,
     mouse_button_input: Res<Input<MouseButton>>,
+    touches: Res<Touches>,
     // mut mouse_motion_events: EventReader<MouseMotion>,
     _cursor_moved_events: EventReader<CursorMoved>,
     dragon_query: Query<(&Dragon, &Transform), (With<MyDragon>,Without<GameCamera>)>,
-    camera_query: Query<&mut Transform, With<GameCamera>>,
+    camera_query: Query<(&GameCamera, &mut Transform), With<GameCamera>>,
 ) {
     
-    let camera_transform = camera_query.single();
+    let (game_camera, camera_transform) = camera_query.single();
     let window = windows.single();
     let window_size = Vec2::new(window.width(), window.height());
     
@@ -366,14 +369,27 @@ fn dragon_position_text_system(
     //     info!("{:?}", pos );
     // }
 
+    let mut last_touched_start_pos = Vec2::ZERO;
+    for touch in touches.iter() {
+        if touches.just_pressed(touch.id()){
+            last_touched_start_pos = touch.position();
+        }
+    }
+
     if let Some(mut text) = text_query.iter_mut().next() {        
         //text.sections[0].value = format!("Dragon Position: ({:.1}, {:.1})", dragon_transform.translation.x, dragon_transform.translation.y);
         text.sections[0].value = format!("Position: {:.1}, {:.1}", dragon_transform.translation.x, dragon_transform.translation.y);
         text.sections[1].value = format!("\nHealth: {}/{}", dragon.health, dragon.max_health );
         if mouse_button_input.pressed(MouseButton::Left) {
             let cursor_position = window.cursor_position().unwrap_or_default();
-            let world_position =  camera_transform.translation.truncate() + ((cursor_position - window_size / 2.0) * camera_scale.0 ) ;
+            //let world_position =  camera_transform.translation.truncate() + ((cursor_position - window_size / 2.0) * camera_scale.0 ) ;
+            let world_position = game_camera.screen_to_world(cursor_position, window, &camera_transform.translation);
             text.sections[2].value = format!("\nMouse Click: {:.1}, {:.1}", world_position.x, world_position.y);
+        } 
+        else if last_touched_start_pos != Vec2::ZERO {
+
+            let world_position = game_camera.screen_to_world(last_touched_start_pos, window, &camera_transform.translation);
+            text.sections[2].value = format!("\nTouch Pos: {:.1}, {:.1}", world_position.x, world_position.y);
         }
     }
 }
@@ -437,7 +453,7 @@ fn setup_game_play_screen(
     let font: Handle<Font> =  resource_cache.gui_fonts.get("FiraSans-Bold").unwrap().clone();
     
     let dragon_position_text_section: TextSection = TextSection::new(
-        "Dragon Position: ",
+        "",  // placeholder for Dragon Position: 
         TextStyle {
             font: font.clone(),
             font_size: 30.0,
@@ -445,7 +461,7 @@ fn setup_game_play_screen(
     });
 
     let dragon_health_text_section: TextSection = TextSection::new(
-        "Dragon Health: ",
+        "", // placeholder for Dragon Health: 
         TextStyle {
             font: font.clone(),
             font_size: 30.0,
@@ -453,7 +469,7 @@ fn setup_game_play_screen(
     });
 
     let mouse_position_text_section: TextSection = TextSection::new(
-        "\nMouse Position: ",
+        "",  // placeholder for \nMouse Position: 
         TextStyle {
             font: font.clone(),
             font_size: 30.0,
