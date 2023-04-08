@@ -63,11 +63,8 @@ pub fn touch_input_system(
                     || (touch_assignments.move_touch_id == None && (touch_assignments.shoot_touch_id != Some(touch.id()) || touch_assignments.shoot_touch_id == None )) {
                     
                     
-                    
+                    touch_assignments.move_touch_id = Some(touch.id());
                     if touch_delta.length() < joystick_radius || !touches.just_pressed(touch.id()) {
-                        
-                        touch_assignments.move_touch_id = Some(touch.id());
-
                         if touch_delta.length() < 0.1 * joystick_radius {
                             dragon.input.brake = true;
                             virtual_joystick.direction = Vec3::ZERO;
@@ -84,8 +81,8 @@ pub fn touch_input_system(
                             joystick_direction *= scale;
                             virtual_joystick.direction = joystick_direction;
                         }
-                        dragon.input.move_direction = virtual_joystick.direction;
                     }
+                    dragon.input.move_direction = virtual_joystick.direction;
                 }
             }
         }

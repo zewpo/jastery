@@ -303,18 +303,22 @@ pub fn dragon_dragon_collision_system(
                 &dragon_image_b
             ) {
 
-                dragon_a.action.velocity = Vec3::ZERO;
-                dragon_b.action.velocity = Vec3::ZERO;
+                // dragon_a.action.velocity = Vec3::ZERO;
+                // dragon_b.action.velocity = Vec3::ZERO;
                 let mut total_adjustment = Vec3::ZERO;
                 match collision {
                     Collision::Left | Collision::Right => {
                         total_adjustment.x += depth.x;
+                        dragon_a.action.velocity.x = 0.0;
+                        dragon_b.action.velocity.x = 0.0;
                     }
                     // Collision::Right  => {
                     //     total_adjustment.x += depth.x;
                     // }
                     Collision::Bottom | Collision::Top => {
                         total_adjustment.y += depth.y;
+                        dragon_a.action.velocity.y = 0.0;
+                        dragon_b.action.velocity.y = 0.0;
                     }
                     // Collision::Top => {
                     //     total_adjustment.y += depth.y;
@@ -375,7 +379,7 @@ pub fn dragon_wall_collision_system(
                 wall_image.size_vec2()
             ) {
 
-                dragon.action.velocity = Vec3::ZERO;
+                //dragon.action.velocity = Vec3::ZERO;
 
                 let mut bumped = false;
                 if dragon.my_dragon.is_none(){
@@ -398,21 +402,13 @@ pub fn dragon_wall_collision_system(
                         &wall_image
                     ) {                        
                         match collision {
-                            Collision::Left => {
+                            Collision::Left | Collision::Right  => {
                                 total_adjustment.x += depth.x;
-                                // println!("Dragon Left of wall collision!?");
+                                dragon.action.velocity.x = 0.0;
                             }
-                            Collision::Right  => {
-                                total_adjustment.x += depth.x;
-                                // println!("Dragon Right of wall collision!?");
-                            }
-                            Collision::Bottom => {
+                            Collision::Bottom | Collision::Top => {
                                 total_adjustment.y += depth.y;
-                                // println!("Dragon Bottom of wall collision!?");
-                            }
-                            Collision::Top => {
-                                total_adjustment.y += depth.y;
-                                // println!("Dragon Top of wall collision!?");
+                                dragon.action.velocity.y = 0.0;
                             }
                             Collision::Inside => {
                                 // println!("Dragon inside of wall collision!?");
