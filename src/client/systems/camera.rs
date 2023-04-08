@@ -8,7 +8,7 @@ pub struct GameCameraPlugin;
 impl Plugin for GameCameraPlugin {
     fn build(&self, app: &mut App) {
         app
-            .insert_resource(CameraScale(2.0))
+            .insert_resource(CameraScale(3.0))
             .add_startup_system(setup_camera)
             .add_system(camera_follow_system.in_set(OnUpdate(GamePhase::Playing)));
     }

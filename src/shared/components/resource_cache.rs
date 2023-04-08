@@ -20,6 +20,7 @@ pub struct ResourceCache {
     pub dragon_images: HashMap<ElementalTheme, Arc<CollidableImage>>,
     pub projectile_images: HashMap<ElementalTheme, Arc<CollidableImage>>,
     pub gui_fonts: HashMap<String, Handle<Font>>,
+    // pub joystick_images: HashMap<String, Arc<CollidableImage>>,
     // Other resources can be added here, e.g., audio files, character data, etc.
 }
 

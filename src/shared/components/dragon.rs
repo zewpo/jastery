@@ -77,16 +77,32 @@ pub struct DragonBundle {
     pub game_piece: GamePiece,
 }
 
+pub enum PlayerControllerType {
+    Keyboard,
+    Joystick,
+    Mouse,
+}
+pub enum AiControllerType {
+    BasicAi,
+    AdvancedAi,
+    // Add more AI types as needed
+}
+
+pub enum DragonController {
+    PlayerControlled(PlayerControllerType),
+    NonPlayerControlled(AiControllerType),
+}
+
+
 #[derive(Default, Clone)]
 pub struct DragonInput {
     pub move_direction: Vec3,
-    pub fire_direction: Vec3,
+    pub shoot_direction: Vec3,
     pub brake: bool,
     pub home: bool,
-    pub fire: bool,
+    pub shoot: bool,
 }
 
-// #[derive(Component)]
 #[derive(Clone)]
 pub struct DragonAction {
     pub spawn_home: Vec3,
@@ -94,8 +110,24 @@ pub struct DragonAction {
     pub acceleration: Vec3,
     pub motion_timer: Timer,
     pub flip_timer: Timer,
-    pub firerate_timer: Timer,
+    pub shooting_rate_timer: Timer,
     pub flipping: bool,
     pub pathfinding_timer: Option<Timer>,
     pub path: Option<Vec<(i32, i32)>>,
+}
+
+impl Default for DragonAction {
+    fn default() -> Self {
+        Self {
+            spawn_home: Vec3::ZERO,
+            velocity: Vec3::ZERO,
+            acceleration: Vec3::ZERO,
+            motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+            shooting_rate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
+            flip_timer: Timer::from_seconds(0.1, TimerMode::Once),
+            flipping: false,
+            path: None,
+            pathfinding_timer: None,
+        }
+    }
 }

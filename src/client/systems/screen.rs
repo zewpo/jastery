@@ -9,6 +9,7 @@ use bevy::{
 };
 
 use crate::client::components::*;
+use crate::mutils;
 use crate::shared::components::*;
 use crate::shared::components::game::*;
 
@@ -59,7 +60,9 @@ impl Plugin for ScreenManagerPlugin {
             .add_system(cleanup_screen.in_schedule(OnExit(AppScreen::MainMenu)))
 
             .add_system(setup_game_play_screen.in_schedule(OnEnter(AppScreen::InPlay)))
+            .add_system(setup_virtual_joystick.in_schedule(OnEnter(AppScreen::InPlay)))
             .add_system(game_monitor.in_set(OnUpdate(AppScreen::InPlay)))
+            .add_system(update_virtual_joystick_system.in_set(OnUpdate(GamePhase::Playing)))
             .add_system(dragon_position_text_system.in_set(OnUpdate(GamePhase::Playing)))
 
             .add_system(setup_game_over_screen.in_schedule(OnEnter(AppScreen::GameOver)))
@@ -67,23 +70,6 @@ impl Plugin for ScreenManagerPlugin {
             .add_system(cleanup_screen.in_schedule(OnExit(AppScreen::GameOver)));
     }
 }
-
-
-// pub struct MainMenuScreen;
-
-// impl Plugin for MainMenuScreen {
-//     fn build(&self, app: &mut App) {
-//         app
-//             .add_system(setup_main_menu_screen.in_schedule(OnEnter(AppScreen::MainMenu)))
-//             .add_system(handle_menu_interaction.in_set(OnUpdate(AppScreen::MainMenu)))
-//             .add_system(cleanup_screen.in_schedule(OnExit(AppScreen::MainMenu)))
-
-//             .add_system(setup_game_over_screen.in_schedule(OnEnter(AppScreen::GameOver)))
-//             .add_system(handle_menu_interaction.in_set(OnUpdate(AppScreen::GameOver)))
-//             .add_system(cleanup_screen.in_schedule(OnExit(AppScreen::GameOver)))
-//         ;
-//     }
-// }
 
 
 fn setup_main_menu_screen(
@@ -475,10 +461,11 @@ fn setup_game_play_screen(
             font_size: 30.0,
             color: Color::WHITE,
     });
-    // Create a text element to display things like the mouse coordinates
+
+    // Create a text element to display things like the dragon position
     commands.spawn(TextBundle {
         style: Style {
-            align_self: AlignSelf::FlexEnd,
+            align_self: AlignSelf::FlexStart,
             ..Default::default()
         },
         text: Text::from_sections([
@@ -525,3 +512,179 @@ fn cleanup_screen(
     commands.entity(screen_package.entity).despawn_recursive();
 
 }
+
+
+pub fn setup_virtual_joystick(
+        mut commands: Commands,
+        asset_server: Res<AssetServer>,
+    ) {
+    println!("Setup Joystick.");
+
+    let joystick_diameter = 200.0;
+    let joystick_border_left = 25.0;
+    let joystick_border_bottom = 25.0;
+    
+    let joystick_background_path = "sprites/joystick-background.png";
+    let joystick_background_image_handle: Handle<Image> = asset_server.load(joystick_background_path);
+
+    let joystick_handle_path = "sprites/joystick-handle.png";
+    let joystick_handle_image_handle: Handle<Image> = asset_server.load(joystick_handle_path);
+
+    let handle_entity = commands.spawn(ImageBundle {
+        style: Style {
+            size: Size { 
+                width: Val::Px(joystick_diameter/4.0), 
+                height: Val::Px(joystick_diameter/4.0) 
+            },
+            ..default()
+        },
+        image: UiImage {
+            texture: joystick_handle_image_handle, 
+            ..default()
+        },
+        background_color: Color::rgba(1.0, 1.0, 1.0, 0.78).into(),
+        ..default()
+    }).id();
+
+    let joystick_entity = commands.spawn( (
+        VirtualJoystick {
+            center: Vec2::ZERO,
+            direction: Vec3::ZERO,
+            handle_entity
+        },
+        ImageBundle {
+            style: Style {
+                size: Size { 
+                    width: Val::Px(joystick_diameter), 
+                    height: Val::Px(joystick_diameter) 
+                },
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                position_type: PositionType::Absolute,
+                position: UiRect {
+                    left: Val::Px(joystick_border_left),
+                    bottom: Val::Px(joystick_border_bottom),
+                    ..default()
+                },
+                ..default()
+            },
+            image: UiImage { 
+                texture: joystick_background_image_handle,
+                ..default()
+            },
+            background_color: Color::rgba(1.0, 1.0, 1.0, 0.78).into(),
+            ..default()
+        },
+    ))
+    .id();
+
+    commands.entity(joystick_entity).push_children(&[handle_entity]);
+}
+
+
+
+
+fn update_virtual_joystick_system(
+    virtual_joysticks: Query<(&VirtualJoystick, &Style), With<VirtualJoystick>>,
+    mut handle_style_query: Query<&mut Style, (With<UiImage>, Without<VirtualJoystick>)>,
+) {
+    for (joystick, background_style) in virtual_joysticks.iter() {
+        if let Ok(mut handle_style) = handle_style_query.get_mut(joystick.handle_entity) {
+            let half_size = mutils::size_to_vec2(background_style.size) / 2.0;
+            let handle_half_size = mutils::size_to_vec2(handle_style.size) / 2.0;
+            let joystick_direction = joystick.direction.truncate().normalize_or_zero();
+            let offset = joystick_direction * (half_size - handle_half_size) * 0.5;
+            handle_style.position.left = Val::Px(offset.x);
+            handle_style.position.bottom = Val::Px(offset.y);
+            // println!("--------------------------------");
+            // println!("background_style.position.left {:?}", background_style.position.left);
+            // println!("half_size.x {:?}", half_size.x);
+            // println!("offset.x {:?}", offset.x);
+            // println!("handle_half_size.x {:?}", handle_half_size.x);
+
+            // println!("background_style.position.bottom {:?}", background_style.position.bottom);
+            // println!("half_size.y {:?}", half_size.y);
+            // println!("offset.y {:?}", offset.y);
+            // println!("handle_half_size.y {:?}", handle_half_size.y);
+
+            // println!("handle_style.position {:?}", handle_style.position);
+            // println!("======================================");
+        }
+    }
+}
+
+// fn update_virtual_joystick_system(
+//     virtual_joysticks: Query<(&VirtualJoystick, &Style), With<VirtualJoystick>>,
+//     mut handle_style_query: Query<&mut Style, (With<UiImage>, Without<VirtualJoystick>)>,
+// ) {
+//     for (joystick, background_style) in virtual_joysticks.iter() {
+//         if let Ok(mut handle_style) = handle_style_query.get_mut(joystick.handle_entity) {
+//             let half_size = size_to_vec2(background_style.size) / 2.0;
+//             let handle_half_size = size_to_vec2(handle_style.size) / 2.0;
+//             let joystick_direction = joystick.delta.truncate();
+//             let offset = joystick_direction * (half_size - handle_half_size) * 0.5;
+//             handle_style.position.left = Val::Px(half_size.x + offset.x - handle_half_size.x);
+//             handle_style.position.bottom = Val::Px(half_size.y + offset.y - handle_half_size.y);
+//         }
+//     }
+// }
+
+
+// fn update_virtual_joystick_system(
+//     virtual_joysticks: Query<(&VirtualJoystick, &Style), With<VirtualJoystick>>,
+//     mut handle_style_query: Query<&mut Style, (With<UiImage>, Without<VirtualJoystick>)>,
+// ) {
+//     for (joystick, background_style) in virtual_joysticks.iter() {
+//         if let Ok(mut handle_style) = handle_style_query.get_mut(joystick.handle_entity) {
+//             //let (Val::Px(width), Val::Px(height)) = (background_style.size.width, background_style.size.height);
+//             let Val::Px(width) = background_style.size.width else { return; };
+//             let Val::Px(height) = background_style.size.height else { return; };
+//             let Val::Px(handle_width) = handle_style.size.width else { return; };
+//             let Val::Px(handle_height) = handle_style.size.height else { return; };
+//             let half_size = Vec2::new(width, height) / 2.0;
+//             let handle_half_size = Vec2::new(handle_width, handle_height) / 2.0;
+//             let joystick_direction = joystick.delta.truncate();
+//             let offset = joystick_direction * (half_size - handle_half_size) * 0.5;
+//             handle_style.position.left = Val::Px(half_size.x + offset.x - handle_half_size.x);
+//             handle_style.position.bottom = Val::Px(half_size.y + offset.y - handle_half_size.y);
+        
+//         }
+//     }
+// }
+
+
+// fn update_virtual_joystick_system(
+//     virtual_joysticks: Query<(&VirtualJoystick, Entity)>,
+//     mut query: Query<(&Children, &Style), (With<VirtualJoystick>, Without<UiImage>)>,
+//     mut handle_style_query: Query<&mut Style, With<UiImage>>,
+// ) {
+//     println!("1.0  update_virtual_joystick_system");
+//     for (virtual_joystick, joystick_entity) in virtual_joysticks.iter() {
+//         println!("1.1  update_virtual_joystick_system");
+//         if let Ok((children, background_style)) = query.get(joystick_entity) {
+//             println!("1.2  update_virtual_joystick_system");
+
+//             if let Some(handle_entity) = children.iter().next() {
+//                 println!("1.3  update_virtual_joystick_system");
+//                 if let Ok(mut handle_style) = handle_style_query.get_mut(*handle_entity) {
+//                     println!("1.4  update_virtual_joystick_system");
+//                     if let (Val::Px(width), Val::Px(height)) = (background_style.size.width, background_style.size.height) {
+//                         let delta_2d = virtual_joystick.delta.truncate();
+//                         let half_size = Vec2::new(width, height) / 2.0; // Half the size of the joystick background
+
+//                         println!("Virtual Joystick Delta: {:?}", virtual_joystick.delta);
+//                         println!("Handle Style Position: {:?}", handle_style.position);
+
+//                         handle_style.position = UiRect {
+//                             left: Val::Px(delta_2d.x * half_size.x),
+//                             bottom: Val::Px(delta_2d.y * half_size.y),
+//                             ..Default::default()
+//                         };
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
+
+

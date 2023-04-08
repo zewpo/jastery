@@ -11,12 +11,12 @@ pub fn projectile_spawn_system(
         if dragon.health <= 0 {
            continue; 
         }
-        if dragon.input.fire && dragon.action.firerate_timer.tick(time.delta()).just_finished() { 
+        if dragon.input.shoot && dragon.action.shooting_rate_timer.tick(time.delta()).just_finished() { 
             // if let Some(projectile_image) = resource_cache.projectile_images.get(&dragon.elemental_theme) {
             let projectile_image = resource_cache.get_collidable_image(CollidableClassifier::Projectile(dragon.elemental_theme));
                 //let mut projectile_direction = dragon_action.velocity.normalize_or_zero();
 
-                let mut projectile_direction = dragon.input.fire_direction.normalize_or_zero();
+                let mut projectile_direction = dragon.input.shoot_direction.normalize_or_zero();
 
                 if projectile_direction == Vec3::ZERO {
                     if dragon.input.move_direction.normalize_or_zero() == Vec3::ZERO {

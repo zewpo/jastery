@@ -29,20 +29,13 @@ pub fn setup_dragons(
             elemental_theme: my_dragon_theme,
             health: 10,
             max_health: 10,
-            max_velocity: 40.0,
+            max_velocity: 35.0,
             shooting_frequence: 1.0, // 100%
             image: my_dragon_image,
             input: DragonInput::default(),
             action: DragonAction {
                 spawn_home: my_dragon_spawn_home,
-                velocity: Vec3::ZERO,
-                acceleration: Vec3::ZERO,
-                motion_timer: Timer::from_seconds(0.02, TimerMode::Repeating),
-                firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
-                flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
-                flipping: false,
-                path: None,
-                pathfinding_timer: None,
+                ..default()
             },
         },
          
@@ -86,23 +79,18 @@ pub fn setup_dragons(
                 my_dragon: None,
                 id: Uuid::new_v4(), 
                 elemental_theme: ice_dragon_theme,
-                health: 10,
+                health: 1,
                 max_health: 20,
-                max_velocity: 15.0,
+                max_velocity: 0.0,
                 shooting_frequence: 0.3,
                 image: ice_dragon_image,
             
                 input: DragonInput::default(),
                 action: DragonAction {
                     spawn_home: ice_dragon_spawn_home,
-                    velocity: Vec3::ZERO,
-                    acceleration: Vec3::ZERO,
-                    motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
-                    firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
-                    flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
-                    flipping: false,
                     path: Some(Vec::new()),
                     pathfinding_timer: Some(Timer::from_seconds(0.05, TimerMode::Repeating)),
+                    ..default()
                 },
                 
             },
@@ -144,23 +132,18 @@ pub fn setup_dragons(
                 my_dragon: None,
                 id: Uuid::new_v4(), 
                 elemental_theme: rock_dragon_theme,
-                health: 10,
+                health: 1,
                 max_health: 20,
-                max_velocity: 15.0,
+                max_velocity: 0.0,
                 shooting_frequence: 0.3,
                 image: rock_dragon_image,
             
                 input: DragonInput::default(),
                 action: DragonAction {
                     spawn_home: rock_dragon_spawn_home,
-                    velocity: Vec3::ZERO,
-                    acceleration: Vec3::ZERO,
-                    motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
-                    firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
-                    flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
-                    flipping: false,
                     path: Some(Vec::new()),
                     pathfinding_timer: Some(Timer::from_seconds(0.06, TimerMode::Repeating)),
+                    ..default()
                 },
             },
     });
@@ -182,23 +165,18 @@ pub fn setup_dragons(
                 my_dragon: None,
                 id: Uuid::new_v4(), 
                 elemental_theme: water_dragon_theme,
-                health: 10,
+                health: 1,
                 max_health: 20,
-                max_velocity: 12.0,
+                max_velocity: 0.0,
                 shooting_frequence: 0.3,
                 image: water_dragon_image,
             
                 input: DragonInput::default(),
                 action: DragonAction {
                     spawn_home: water_dragon_spawn_home,
-                    velocity: Vec3::ZERO,
-                    acceleration: Vec3::ZERO,
-                    motion_timer: Timer::from_seconds(0.05, TimerMode::Repeating),
-                    firerate_timer: Timer::from_seconds(0.15, TimerMode::Repeating),
-                    flip_timer: Timer::from_seconds(0.2, TimerMode::Once),
-                    flipping: false,
                     path: Some(Vec::new()),
                     pathfinding_timer: Some(Timer::from_seconds(0.07, TimerMode::Repeating)),
+                    ..default()
                 },
             },
     });

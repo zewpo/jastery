@@ -459,34 +459,40 @@ pub fn dragon_movement_system(
         
         // Change in motion
         if dragon.action.motion_timer.tick(time.delta()).just_finished() {
-            let acceleration_rate = 1.45;
-            
-            if dragon.input.move_direction.x != 0.0 {
-                dragon.action.velocity.x += dragon.input.move_direction.x;
-                if dragon.action.velocity.x.signum() == dragon.input.move_direction.x.signum() {
-                    dragon.action.velocity.x *= acceleration_rate;
-                } else {
-                    dragon.action.velocity.x /= acceleration_rate;
+            let acceleration_rate = 2.5;
+            let decceleration_rate = 0.7;
+
+            if dragon.input.move_direction != Vec3::ZERO {
+                let target_velocity = dragon.input.move_direction * dragon.max_velocity;    
+
+                // Gradually change the velocity towards the target
+                dragon.action.velocity = dragon.action.velocity.lerp(target_velocity, acceleration_rate * time.delta().as_secs_f32() );
+
+                if dragon.action.velocity.x.signum() != dragon.input.move_direction.x.signum() {
+                    dragon.action.velocity.x *= decceleration_rate;
+                }
+                if dragon.action.velocity.y.signum() != dragon.input.move_direction.y.signum() {
+                    dragon.action.velocity.y *= decceleration_rate;
                 }
             } else {
-                dragon.action.velocity.x /= acceleration_rate;
+                dragon.action.velocity *= decceleration_rate;
             }
 
-            if dragon.input.move_direction.y != 0.0 {
-                dragon.action.velocity.y += dragon.input.move_direction.y;
-                if dragon.action.velocity.y.signum() == dragon.input.move_direction.y.signum() {
-                    dragon.action.velocity.y *= acceleration_rate;
-                } else {
-                    dragon.action.velocity.y /= acceleration_rate;
-                }
-            } else {
-                    dragon.action.velocity.y /= acceleration_rate;
-            }
+            // if dragon.input.move_direction.x != 0.0 {
+            //     dragon.action.velocity.x = dragon.input.move_direction.x * dragon.max_velocity;
+            // } else {
+            //     dragon.action.velocity.x /= acceleration_rate;
+            // }
+
+            // if dragon.input.move_direction.y != 0.0 {
+            //     dragon.action.velocity.y = dragon.input.move_direction.y * dragon.max_velocity;
+            // } else {
+            //         dragon.action.velocity.y /= acceleration_rate;
+            // }
 
             if dragon.input.brake {
                 dragon.action.velocity *= 0.5;
             }
-
         }
 
         // Move to home position
@@ -526,11 +532,13 @@ pub fn dragon_movement_system(
         else {
             let face_dir_x = dragon_transform.scale.x.signum();
             let vel_dir_x = dragon.action.velocity.x.signum();
-            let fire_dir_x_zero = dragon.input.fire_direction.x == 0.0;
+            // let shoot_dir_x_zero = dragon.input.shoot_direction.x == 0.0;
             let vel_dir_x_min = dragon.action.velocity.x.abs() > 3.0;
 
-            if (!fire_dir_x_zero && dragon.my_dragon.is_some() && dragon.input.fire_direction.x != face_dir_x)
-                || ((fire_dir_x_zero || dragon.my_dragon.is_none()) && vel_dir_x_min && vel_dir_x != face_dir_x)
+            // if (!shoot_dir_x_zero && dragon.my_dragon.is_some() && dragon.input.shoot_direction.x != face_dir_x)
+            //     || ((shoot_dir_x_zero || dragon.my_dragon.is_none()) && vel_dir_x_min && vel_dir_x != face_dir_x)
+            // {
+            if vel_dir_x_min && vel_dir_x != face_dir_x
             {
                 dragon.action.flip_timer.reset();
                 dragon.action.flipping = true;

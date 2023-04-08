@@ -8,6 +8,8 @@ lazy_static! {
         map.insert("sprites/fire-projectile.png", include_bytes!("c:\\workspaces\\rust\\jastery\\assets\\sprites\\fire-projectile.png").to_vec());
         map.insert("sprites/ice-dragon.png", include_bytes!("c:\\workspaces\\rust\\jastery\\assets\\sprites\\ice-dragon.png").to_vec());
         map.insert("sprites/ice-projectile.png", include_bytes!("c:\\workspaces\\rust\\jastery\\assets\\sprites\\ice-projectile.png").to_vec());
+        map.insert("sprites/joystick-background.png", include_bytes!("c:\\workspaces\\rust\\jastery\\assets\\sprites\\joystick-background.png").to_vec());
+        map.insert("sprites/joystick-handle.png", include_bytes!("c:\\workspaces\\rust\\jastery\\assets\\sprites\\joystick-handle.png").to_vec());
         map.insert("sprites/rock-dragon.png", include_bytes!("c:\\workspaces\\rust\\jastery\\assets\\sprites\\rock-dragon.png").to_vec());
         map.insert("sprites/rock-projectile.png", include_bytes!("c:\\workspaces\\rust\\jastery\\assets\\sprites\\rock-projectile.png").to_vec());
         map.insert("sprites/wall-block.png", include_bytes!("c:\\workspaces\\rust\\jastery\\assets\\sprites\\wall-block.png").to_vec());
