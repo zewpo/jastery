@@ -68,7 +68,7 @@ pub fn projectile_spawn_system(
                     },
                     movement: ProjectileMovement { 
                         speed: projectile_speed,
-                        despawn_timer: Timer::from_seconds(1.5, TimerMode::Once), // Set the timeout duration here
+                        despawn_timer: Timer::from_seconds(2.5, TimerMode::Once), // Set the timeout duration here
                     },
                     projectile: Projectile { 
                         elemental_theme: dragon.elemental_theme,
@@ -166,7 +166,7 @@ pub fn projectile_dragon_collision_system(
             let distance = projectile_transform.translation.distance(dragon_transform.translation);
 
             // Check if the projectile is close enough to the dragon to be considered a hit
-            if distance < 100.0 {
+            if distance < 150.0 {
                 if projectile.elemental_theme != dragon.elemental_theme { 
                     if dragon.health > 0 {
                         dragon.health -= 1;

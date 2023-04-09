@@ -42,12 +42,23 @@ pub fn touch_input_system(
         touch_assignments.shoot_touch_id = None;
         // joystick_direction = Vec3::ZERO;
     }
+    if n_touches == 1 {
+        let touch = touches_vec[0];
+        if touch_assignments.shoot_touch_id != Some(touch.id()) {
+            touch_assignments.shoot_touch_id = None;
+        }
+        else if touch_assignments.move_touch_id != Some(touch.id()) {
+            touch_assignments.move_touch_id = None;
+        }
+    }
+
+
 
     // let mut using_joystick = false;
  
     if let Ok((mut virtual_joystick,virtual_joystick_style, virtual_joystick_transform)) = joystick_query.get_single_mut(){
 
-        if n_touches == 0 {
+        if n_touches == 0 || ( n_touches == 1 && touch_assignments.shoot_touch_id != None ) {
             virtual_joystick.direction = Vec3::ZERO;
             virtual_joystick.center = virtual_joystick_transform.translation.truncate();
         }
@@ -57,29 +68,33 @@ pub fn touch_input_system(
             let joystick_radius = joystick_diameter / 2.0;
 
             for touch in touches_vec.iter() {
+
                 let touch_delta = touch.position() - virtual_joystick.center;
                 // dont worry about touches that are assigned to firing.
                 if touch_assignments.move_touch_id == Some(touch.id())
-                    || (touch_assignments.move_touch_id == None && (touch_assignments.shoot_touch_id != Some(touch.id()) || touch_assignments.shoot_touch_id == None )) {
-                    
-                    
-                    touch_assignments.move_touch_id = Some(touch.id());
+                    || ( touch_assignments.move_touch_id == None && touch_assignments.shoot_touch_id != Some(touch.id()) ) {
+
                     if touch_delta.length() < joystick_radius || !touches.just_pressed(touch.id()) {
-                        if touch_delta.length() < 0.1 * joystick_radius {
-                            dragon.input.brake = true;
+
+                        if touches.just_released(touch.id()) || touches.just_cancelled(touch.id()) {
                             virtual_joystick.direction = Vec3::ZERO;
+                            dragon.input.brake = true;
+                            touch_assignments.move_touch_id = None;
                         } else {
-                            dragon.input.brake = false;
-                            
-                            let mut joystick_direction = touch_delta.normalize_or_zero().extend(0.0);
-                            joystick_direction.y *= -1.0;  // flip Y from screen directions to world directions
-                            // joystick_direction = mutils::vec3_round(joystick_direction);
-
-                            let touch_distance_ratio = (touch_delta.length() / joystick_radius).clamp(0.0, 1.0);
-                            let scale = 1.0 - (1.0 - touch_distance_ratio).powi(2);
-
-                            joystick_direction *= scale;
-                            virtual_joystick.direction = joystick_direction;
+                            touch_assignments.move_touch_id = Some(touch.id());
+                            if touch_delta.length() < 0.1 * joystick_radius {
+                                dragon.input.brake = true;
+                                virtual_joystick.direction = Vec3::ZERO;
+                            } else {
+                                dragon.input.brake = false;
+                                
+                                let mut joystick_direction = touch_delta.normalize_or_zero().extend(0.0);
+                                joystick_direction.y *= -1.0;  // flip Y from screen directions to world directions
+                                let touch_distance_ratio = (touch_delta.length() / (1.5*joystick_radius)).clamp(0.0, 1.0);
+                                let scale = 1.0 - (1.0 - touch_distance_ratio).powi(4);
+                                joystick_direction *= scale;
+                                virtual_joystick.direction = joystick_direction;
+                            }
                         }
                     }
                     dragon.input.move_direction = virtual_joystick.direction;
@@ -89,54 +104,11 @@ pub fn touch_input_system(
     }
 
     for touch in touches_vec.iter() {
-        // //Assign touch to movment, if first touch.
-        // if touch_assignments.move_touch_id.is_none() && touches.just_pressed(touch.id()) {
-        //     touch_assignments.move_touch_id = Some(touch.id());
-        // }
-
         // Assign non-movement touch to shooting.
         if touch_assignments.shoot_touch_id.is_none() && touches.just_pressed(touch.id()) 
             && touch_assignments.move_touch_id != Some(touch.id()) {
             touch_assignments.shoot_touch_id = Some(touch.id());
         }
-
-        // // Handle Movement Touch
-        // if touch_assignments.move_touch_id == Some(touch.id()) {
-        //     if touches.just_released(touch.id()) || touches.just_cancelled(touch.id()) {
-        //         dragon.input.move_direction = Vec3::ZERO;
-        //         dragon.input.brake = true;
-        //     }
-        //     else {
-        //         // if using_joystick {
-        //             dragon.input.move_direction = joystick_direction;
-        //             dragon.input.brake = false;
-        //         // } 
-        //         // else {
-        //         //     let touch_pos_screen = touch.position();
-        //         //     let touch_pos_world = game_camera.screen_to_world(touch_pos_screen, window, &camera_transform.translation);
-        //         //     let move_dir = (touch_pos_world - dragon_pos.truncate()).normalize_or_zero().extend(0.0);
-        //         //     dragon.input.move_direction = move_dir;
-        //         // }
-        //     }
-        // }
-
-        // // Handle Movement Touch
-        // if touch_assignments.move_touch_id == Some(touch.id()) {
-        //     if touches.just_released(touch.id()) || touches.just_cancelled(touch.id()) {
-        //         dragon.input.move_direction = Vec3::ZERO;
-        //         dragon.input.brake = true;
-        //     }
-        //     else {
-        //         if using_joystick {
-        //             dragon.input.move_direction = joystick_direction;
-        //         } else {
-        //             let touch_pos_screen = touch.position();
-        //             let touch_pos_world = game_camera.screen_to_world(touch_pos_screen, window, &camera_transform.translation);
-        //             let move_dir = (touch_pos_world - dragon_pos.truncate()).normalize_or_zero().extend(0.0);
-        //             dragon.input.move_direction = move_dir;
-        //         }
-        //     }
-        // }
 
         // Handle Shooting Touch
         if touch_assignments.shoot_touch_id == Some(touch.id()) {
@@ -183,6 +155,8 @@ pub fn keyboard_input_system (
     keyboard_input: Res<Input<KeyCode>>, 
     mut dragon_query: Query<&mut Dragon, With<MyDragon>>,
     mut camera_query: Query<(&mut GameCamera, &mut Transform), With<GameCamera>>,
+    game_phase: Res<State<GamePhase>>,
+    mut next_game_phase: ResMut<NextState<GamePhase>>,
 ) {
     let mut dragon = dragon_query.single_mut();
     dragon.input.move_direction = Vec3::ZERO;
@@ -231,19 +205,26 @@ pub fn keyboard_input_system (
     dragon.input.brake = keyboard_input.pressed(KeyCode::RShift);
     dragon.input.home = keyboard_input.pressed(KeyCode::X);
 
-    let ctrl_pressed = keyboard_input.pressed(KeyCode::LControl) || keyboard_input.pressed(KeyCode::RControl);
+    // let ctrl_pressed = keyboard_input.pressed(KeyCode::LControl) || keyboard_input.pressed(KeyCode::RControl);
 
-    if ctrl_pressed {
+    // if ctrl_pressed  {
         let mut scale_change = 1.0;
         if keyboard_input.pressed(KeyCode::Plus) || keyboard_input.pressed(KeyCode::Equals) {
             scale_change = 0.99;
-        } else if keyboard_input.pressed(KeyCode::Minus) {
+        } else if keyboard_input.pressed(KeyCode::Minus) || keyboard_input.pressed(KeyCode::Underline)  {
             scale_change = 1.01;
         }
+        if scale_change != 1.0 {
+            let (mut game_camera, mut camera_transform) = camera_query.single_mut();
+            camera_transform.scale *= Vec3::splat(scale_change);
+            game_camera.scale *= scale_change;
+        }
+        
+    // }
 
-        let (mut game_camera, mut camera_transform) = camera_query.single_mut();
-        camera_transform.scale *= Vec3::splat(scale_change);
-        game_camera.scale *= scale_change;
+
+    if game_phase.0 != GamePhase::Paused && keyboard_input.pressed(KeyCode::Escape){
+        next_game_phase.set(GamePhase::Paused);
     }
 }
 

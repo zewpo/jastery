@@ -456,7 +456,7 @@ pub fn dragon_movement_system(
         // Change in motion
         if dragon.action.motion_timer.tick(time.delta()).just_finished() {
             let acceleration_rate = 2.5;
-            let decceleration_rate = 0.7;
+            let deceleration_rate = 0.55;
 
             if dragon.input.move_direction != Vec3::ZERO {
                 let target_velocity = dragon.input.move_direction * dragon.max_velocity;    
@@ -465,13 +465,13 @@ pub fn dragon_movement_system(
                 dragon.action.velocity = dragon.action.velocity.lerp(target_velocity, acceleration_rate * time.delta().as_secs_f32() );
 
                 if dragon.action.velocity.x.signum() != dragon.input.move_direction.x.signum() {
-                    dragon.action.velocity.x *= decceleration_rate;
+                    dragon.action.velocity.x *= deceleration_rate;
                 }
                 if dragon.action.velocity.y.signum() != dragon.input.move_direction.y.signum() {
-                    dragon.action.velocity.y *= decceleration_rate;
+                    dragon.action.velocity.y *= deceleration_rate;
                 }
             } else {
-                dragon.action.velocity *= decceleration_rate;
+                dragon.action.velocity *= deceleration_rate;
             }
 
             // if dragon.input.move_direction.x != 0.0 {

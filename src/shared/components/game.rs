@@ -30,6 +30,6 @@ pub enum GameOutcome {
     Lose,
 }
 
-// useful marker for pieces that can be despawned to clear out the game.
+// useful marker for pieces that should be despawned when clearing out the game.
 #[derive(Component, Default)]
 pub struct GamePiece;

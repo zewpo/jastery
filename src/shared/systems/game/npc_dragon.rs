@@ -70,7 +70,7 @@ pub fn npc_dragon_movement_system(
             // Randomly decide when to shoot, using a random probability
             let shoot_probability = rng.gen_range(0.0..1.0);
             if shoot_probability < npc_dragon.shooting_frequence {
-                // npc_dragon.input.shoot = true;
+                npc_dragon.input.shoot = true;
             } else {
                 npc_dragon.input.shoot = false;
             }

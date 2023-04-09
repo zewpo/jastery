@@ -10,7 +10,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app
-        .add_state::<GamePhase>()
+        
         // .add_state::<GameOutcome>()
         .insert_resource(GameStatus::default())
         .add_plugin(GameSetupPlugin)

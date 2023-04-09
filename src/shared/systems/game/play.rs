@@ -31,10 +31,22 @@ impl Plugin for GamePlayPlugin {
 fn game_over_trigger(
     dragon_query: Query<(&Dragon, Option<&MyDragon>)>,
     // mut next_screen: ResMut<NextState<AppScreen>>,
-    mut game_phase:  ResMut<NextState<GamePhase>>,
+    game_phase:  Res<State<GamePhase>>,
+    mut next_game_phase:  ResMut<NextState<GamePhase>>,
     // mut game_outcome:  ResMut<NextState<GameOutcome>>,
     mut game_status: ResMut<GameStatus>,
 ) {
+
+    if game_phase.0 == GamePhase::Paused {
+        println!("game_over_trigger. Skipped because game_phase: {:?}", game_phase);
+        return;
+    }
+
+    let n_dragons_found = dragon_query.iter().collect::<Vec<_>>().len();
+    if n_dragons_found < 1 {
+        println!("game_over_trigger. Found NO Dragons, game_phase: {:?}", game_phase);
+        return;
+    }
 
     let mut my_health = 0;
     let mut npc_dragon_health = 0;
@@ -57,8 +69,8 @@ fn game_over_trigger(
     }
 
     if game_status.outcome != GameOutcome::Undecided {
-        game_phase.set(GamePhase::GameOver);
-        println!("Game Over!");
+        next_game_phase.set(GamePhase::GameOver);
+        println!("\n*** Game Over! ***\n");
     }
             
 }
