@@ -4,38 +4,6 @@ use bevy::prelude::*;
 
 use uuid::Uuid;
 use super::*;
-// use crate::shared::components::{
-//     ElementalTheme,
-//     CollidableImage,
-//     GamePiece
-// };
-//Dragon, DragonImage, MyDragon, MyDragonBundle, DragonBundle, DragonInput, and DragonAction 
-
-
-
-// pub struct DragonImage {
-//     pub elemental_theme: ElementalTheme,
-//     pub image: CollidableImage
-// }
-
-// // impl DragonImage {
-//     pub fn height(&self) -> i32 {
-//         self.image.height()
-//     }
-//     pub fn width(&self) -> i32 {
-//         self.image.width()
-//     }
-//     pub fn size_vec2(&self) -> Vec2 {
-//         Vec2::new(self.image.width() as f32, self.image.height() as f32)
-//     }
-//     pub fn size_i32(&self) -> (i32, i32) {
-//         (self.image.width(), self.image.height())
-//     }
-//     pub fn handle(&self) -> Handle<Image> {
-//         self.image.file_handle
-//     }
-// // }
-
 
 #[derive(Component, Clone)]
 pub struct Dragon {
@@ -51,12 +19,11 @@ pub struct Dragon {
     pub my_dragon: Option<MyDragon>,
 }
 
-// struct HealthText {
-//     dragon: Entity,
-// }
-
+// // Not in use yet!
 #[derive(Component)]
-pub struct HealthText;
+pub struct DragonStatusText;
+
+
 
 // Marker to query the dragon to control by the local system.
 #[derive(Component, Clone)]
@@ -79,8 +46,9 @@ pub struct DragonBundle {
 
 pub enum PlayerControllerType {
     Keyboard,
-    Joystick,
     Mouse,
+    GamePad,
+    TouchScreen,
 }
 pub enum AiControllerType {
     BasicAi,

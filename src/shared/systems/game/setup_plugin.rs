@@ -1,6 +1,7 @@
 // src\shared\systems\game\setup_plugin.rs
 use bevy::prelude::*;
 
+use crate::client::systems::AppScreen;
 use crate::shared::components::*;
 use crate::shared::systems::game::*;
 
@@ -9,20 +10,32 @@ pub struct GameSetupPlugin;
 impl Plugin for GameSetupPlugin {
     fn build(&self, app: &mut App) {
         app
-        .add_systems((
-            setup_maze,
-            setup_dragons,
-        ).in_schedule(OnEnter(GamePhase::Setup)))
-        .add_system( check_setup_complete.in_set(OnUpdate(GamePhase::Setup)))
-        .add_system( start_game.in_schedule(OnExit(GamePhase::Setup)) )
-        
+        .add_systems(
+            (setup_maze, 
+              setup_dragons,)
+            .distributive_run_if(|game_status: Res<GameStatus>| game_status.phase == GamePhase::Setup)
+            .in_schedule(OnEnter(AppScreen::InPlay)))
+
+        //.add_systems((setup_maze, setup_dragons,).in_schedule(OnExit(AppScreen::GameOver)))
+  
+        .add_system( 
+            check_setup_complete
+            .in_set(OnUpdate(AppScreen::InPlay))
+            .run_if(|game_status: Res<GameStatus>| game_status.phase == GamePhase::Setup)
+        )
+        .add_system( 
+            start_game
+            .in_set(OnUpdate(AppScreen::InPlay))
+            .run_if(|game_status: Res<GameStatus>| game_status.phase == GamePhase::Start)
+        )
         ;
     }
 }
 
 fn check_setup_complete(
-    game_phase: Res<State<GamePhase>>,
-    mut next_game_phase: ResMut<NextState<GamePhase>>,
+    // game_phase: Res<State<GamePhase>>,
+    // mut next_game_phase: ResMut<NextState<GamePhase>>,
+    mut game_status: ResMut<GameStatus>,
     my_dragon_query: Query<&Dragon, With<MyDragon>>,
     wall_query: Query<&Wall, Without<Dragon>>,
 ){
@@ -34,14 +47,20 @@ fn check_setup_complete(
     
     let my_dragon_found = my_dragon_query.iter().collect::<Vec<_>>().len() == 1;
     let walls_found = wall_query.iter().collect::<Vec<_>>().len() > 0;
-    print!("check_setup_complete -- ");
-    if my_dragon_found  && walls_found 
-        && game_phase.0 != GamePhase::Playing {
-            println!(" All complete.  set GamePhase::Playing.");
-        next_game_phase.set(GamePhase::Playing);
+    
+    if game_status.phase != GamePhase::Start {
+        print!("check_setup_complete -- ");
+        if my_dragon_found  && walls_found {
+                println!(" All complete.  set GamePhase::Start.");
+                game_status.phase = GamePhase::Start;
+                //next_game_phase.set(GamePhase::Playing);
+        } else {
+            println!(" Not complete.  GamePhase: {:?}", game_status.phase );
+        }
     } else {
-        println!(" Not complete.  GamePhase: {:?}", game_phase );
+        println!("check_setup_complete: Already Playing");
     }
+    
 }
 // called when setup is complete.
 fn start_game(
@@ -51,10 +70,11 @@ fn start_game(
 ){
     let my_dragon_found = my_dragon_query.iter().collect::<Vec<_>>().len() == 1;
     if my_dragon_found {
-        info!("*** start_game ***");
+        info!("*** (re)start_game ***");
         let my_dragon = my_dragon_query.single();
         game_status.my_id = my_dragon.id;
         game_status.outcome = GameOutcome::Undecided;
+        game_status.phase = GamePhase::Playing;
     } else {
         info!("******* Attempting to Start Game *******");
         // println!("******* Attempting to Start Game *******");

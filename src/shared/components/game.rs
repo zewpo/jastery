@@ -12,11 +12,13 @@ pub struct GameStatus {
 }
 
 
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+// #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 pub enum GamePhase {
     #[default]
     ToBeDefined,
     Setup,
+    Start, // Start is a transition phase from Setup to Playing
     Playing,
     Paused,
     GameOver,

@@ -11,7 +11,7 @@ impl Plugin for GameOverScreenPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_system( spawn_screen_game_over.in_schedule(OnEnter(AppScreen::GameOver)) )
-            .add_system( cleanup_screen.in_schedule(OnExit(AppScreen::GameOver)) )
+            .add_system( cleanup_game.in_schedule(OnExit(AppScreen::GameOver)) )
             ;
     }
 }
@@ -77,9 +77,9 @@ pub fn spawn_screen_game_over(
                         button_text_style.clone(),
                     ));
                 });
-            // Restart button
+            // Reset button
             parent
-                .spawn((MenuButtonAction::Restart, ButtonBundle {
+                .spawn((MenuButtonAction::Reset, ButtonBundle {
                     style: button_style.clone(),
                     background_color: NORMAL_BUTTON.into(),
                     ..default()
@@ -87,7 +87,7 @@ pub fn spawn_screen_game_over(
                 ))
                 .with_children(|parent| {
                     parent.spawn(TextBundle::from_section(
-                        "Restart",
+                        "Reset",
                         button_text_style.clone(),
                     ));
                 });

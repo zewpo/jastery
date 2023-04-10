@@ -6,7 +6,7 @@ use bevy::{
     ui::Interaction,
 };
 
-use crate::{shared::components::game::*, client::components::*};
+use crate::{shared::components::{game::*, DragonStatusText}, client::components::*};
 
 use super::*;
 
@@ -39,7 +39,7 @@ pub enum MenuButtonAction {
     Play,
     // Resume,
     Quit,
-    Restart,
+    Reset,
     Settings,
     // SettingsDisplay,
     // SettingsSound,
@@ -55,23 +55,22 @@ impl Plugin for ScreenManagerPlugin {
 
         app
             .add_state::<AppScreen>()
-            .add_state::<GamePhase>()
+            // .add_state::<GamePhase>()
 
             .add_system( handle_screen_interaction )
 
             .add_system( spawn_main_menu_screen.in_schedule(OnEnter(AppScreen::MainMenu)) )
-            .add_system( cleanup_screen.in_schedule(OnExit(AppScreen::MainMenu)))
+            .add_system( cleanup_game.in_schedule(OnExit(AppScreen::MainMenu)))
 
             .add_system( spawn_settings_screen.in_schedule(OnEnter(AppScreen::Settings)) )
-            .add_system( cleanup_screen.in_schedule(OnExit(AppScreen::Settings)))
+            .add_system( cleanup_game.in_schedule(OnExit(AppScreen::Settings)))
 
             .add_system( spawn_paused_screen.in_schedule(OnEnter(AppScreen::Paused)) )
-            .add_system( unpause_screen.in_schedule(OnExit(AppScreen::Paused)))
+            .add_system( unpause_game.in_schedule(OnExit(AppScreen::Paused)))
 
             .add_plugin( GamePlayScreenPlugin )
-            // .add_system( cleanup_screen.in_schedule(OnExit(AppScreen::InPlay)) )
 
-            .add_plugin(GameOverScreenPlugin)
+            .add_plugin( GameOverScreenPlugin )
             ;
     }
 }
@@ -82,6 +81,7 @@ fn handle_screen_interaction(
                                  (Changed<Interaction>, With<Button>) >,
     mut next_screen: ResMut<NextState<AppScreen>>,
     mut app_exit_events: EventWriter<AppExit>,
+    mut game_status: ResMut<GameStatus>,
 ) {
 
     // println!("Handling Game Over menu...");
@@ -94,14 +94,29 @@ fn handle_screen_interaction(
             Interaction::Clicked => {
                 *color = PRESSED_BUTTON.into();
                 match menu_button_action {
-                    MenuButtonAction::Play => next_screen.set(AppScreen::InPlay),
-                    // MenuButtonAction::Resume => next_screen.set(AppScreen::InPlay),
-                    MenuButtonAction::Settings => next_screen.set(AppScreen::Settings),
-                    
-                    MenuButtonAction::MainMenu => next_screen.set(AppScreen::MainMenu),
-                    MenuButtonAction::Restart => next_screen.set(AppScreen::InPlay),
-
-                    MenuButtonAction::Quit => app_exit_events.send(AppExit),
+                    // Play: From start, AND From un-Pause
+                    MenuButtonAction::Play => {
+                        if game_status.phase == GamePhase::Paused {
+                            game_status.phase = GamePhase::Playing;
+                        } else {
+                            game_status.phase = GamePhase::Setup;
+                        }
+                        next_screen.set(AppScreen::InPlay);
+                    },
+                    MenuButtonAction::Settings => {
+                        next_screen.set(AppScreen::Settings);
+                    },
+                    MenuButtonAction::MainMenu => {
+                        game_status.phase = GamePhase::ToBeDefined;
+                        next_screen.set(AppScreen::MainMenu);
+                    },
+                    MenuButtonAction::Reset => {
+                        game_status.phase = GamePhase::Setup;
+                        next_screen.set(AppScreen::InPlay);
+                    },
+                    MenuButtonAction::Quit => {
+                        app_exit_events.send(AppExit);
+                    }
                 }
             }
             Interaction::Hovered => {
@@ -115,26 +130,33 @@ fn handle_screen_interaction(
 }
 
 
-pub fn cleanup_screen(
+pub fn cleanup_game(
     mut commands: Commands,
     game_piece_query: Query<Entity,With<GamePiece>>,
     screen_package: Res<ScreenPackage>,
     mut touch_assignments: ResMut<TouchAssignments>,
+    dragon_status_text_query: Query<Entity,With<DragonStatusText>>,
 ) {
-    println!("1.0  cleanup_screen");
+    println!("1.0  cleanup_game");
     for game_piece in game_piece_query.iter() {
         commands.entity(game_piece).despawn_recursive();
     }
-    println!("3.0  cleanup_screen");
+
+
+    println!("3.0  cleanup_game");
     commands.entity(screen_package.entity).despawn_recursive();
 
-    println!("4.0  cleanup_screen");
+    for dragon_status_text in dragon_status_text_query.iter() {
+        commands.entity(dragon_status_text).despawn_recursive();
+    }
+
+    println!("4.0  cleanup_game");
     if let Some(joystick_entity) = touch_assignments.joystick_entity_id {
-        println!("5.0  cleanup_screen");
+        println!("5.0  cleanup_game");
         commands.entity(joystick_entity).despawn_recursive();
-        println!("6.0  cleanup_screen");
+        println!("6.0  cleanup_game");
         touch_assignments.joystick_entity_id = None;
-        println!("7.0  cleanup_screen");
+        println!("7.0  cleanup_game");
     }
 }
 

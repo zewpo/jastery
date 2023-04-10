@@ -214,7 +214,7 @@ pub fn setup_maze(
     // let maze: Vec<Vec<u32>> = maze_array.iter().map(|row| row.to_vec()).collect();
     // let grid = Grid::from_maze(&maze);
 
-    println!("Grid:\n{:?}", grid);
+    println!("Dungeon Grid:\n{:?}", grid);
     // Add the Grid as a Bevy resource
     commands.insert_resource(grid);
 

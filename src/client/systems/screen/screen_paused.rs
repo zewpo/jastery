@@ -1,7 +1,7 @@
 // src\client\systems\screen.rs
 
 use bevy::prelude::*;
-use crate::{shared::components::*, client::systems::*};
+use crate::{shared::components::*, client::{systems::*, components::TouchAssignments}};
 // use crate::client::systems::screen::*;
 
 
@@ -27,7 +27,7 @@ pub fn spawn_paused_screen(
         })
         .with_children(|parent| {
             
-            // Play Button
+            // UnPause Button
             parent.spawn((MenuButtonAction::Play, ButtonBundle {
                     style: button_style.clone(),
                     background_color: NORMAL_BUTTON.into(),
@@ -36,10 +36,41 @@ pub fn spawn_paused_screen(
                 ))
                 .with_children(|parent| {
                     parent.spawn(TextBundle::from_section(
-                        "Resume",
+                        "Unpause",
                         button_text_style.clone()
                     ));
                 });
+
+            // Main Menu button
+            parent
+                .spawn((MenuButtonAction::MainMenu, ButtonBundle {
+                    style: button_style.clone(),
+                    background_color: NORMAL_BUTTON.into(),
+                    ..default()
+                }
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Main Menu",
+                        button_text_style.clone(),
+                    ));
+                });
+
+            // Reset button
+            parent
+                .spawn((MenuButtonAction::Reset, ButtonBundle {
+                    style: button_style.clone(),
+                    background_color: NORMAL_BUTTON.into(),
+                    ..default()
+                }
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Reset",
+                        button_text_style.clone(),
+                    ));
+                });
+
         })
         .id();
 
@@ -48,11 +79,23 @@ pub fn spawn_paused_screen(
 }
 
 
-pub fn unpause_screen(
+pub fn unpause_game(
     mut commands: Commands,
     screen_package: Res<ScreenPackage>,
-    mut next_game_phase: ResMut<NextState<GamePhase>>,
+    // dragon_status_text: Res<DragonStatusText>,
+    dragon_status_text_query: Query<Entity,With<DragonStatusText>>,
+    game_status: Res<GameStatus>,
+    // mut next_app_screen: ResMut<NextState<AppScreen>>,
+    game_piece_query: Query<Entity,With<GamePiece>>,
+    touch_assignments: ResMut<TouchAssignments>,
 ) {
-    commands.entity(screen_package.entity).despawn_recursive();
-    next_game_phase.set(GamePhase::Playing);
+
+    if game_status.phase == GamePhase::Playing {
+        // just clean the Pause Screen entities, not the whole game.
+        commands.entity(screen_package.entity).despawn_recursive();
+    } else {
+        // clean the whole game.
+        cleanup_game(commands, game_piece_query, screen_package, touch_assignments, dragon_status_text_query);
+    }
+
 }

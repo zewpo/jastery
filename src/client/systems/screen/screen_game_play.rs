@@ -1,4 +1,4 @@
-// src\client\systems\screen.rs
+// src\client\systems\screen_game_play.rs
 
 use bevy::prelude::*;
 use crate::mutils;
@@ -31,50 +31,65 @@ impl Plugin for GamePlayScreenPlugin {
     fn build(&self, app: &mut App) {
 
         // ensure_state_schedules::<AppScreen>(app);
-        // ensure_state_schedules::<GamePhase>(app);
 
         app
             // .add_state::<AppScreen>()
 
-            .add_system( spawn_screen_game_play.in_schedule(OnEnter(AppScreen::InPlay)) )
-            .add_system( spawn_virtual_joystick.in_schedule(OnEnter(AppScreen::InPlay)) )
-
-            .add_system( game_event_watcher.in_set(OnUpdate(AppScreen::InPlay)) )
-            .add_system( virtual_joystick_watcher.in_set(OnUpdate(AppScreen::InPlay)) )
-            .add_system( dragon_status_watcher.in_set(OnUpdate(AppScreen::InPlay)) )
+            .add_systems( (spawn_virtual_joystick,
+                           spawn_dragon_status_text,
+                        //    spawn_screen_game_play,
+                        )
+                        .distributive_run_if(|game_status: Res<GameStatus>| game_status.phase == GamePhase::Setup)
+                        .in_schedule(OnEnter(AppScreen::InPlay)))
+            .add_systems( (virtual_joystick_watcher,
+                           dragon_status_watcher
+                        )
+                        .distributive_run_if(|game_status: Res<GameStatus>| game_status.phase == GamePhase::Playing)
+                        .in_set(OnUpdate(AppScreen::InPlay)) )
+            .add_system(
+                game_event_watcher
+                .in_set(OnUpdate(AppScreen::InPlay))
+            ) 
             
-            // .add_system( cleanup_screen.in_schedule(OnExit(AppScreen::InPlay)) );
-            //.add_system( game_event_watcher.in_schedule(OnExit(GamePhase::Playing)) )
+            // .add_system( cleanup_game.in_schedule(OnExit(AppScreen::InPlay)) );
+            // .add_system( game_event_watcher.in_schedule(OnExit(GamePhase::Playing)) )
             ;
     }
 }
 
 
 
-fn spawn_screen_game_play(
+// fn spawn_screen_game_play(
+//     // mut commands: Commands,
+//     // app_screen: Res<State<AppScreen>>, 
+//     // mut next_app_screen: ResMut<NextState<AppScreen>>,
+//     mut game_status: ResMut<GameStatus>,
+//     // resource_cache: Res<ResourceCache>,
+// ){
+//     println!("setup_game_play_screen");
+//     game_status.phase = GamePhase::Setup;
+// }
+
+
+fn spawn_dragon_status_text(
     mut commands: Commands,
     // app_screen: Res<State<AppScreen>>, 
     // mut next_app_screen: ResMut<NextState<AppScreen>>,
-    game_phase: Res<State<GamePhase>>,
-    mut next_game_phase: ResMut<NextState<GamePhase>>,
+    mut game_status: ResMut<GameStatus>,
     resource_cache: Res<ResourceCache>,
 ){
 
-    if game_phase.0 == GamePhase::Paused {
-        return;
-    }
-
-    println!("setup_game_play_screen");
+    println!("spawn_dragon_status_text");
 
     let font: Handle<Font> =  resource_cache.gui_fonts.get("FiraSans-Bold").unwrap().clone();
     
-    let dragon_position_text_section: TextSection = TextSection::new(
-        "",  // placeholder for Dragon Position: 
-        TextStyle {
-            font: font.clone(),
-            font_size: 30.0,
-            color: Color::WHITE,
-    });
+    // let dragon_position_text_section: TextSection = TextSection::new(
+    //     "",  // placeholder for Dragon Position: 
+    //     TextStyle {
+    //         font: font.clone(),
+    //         font_size: 30.0,
+    //         color: Color::WHITE,
+    // });
 
     let dragon_health_text_section: TextSection = TextSection::new(
         "", // placeholder for Dragon Health: 
@@ -84,13 +99,13 @@ fn spawn_screen_game_play(
             color: Color::WHITE,
     });
 
-    let mouse_position_text_section: TextSection = TextSection::new(
-        "",  // placeholder for \nMouse Position: 
-        TextStyle {
-            font: font.clone(),
-            font_size: 30.0,
-            color: Color::WHITE,
-    });
+    // let mouse_position_text_section: TextSection = TextSection::new(
+    //     "",  // placeholder for \nMouse Position: 
+    //     TextStyle {
+    //         font: font.clone(),
+    //         font_size: 30.0,
+    //         color: Color::WHITE,
+    // });
 
     // Create a text element to display things like the dragon health and position
     let text_bundle_package = commands.spawn(TextBundle {
@@ -99,16 +114,15 @@ fn spawn_screen_game_play(
             ..Default::default()
         },
         text: Text::from_sections([
-            dragon_position_text_section,
+            // dragon_position_text_section,
             dragon_health_text_section,
-            mouse_position_text_section
+            // mouse_position_text_section
         ]),
         ..Default::default()
     }).id();
 
-    commands.insert_resource(ScreenPackage { entity: text_bundle_package });
+    // commands.insert_resource(DragonStatusText { entity: Some(text_bundle_package) });
 
-    next_game_phase.set(GamePhase::Setup);
 }
 
 
@@ -116,13 +130,14 @@ fn spawn_virtual_joystick(
         mut commands: Commands,
         asset_server: Res<AssetServer>,
         mut touch_assignments: ResMut<TouchAssignments>,
-        game_phase: Res<State<GamePhase>>,
+        // game_phase: Res<State<GamePhase>>,
+        mut game_status: ResMut<GameStatus>,
     ) {
 
-    info!("Setup Joystick. game_phase: {:?}", game_phase);
+    info!("Setup Joystick. game_status.phase: {:?}", game_status.phase );
 
-    if game_phase.0 == GamePhase::Paused {
-        println!("Setup Joystick. don't respawn, just game_phase: {:?}", game_phase);
+    if game_status.phase == GamePhase::Paused {
+        println!("Setup Joystick. don't respawn, just game_status.phase: {:?}", game_status.phase);
         return;
     }
 
@@ -202,10 +217,11 @@ fn spawn_virtual_joystick(
 
 fn game_event_watcher( 
     mut next_app_screen: ResMut<NextState<AppScreen>>,
-    game_phase: Res<State<GamePhase>>,
+    // game_phase: Res<State<GamePhase>>,
+    game_status: Res<GameStatus>,
 ){
 
-    match game_phase.0 {
+    match game_status.phase {
         GamePhase::GameOver => {
             next_app_screen.set(AppScreen::GameOver);
         }
@@ -228,7 +244,8 @@ fn dragon_status_watcher(
     _cursor_moved_events: EventReader<CursorMoved>,
     dragon_query: Query<(&Dragon, &Transform), (With<MyDragon>,Without<GameCamera>)>,
     camera_query: Query<(&GameCamera, &mut Transform), With<GameCamera>>,
-    game_phase: Res<State<GamePhase>>,
+    //game_phase: Res<State<GamePhase>>,
+    game_status: Res<GameStatus>,
 ) {
     // if game_phase.0 == GamePhase::Paused {
     //     println!("dragon_status_watcher. skip because game_phase: {:?}", game_phase);
@@ -241,7 +258,7 @@ fn dragon_status_watcher(
 
     let n_dragons_found = dragon_query.iter().collect::<Vec<_>>().len();
     if n_dragons_found < 1 {
-        println!("dragon_status_watcher. Found NO Dragons, game_phase: {:?}", game_phase);
+        println!("dragon_status_watcher. Found NO Dragons, game_status.phase : {:?}", game_status.phase);
         return;
     }
 
@@ -257,19 +274,23 @@ fn dragon_status_watcher(
         }
     }
 
-    if let Some(mut text) = text_query.iter_mut().next() {       
-        text.sections[0].value = format!("Position: {:.1}, {:.1}", dragon_transform.translation.x, dragon_transform.translation.y);
-        text.sections[1].value = format!("\nHealth: {}/{}", dragon.health, dragon.max_health );
-        if mouse_button_input.pressed(MouseButton::Left) {
-            let cursor_position = window.cursor_position().unwrap_or_default();
-            let world_position = game_camera.screen_to_world(cursor_position, window, &camera_transform.translation);
-            text.sections[2].value = format!("\nMouse Click: {:.1}, {:.1}", world_position.x, world_position.y);
-        } 
-        else if last_touched_start_pos != Vec2::ZERO {
+    let n_text_found = text_query.iter().collect::<Vec<_>>().len();
+    let mut i = 0;
+    if let Some(mut text) = text_query.iter_mut().next() {
+        i += 1;
+        println!("text component {} of {} text components on screen", i, n_text_found);
+        //text.sections[0].value = format!("Position: {:.1}, {:.1}", dragon_transform.translation.x, dragon_transform.translation.y);
+        text.sections[0].value = format!("\nHealth: {}/{}", dragon.health, dragon.max_health );
+        // if mouse_button_input.pressed(MouseButton::Left) {
+        //     let cursor_position = window.cursor_position().unwrap_or_default();
+        //     let world_position = game_camera.screen_to_world(cursor_position, window, &camera_transform.translation);
+        //     text.sections[2].value = format!("\nMouse Click: {:.1}, {:.1}", world_position.x, world_position.y);
+        // } 
+        // else if last_touched_start_pos != Vec2::ZERO {
 
-            let world_position = game_camera.screen_to_world(last_touched_start_pos, window, &camera_transform.translation);
-            text.sections[2].value = format!("\nTouch Pos: {:.1}, {:.1}", world_position.x, world_position.y);
-        }
+        //     let world_position = game_camera.screen_to_world(last_touched_start_pos, window, &camera_transform.translation);
+        //     text.sections[2].value = format!("\nTouch Pos: {:.1}, {:.1}", world_position.x, world_position.y);
+        // }
     }
 }
 

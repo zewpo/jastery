@@ -8,14 +8,21 @@ use crate::mutils;
 use crate::shared::components::*;
 use crate::shared::components::game::*;
 
+use super::*;
+
 pub struct UserInputPlugin;
 
 impl Plugin for UserInputPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(TouchAssignments::default())
-            .add_system(keyboard_input_system.in_set(OnUpdate(GamePhase::Playing)))
-            .add_system(touch_input_system.in_set(OnUpdate(GamePhase::Playing)))
+            .add_systems((
+                    keyboard_input_system,
+                    touch_input_system,
+                )
+                .distributive_run_if(|game_status: Res<GameStatus>| game_status.phase == GamePhase::Playing)
+                .in_set(OnUpdate(AppScreen::InPlay))
+            )
             ;
     }
 }
@@ -155,8 +162,7 @@ pub fn keyboard_input_system (
     keyboard_input: Res<Input<KeyCode>>, 
     mut dragon_query: Query<&mut Dragon, With<MyDragon>>,
     mut camera_query: Query<(&mut GameCamera, &mut Transform), With<GameCamera>>,
-    game_phase: Res<State<GamePhase>>,
-    mut next_game_phase: ResMut<NextState<GamePhase>>,
+    mut game_status: ResMut<GameStatus>,
 ) {
     let mut dragon = dragon_query.single_mut();
     dragon.input.move_direction = Vec3::ZERO;
@@ -223,8 +229,10 @@ pub fn keyboard_input_system (
     // }
 
 
-    if game_phase.0 != GamePhase::Paused && keyboard_input.pressed(KeyCode::Escape){
-        next_game_phase.set(GamePhase::Paused);
+    if game_status.phase == GamePhase::Playing
+        && keyboard_input.pressed(KeyCode::Escape)
+    {
+        game_status.phase = GamePhase::Paused;
     }
 }
 

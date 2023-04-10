@@ -171,7 +171,7 @@ pub fn projectile_dragon_collision_system(
                     if dragon.health > 0 {
                         dragon.health -= 1;
                         if let Some(_) = &dragon.my_dragon {
-                            // Handle hit on the fire dragon
+                            // Handle hit on my_dragon
                             println!("Ouch...  Someone hit my dragon! Health: {}",dragon.health);
                         } else {
                             if projectile.shot_by == my_dragon_id {
