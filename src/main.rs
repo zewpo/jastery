@@ -152,13 +152,6 @@ fn main() {
         .add_plugin(GamePlugin)        
         .run();
 
-    // if cfg!(not(target_arch = "wasm32")) {
-    //     // This will ensure logs are flushed before the application exits
-    //     if let Some(guard) = log_guard {
-    //         drop(guard);
-    //     }
-    // }
-
 }
 
 

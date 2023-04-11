@@ -27,8 +27,7 @@ wasm-bindgen-futures = "0.4.34"
 
 lazy_static = "1.4.0"
 
-ansi_term = "0.12"
-
+# ansi_term = "0.12"
 
 [build-dependencies]
 walkdir = "2.3.3"

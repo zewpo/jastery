@@ -1,28 +1,12 @@
 use bevy::prelude::*;
-// use bevy::text;
 use image::DynamicImage;
-// use image::GenericImageView;
-// use wasm_bindgen_futures::JsFuture;
-// use core::slice::SlicePattern;
-// use bevy::utils::HashMap;
 use std::collections::{HashMap, HashSet};
-
-// use std::fs::File;
-
-// #[cfg(not(target_arch = "wasm32"))]
-// use std::io::Write;
 
 use std::sync::Arc;
 
 use crate::generated::ASSET_DATA;
 use crate::shared::components::*;
-// use crate::shared::components::I32ImageSize;
-// // use image::GenericImageView;
-// use crate::shared::components::dragon::*;
-// use crate::shared::components::elemental_theme::*;
-// use crate::shared::components::projectile::*;
-// use crate::shared::components::resource_cache::*;
-// use crate::shared::components::wall::*;
+
 
 
 pub struct ResourceCachePlugin;
@@ -41,26 +25,6 @@ impl Plugin for ResourceCachePlugin {
         .add_startup_system(preload_resources);
     }
 }
-
-
-
-// async fn load_image_from_url(url: &str) -> Result<Vec<u8>, JsValue> {
-//     let response = web_sys::window()
-//         .unwrap()
-//         .fetch_with_str(url)
-//         .await?; // use await inside async function
-
-//     let array_buffer = JsFuture::from(response.array_buffer().unwrap())
-//         .await?; // use await inside async function
-
-//     let js_array = js_sys::Uint8Array::new(&array_buffer);
-//     Ok((&js_array).to_vec())
-// }
-
-// fn load_image_from_path(path: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-//     let bytes = include_bytes!("assets/".to_owned() + path);
-//     Ok(bytes.to_vec())
-// }
 
 pub fn load_image_into_cache(asset_images: &mut Assets<Image>, path: &str) -> (Handle<Image>, Image) {
     let image_bytes = ASSET_DATA.get(path).unwrap();
@@ -88,8 +52,6 @@ fn preload_collidable_image(
         classifier,
     })
 }
-
-// use bevy::render::texture::{Extent3d, Texture};
 
 fn get_opaque_pixel_cells(
     image: &Image,
@@ -139,49 +101,6 @@ fn get_opaque_pixel_cells(
     opaque_pixel_cells
 }
 
-
-// fn get_opaque_pixel_cells(
-//     image: &DynamicImage,
-// ) -> HashMap<(i32, i32), HashSet<(i32, i32)>> {
-//     // let cell_size = CELL_SIZE as u32;
-//     let mut opaque_pixel_cells: HashMap<(i32, i32), HashSet<(i32, i32)>> = HashMap::new();
-//     let (width, height) = image.dimensions();
-
-//     let half_width = width as f32 / 2.0;
-//     let half_height = height as f32 / 2.0;
-
-//     let is_transparent = |x: u32, y: u32| image.get_pixel(x, y)[3] == 0;
-
-//     for y in 0..height {
-//         for x in 0..width {
-//             let pixel = image.get_pixel(x, y);
-//             if pixel[3] != 0 {
-//                 let neighbors = [
-//                     (x.checked_sub(1).map_or(true, |nx| is_transparent(nx, y))),
-//                     (x + 1 >= width || is_transparent(x + 1, y)),
-//                     (y.checked_sub(1).map_or(true, |ny| is_transparent(x, ny))),
-//                     (y + 1 >= height || is_transparent(x, y + 1)),
-//                 ];
-
-//                 let is_edge_pixel = neighbors.iter().any(|&is_transparent| is_transparent);
-
-//                 if is_edge_pixel {
-//                     let cell_i = ((x as f32 - half_width) / CELL_SIZE as f32).floor() as i32;
-//                     let cell_j = ((half_height - y as f32) / CELL_SIZE as f32).floor() as i32;
-//                     let cell_key = (cell_i, cell_j);
-
-//                     let pixel_in_cell = ((x as i32 - half_width as i32) % CELL_SIZE, (half_height as i32 - y as i32) % CELL_SIZE);
-
-//                     opaque_pixel_cells
-//                         .entry(cell_key)
-//                         .or_insert_with(HashSet::new)
-//                         .insert(pixel_in_cell);
-//                 }
-//             }
-//         }
-//     }
-//     opaque_pixel_cells
-// }
 
 // #[cfg(not(target_arch = "wasm32"))]
 // fn debug_opaque_pixel_cells(
