@@ -75,7 +75,7 @@ fn spawn_dragon_status_text(
     mut commands: Commands,
     // app_screen: Res<State<AppScreen>>, 
     // mut next_app_screen: ResMut<NextState<AppScreen>>,
-    mut game_status: ResMut<GameStatus>,
+    // game_status: Res<GameStatus>,
     resource_cache: Res<ResourceCache>,
 ){
 
@@ -108,7 +108,7 @@ fn spawn_dragon_status_text(
     // });
 
     // Create a text element to display things like the dragon health and position
-    let text_bundle_package = commands.spawn(TextBundle {
+    let _text_bundle_package = commands.spawn(TextBundle {
         style: Style {
             align_self: AlignSelf::FlexStart,
             ..Default::default()
@@ -131,7 +131,7 @@ fn spawn_virtual_joystick(
         asset_server: Res<AssetServer>,
         mut touch_assignments: ResMut<TouchAssignments>,
         // game_phase: Res<State<GamePhase>>,
-        mut game_status: ResMut<GameStatus>,
+        game_status: Res<GameStatus>,
     ) {
 
     info!("Setup Joystick. game_status.phase: {:?}", game_status.phase );
@@ -237,13 +237,13 @@ fn game_event_watcher(
 }
 
 fn dragon_status_watcher(
-    windows: Query<&Window>,
+    // windows: Query<&Window>,
     mut text_query: Query<&mut Text>,
-    mouse_button_input: Res<Input<MouseButton>>,
-    touches: Res<Touches>,
+    // mouse_button_input: Res<Input<MouseButton>>,
+    // touches: Res<Touches>,
     _cursor_moved_events: EventReader<CursorMoved>,
     dragon_query: Query<(&Dragon, &Transform), (With<MyDragon>,Without<GameCamera>)>,
-    camera_query: Query<(&GameCamera, &mut Transform), With<GameCamera>>,
+    // camera_query: Query<(&GameCamera, &mut Transform), With<GameCamera>>,
     //game_phase: Res<State<GamePhase>>,
     game_status: Res<GameStatus>,
 ) {
@@ -262,23 +262,23 @@ fn dragon_status_watcher(
         return;
     }
 
-    let (game_camera, camera_transform) = camera_query.single();
-    let window = windows.single();
+    // let (game_camera, camera_transform) = camera_query.single();
+    // let window = windows.single();
     
-    let (dragon, dragon_transform) = dragon_query.single();
+    let (dragon, _dragon_transform) = dragon_query.single();
     
-    let mut last_touched_start_pos = Vec2::ZERO;
-    for touch in touches.iter() {
-        if touches.just_pressed(touch.id()){
-            last_touched_start_pos = touch.position();
-        }
-    }
+    // let mut last_touched_start_pos = Vec2::ZERO;
+    // for touch in touches.iter() {
+    //     if touches.just_pressed(touch.id()){
+    //         last_touched_start_pos = touch.position();
+    //     }
+    // }
 
-    let n_text_found = text_query.iter().collect::<Vec<_>>().len();
-    let mut i = 0;
+    // let n_text_found = text_query.iter().collect::<Vec<_>>().len();
+    // let mut i = 0;
     if let Some(mut text) = text_query.iter_mut().next() {
-        i += 1;
-        println!("text component {} of {} text components on screen", i, n_text_found);
+        // i += 1;
+        // println!("text component {} of {} text components on screen", i, n_text_found);
         //text.sections[0].value = format!("Position: {:.1}, {:.1}", dragon_transform.translation.x, dragon_transform.translation.y);
         text.sections[0].value = format!("\nHealth: {}/{}", dragon.health, dragon.max_health );
         // if mouse_button_input.pressed(MouseButton::Left) {

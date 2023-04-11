@@ -1,7 +1,8 @@
 
 // use std::cmp::min;
 
-use bevy::{input::touch::*, prelude::*};
+
+use bevy::{input::{touch::*,mouse::*, ButtonState}, prelude::*};
 
 use crate::client::components::*;
 use crate::mutils;
@@ -16,8 +17,10 @@ impl Plugin for UserInputPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(TouchAssignments::default())
+            .insert_resource(DoubleClickState::default())
             .add_systems((
                     keyboard_input_system,
+                    mouse_input_system,
                     touch_input_system,
                 )
                 .distributive_run_if(|game_status: Res<GameStatus>| game_status.phase == GamePhase::Playing)
@@ -27,6 +30,164 @@ impl Plugin for UserInputPlugin {
     }
 }
 
+
+//
+pub fn mouse_input_system(
+    windows: Query<&Window>,
+    time: Res<Time>,
+    mouse_button_input: Res<Input<MouseButton>>,
+
+    // mut mouse_button_input_events: EventReader<MouseButtonInput>,
+    // mut mouse_motion_events: EventReader<MouseMotion>,
+    // mut cursor_moved_events: EventReader<CursorMoved>,
+    mut mouse_wheel_events: EventReader<MouseWheel>,
+
+    mut double_click_status: ResMut<DoubleClickState>,
+    mut dragon_query: Query<(&mut Dragon, &Transform), (With<MyDragon>, Without<GameCamera>, Without<VirtualJoystick>)>,
+    mut camera_query: Query<(&mut GameCamera, &mut Transform), (With<GameCamera>, Without<VirtualJoystick>,Without<MyDragon>,)>,
+) {
+    let current_time = time.elapsed_seconds_f64();
+
+    let window = windows.single();
+    let (mut game_camera, mut camera_transform) = camera_query.single_mut();
+    
+    let (mut dragon, dragon_transform) = dragon_query.single_mut();
+    let dragon_pos = dragon_transform.translation;
+
+
+
+    for mouse_wheel_event in mouse_wheel_events.iter() {
+        // info!("{:?}", event);
+        if mouse_wheel_event.y != 0.0 {
+            let zoom_factor = (100.0 + 5.0*mouse_wheel_event.y.signum())/100.0;
+            game_camera.scale /= zoom_factor;
+            camera_transform.scale = Vec3::splat(game_camera.scale);
+            
+        }
+    }
+
+    // let mut is_move = false;
+    // let mut is_shoot = false;
+
+//        let ctrl_pressed = keyboard_input.pressed(KeyCode::LControl) || keyboard_input.pressed(KeyCode::RControl);
+
+    // for (mouse_button_event, _event_id) in mouse_button_input_events.iter_with_id() {
+    //     let click_dir_to_dragon: Vec3;
+    //     let cursor_position = window.cursor_position().unwrap_or_default();
+    //     let cursor_position_world = game_camera.mouse_to_world(cursor_position, window, &camera_transform.translation);
+    //     click_dir_to_dragon = (cursor_position_world - dragon_pos.truncate()).normalize_or_zero().extend(0.0);
+    //     match mouse_button_event.state {
+    //         ButtonState::Pressed => {
+                
+    //         },
+    //         ButtonState::Released => {
+
+    //         },
+    //     }
+    //     match mouse_button_event.button {
+    //         MouseButton::Left => {
+    //             dragon.input.shoot_direction = click_dir_to_dragon;
+    //             dragon.input.shoot = true;
+    //         },
+    //         MouseButton::Right => {
+    //             dragon.input.move_direction = click_dir_to_dragon;
+    //             dragon.input.shoot = false;
+    //         },
+    //         MouseButton::Middle => {
+
+    //         },
+    //         MouseButton::Other(_) => {
+
+    //         },
+    //     }
+    // }
+
+    if mouse_button_input.pressed(MouseButton::Right) {
+        let cursor_position = window.cursor_position().unwrap_or_default();
+        let cursor_position_world = game_camera.mouse_to_world(cursor_position, window, &camera_transform.translation);
+        let click_dir = (cursor_position_world - dragon_pos.truncate()).normalize_or_zero().extend(0.0);
+        dragon.input.move_direction = click_dir;
+        dragon.input.shoot = false;
+    }
+
+    //     //if mouse_button_input.just_released(MouseButton::Left) {
+    //     if let Some(last_click_time) = double_click_status.last_click_time {
+    //         if current_time - last_click_time <= double_click_status.max_delay {
+    //             println!("Double-click detected!");
+    //             double_click_status.last_click_time = None;
+
+    //             let cursor_position = window.cursor_position().unwrap_or_default();
+    //             let cursor_position_world = game_camera.screen_to_world(cursor_position, window, &camera_transform.translation);
+    //             let mut click_dir = (cursor_position_world - dragon_pos.truncate()).normalize_or_zero().extend(0.0);
+    //             click_dir.y *= -1.0;
+    //             dragon.input.move_direction = click_dir;
+    //             dragon.input.shoot = false;
+    //             is_move = true;
+    //         } else {
+                
+    //             if mouse_button_input.just_released(MouseButton::Left) {
+    //                 println!("Single-click release detected!");
+    //                 double_click_status.last_click_time = Some(current_time);    
+    //             }
+                
+    //         }
+    //     } else {
+    //         if mouse_button_input.just_released(MouseButton::Left) {
+    //             println!("Single-click release detected!");
+    //             double_click_status.last_click_time = Some(current_time);
+    //         }
+    //     }
+
+    
+    if mouse_button_input.pressed(MouseButton::Left) {
+        
+        if let Some(cursor_position) = window.cursor_position(){
+            let cursor_position_world = game_camera.mouse_to_world(cursor_position, window, &camera_transform.translation);
+            let click_dir = (cursor_position_world - dragon_pos.truncate()).normalize_or_zero().extend(0.0);
+            
+            if let Some(last_release_time) = double_click_status.last_release_time {
+                
+                double_click_status.last_release_time = None;
+                
+                if double_click_status.still_pressed 
+                    || current_time - last_release_time <= double_click_status.max_delay 
+                {
+                    // println!("Double-click detected!");
+                    dragon.input.move_direction = click_dir;
+                    dragon.input.shoot = false;
+                    double_click_status.still_pressed = true;
+                }
+
+            } else if double_click_status.still_pressed {
+                // println!("Double-click still pressed!");
+                dragon.input.move_direction = click_dir;
+                dragon.input.shoot = false;
+                double_click_status.still_pressed = true;
+            } else {
+                dragon.input.shoot_direction = click_dir;
+                dragon.input.shoot = true;
+            }
+        }
+    }
+
+    if mouse_button_input.just_released(MouseButton::Left) {
+            double_click_status.last_release_time = Some(current_time);
+            double_click_status.still_pressed = false;
+    }
+
+    // if mouse_button_input.pressed(MouseButton::Left) {
+    //     // println!("Single-click press detected!");
+
+    //     let cursor_position = window.cursor_position().unwrap_or_default();
+    //     let cursor_position_world = game_camera.mouse_to_world(cursor_position, window, &camera_transform.translation);
+    //     let click_dir = (cursor_position_world - dragon_pos.truncate()).normalize_or_zero().extend(0.0);
+    //     println!("cursor_position: {:?},  Cursor_world: {:?}, Dragon: {:?}", cursor_position, cursor_position_world, dragon_pos.truncate() );
+    //     dragon.input.shoot_direction = click_dir;
+    //     dragon.input.shoot = true;
+
+    // }
+
+}
 
 pub fn touch_input_system(
     windows: Query<&Window>,
@@ -49,6 +210,7 @@ pub fn touch_input_system(
         touch_assignments.shoot_touch_id = None;
         // joystick_direction = Vec3::ZERO;
     }
+
     if n_touches == 1 {
         let touch = touches_vec[0];
         if touch_assignments.shoot_touch_id != Some(touch.id()) {
@@ -125,7 +287,7 @@ pub fn touch_input_system(
                 dragon.input.shoot = false;
             } else {
                 let touch_pos_screen = touch.position();
-                let touch_pos_world = game_camera.screen_to_world(touch_pos_screen, window, &camera_transform.translation);
+                let touch_pos_world = game_camera.touch_to_world(touch_pos_screen, window, &camera_transform.translation);
                 let shoot_dir = (touch_pos_world - dragon_pos.truncate()).normalize_or_zero().extend(0.0);
                 dragon.input.shoot_direction = shoot_dir;
                 dragon.input.shoot = true;
@@ -213,6 +375,7 @@ pub fn keyboard_input_system (
 
     // let ctrl_pressed = keyboard_input.pressed(KeyCode::LControl) || keyboard_input.pressed(KeyCode::RControl);
 
+    // let +,- keys zoom the screen 
     // if ctrl_pressed  {
         let mut scale_change = 1.0;
         if keyboard_input.pressed(KeyCode::Plus) || keyboard_input.pressed(KeyCode::Equals) {
@@ -222,8 +385,9 @@ pub fn keyboard_input_system (
         }
         if scale_change != 1.0 {
             let (mut game_camera, mut camera_transform) = camera_query.single_mut();
-            camera_transform.scale *= Vec3::splat(scale_change);
             game_camera.scale *= scale_change;
+            camera_transform.scale *= Vec3::splat(game_camera.scale);
+            
         }
         
     // }
