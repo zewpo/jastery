@@ -137,26 +137,26 @@ pub fn cleanup_game(
     mut touch_assignments: ResMut<TouchAssignments>,
     dragon_status_text_query: Query<Entity,With<DragonStatusText>>,
 ) {
-    println!("1.0  cleanup_game");
+    // println!("1.0  cleanup_game");
     for game_piece in game_piece_query.iter() {
         commands.entity(game_piece).despawn_recursive();
     }
 
 
-    println!("3.0  cleanup_game");
+    // println!("3.0  cleanup_game");
     commands.entity(screen_package.entity).despawn_recursive();
 
     for dragon_status_text in dragon_status_text_query.iter() {
         commands.entity(dragon_status_text).despawn_recursive();
     }
 
-    println!("4.0  cleanup_game");
+    // println!("4.0  cleanup_game");
     if let Some(joystick_entity) = touch_assignments.joystick_entity_id {
-        println!("5.0  cleanup_game");
+        // println!("5.0  cleanup_game");
         commands.entity(joystick_entity).despawn_recursive();
-        println!("6.0  cleanup_game");
+        // println!("6.0  cleanup_game");
         touch_assignments.joystick_entity_id = None;
-        println!("7.0  cleanup_game");
+        // println!("7.0  cleanup_game");
     }
 }
 

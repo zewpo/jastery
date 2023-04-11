@@ -39,13 +39,13 @@ fn game_over_trigger(
 ) {
 
     if game_status.phase == GamePhase::Paused {
-        println!("game_over_trigger. Skipped because game_status.phase: {:?}", game_status.phase);
+        info!("game_over_trigger. Skipped because game_status.phase: {:?}", game_status.phase);
         return;
     }
 
     let n_dragons_found = dragon_query.iter().collect::<Vec<_>>().len();
     if n_dragons_found < 1 {
-        println!("game_over_trigger. Found NO Dragons, game_status.phase: {:?}", game_status.phase);
+        info!("game_over_trigger. Found NO Dragons, game_status.phase: {:?}", game_status.phase);
         return;
     }
 
@@ -74,16 +74,16 @@ fn game_over_trigger(
 
     if my_health <= 0 {
         game_status.outcome = GameOutcome::Lose;
-        println!("You Died");
+        info!("You Died");
     } else if npc_dragon_health <= 0 {
         game_status.outcome = GameOutcome::Win;
-        println!("All Enemies Died!");
+        info!("All Enemies Died!");
     }
 
     if game_status.outcome != GameOutcome::Undecided {
         //next_game_phase.set(GamePhase::GameOver);
         game_status.phase = GamePhase::GameOver;
-        println!("\n*** Game Over! ***\n");
+        info!("\n*** Game Over! ***\n");
     }
             
 }

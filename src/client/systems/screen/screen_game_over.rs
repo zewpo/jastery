@@ -20,13 +20,11 @@ impl Plugin for GameOverScreenPlugin {
 
 pub fn spawn_screen_game_over(
     mut commands: Commands,
-    // asset_server: Res<AssetServer>,
     resource_cache: Res<ResourceCache>,
-    // game_outcome: Res<State<GameOutcome>>,
     game_status: Res<GameStatus>,
 ) {
 
-    println!("screen_game_over");
+    info!("screen_game_over");
     // A semi-transparent black color
     let dim_color = Color::rgba(0.4, 0.4, 0.4, 0.75);
 

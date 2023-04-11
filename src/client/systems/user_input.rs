@@ -2,7 +2,7 @@
 // use std::cmp::min;
 
 
-use bevy::{input::{touch::*,mouse::*, ButtonState}, prelude::*};
+use bevy::{input::{touch::*,mouse::*,}, prelude::*};
 
 use crate::client::components::*;
 use crate::mutils;
@@ -370,7 +370,7 @@ pub fn keyboard_input_system (
     }
 
     dragon.input.shoot = keyboard_input.pressed(KeyCode::Space);
-    dragon.input.brake = keyboard_input.pressed(KeyCode::RShift);
+    dragon.input.brake = keyboard_input.pressed(KeyCode::LShift) || keyboard_input.pressed(KeyCode::RShift);
     dragon.input.home = keyboard_input.pressed(KeyCode::X);
 
     // let ctrl_pressed = keyboard_input.pressed(KeyCode::LControl) || keyboard_input.pressed(KeyCode::RControl);

@@ -12,7 +12,7 @@ use crate::shared::components::ElementalTheme;
 
 use super::*;
 
-pub const CELL_SIZE: i32 = 40;
+pub const CELL_SIZE: i32 = 16;
 
 #[derive(Resource)]
 pub struct ResourceCache {
@@ -20,6 +20,7 @@ pub struct ResourceCache {
     pub dragon_images: HashMap<ElementalTheme, Arc<CollidableImage>>,
     pub projectile_images: HashMap<ElementalTheme, Arc<CollidableImage>>,
     pub gui_fonts: HashMap<String, Handle<Font>>,
+    pub virtual_joystick_images:HashMap<String, Handle<Image>>,
     // pub joystick_images: HashMap<String, Arc<CollidableImage>>,
     // Other resources can be added here, e.g., audio files, character data, etc.
 }

@@ -8,7 +8,7 @@ pub fn spawn_main_menu_screen(
     mut commands: Commands,
     resource_cache: Res<ResourceCache>,
 ) {
-    println!("spawn_main_menu_screen");
+    info!("spawn_main_menu_screen");
 
     let font: Handle<Font> =  resource_cache.gui_fonts.get("FiraSans-Bold").unwrap().clone();
     let (button_style, button_text_style) = common_button_style(font.clone());

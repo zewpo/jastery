@@ -106,7 +106,7 @@ pub fn npc_dragon_pathfinding_system(
 
             let is_goal_walkable = grid.is_walkable(goal);
             if !is_goal_walkable {
-                println!("Not walkable: {:?} [{:?}]",goal ,my_dragon_position );
+                info!("Not walkable: {:?} [{:?}]",goal ,my_dragon_position );
             }
             // Check if start or goal is outside the grid
             let is_start_outside_grid = !grid.is_inside_grid(npc_dragon_position);

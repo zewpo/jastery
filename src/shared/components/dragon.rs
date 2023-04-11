@@ -44,22 +44,22 @@ pub struct DragonBundle {
     pub game_piece: GamePiece,
 }
 
-pub enum PlayerControllerType {
-    Keyboard,
-    Mouse,
-    GamePad,
-    TouchScreen,
-}
-pub enum AiControllerType {
-    BasicAi,
-    AdvancedAi,
-    // Add more AI types as needed
-}
+// pub enum PlayerControllerType {
+//     Keyboard,
+//     Mouse,
+//     GamePad,
+//     TouchScreen,
+// }
+// pub enum AiControllerType {
+//     BasicAi,
+//     AdvancedAi,
+//     // Add more AI types as needed
+// }
 
-pub enum DragonController {
-    PlayerControlled(PlayerControllerType),
-    NonPlayerControlled(AiControllerType),
-}
+// pub enum DragonController {
+//     PlayerControlled(PlayerControllerType),
+//     NonPlayerControlled(AiControllerType),
+// }
 
 
 #[derive(Default, Clone)]

@@ -9,7 +9,7 @@ pub fn setup_dragons(
         mut commands: Commands,
         resource_cache: Res<ResourceCache>,
     ) {
-    println!("Setup Dragons.");
+    info!("Setup Dragons.");
     //let dragon_images = &resource_cache.dragon_images;
     
     // Spawn My Fire Dragon into the game.
@@ -182,6 +182,6 @@ pub fn setup_dragons(
     });
 
 
-    println!("Setup Dragons DONE.");
+    // info!("Setup Dragons DONE.");
 }
 

@@ -26,7 +26,7 @@ pub fn setup_camera(
 //     query_window: Query<&Window>,
     camera_scale: Res<CameraScale>,
 ) {
-    println!("Setup Camera");
+    info!("Setup Camera");
     commands.spawn((
         Camera2dBundle {
             transform: Transform::from_scale(Vec3::splat(camera_scale.0)),

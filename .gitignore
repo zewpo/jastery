@@ -8,3 +8,4 @@ output-cargo-metadata.txt
 output-cargo-metadata.json
 wasm/target
 wasm/target/wasm_jastery_bg.wasm
+dragon_output.2.txt

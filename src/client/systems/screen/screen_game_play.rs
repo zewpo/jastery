@@ -79,7 +79,7 @@ fn spawn_dragon_status_text(
     resource_cache: Res<ResourceCache>,
 ){
 
-    println!("spawn_dragon_status_text");
+    info!("spawn_dragon_status_text");
 
     let font: Handle<Font> =  resource_cache.gui_fonts.get("FiraSans-Bold").unwrap().clone();
     
@@ -128,7 +128,8 @@ fn spawn_dragon_status_text(
 
 fn spawn_virtual_joystick(
         mut commands: Commands,
-        asset_server: Res<AssetServer>,
+        // asset_server: Res<AssetServer>,
+        resource_cache: Res<ResourceCache>,
         mut touch_assignments: ResMut<TouchAssignments>,
         // game_phase: Res<State<GamePhase>>,
         game_status: Res<GameStatus>,
@@ -137,7 +138,7 @@ fn spawn_virtual_joystick(
     info!("Setup Joystick. game_status.phase: {:?}", game_status.phase );
 
     if game_status.phase == GamePhase::Paused {
-        println!("Setup Joystick. don't respawn, just game_status.phase: {:?}", game_status.phase);
+        info!("Setup Joystick. don't respawn, just game_status.phase: {:?}", game_status.phase);
         return;
     }
 
@@ -154,10 +155,10 @@ fn spawn_virtual_joystick(
     touch_assignments.shoot_touch_id = None;
 
     let joystick_background_path = "sprites/joystick-background.png";
-    let joystick_background_image_handle: Handle<Image> = asset_server.load(joystick_background_path);
+    let joystick_background_image_handle: Handle<Image> = resource_cache.virtual_joystick_images.get(joystick_background_path).unwrap().clone();
 
     let joystick_handle_path = "sprites/joystick-handle.png";
-    let joystick_handle_image_handle: Handle<Image> = asset_server.load(joystick_handle_path);
+    let joystick_handle_image_handle: Handle<Image> = resource_cache.virtual_joystick_images.get(joystick_handle_path).unwrap().clone();
 
     let handle_entity = commands.spawn(ImageBundle {
         style: Style {
@@ -258,7 +259,7 @@ fn dragon_status_watcher(
 
     let n_dragons_found = dragon_query.iter().collect::<Vec<_>>().len();
     if n_dragons_found < 1 {
-        println!("dragon_status_watcher. Found NO Dragons, game_status.phase : {:?}", game_status.phase);
+        info!("dragon_status_watcher. Found NO Dragons, game_status.phase : {:?}", game_status.phase);
         return;
     }
 

@@ -291,9 +291,9 @@ pub fn dragon_dragon_collision_system(
         // check for sprite boundary collision.
         if let (Some(collision), mut depth) = detect_collision_depth(
             dragon_transform_a.translation,
-            dragon_image_a.size_vec2(),
+            dragon_image_a.size,
             dragon_transform_b.translation,
-            dragon_image_b.size_vec2()
+            dragon_image_b.size
         ) {
             // Check for cell collision
             if detect_collision_of_opaque_image_cells(
@@ -374,9 +374,9 @@ pub fn dragon_wall_collision_system(
             // If all sides are involved, `Inside` is returned.
             if let (Some(collision), mut depth) = detect_collision_depth(
                 dragon_transform.translation,
-                dragon_image.size_vec2(),
+                dragon_image.size,
                 wall_transform.translation,
-                wall_image.size_vec2()
+                wall_image.size
             ) {
 
                 //dragon.action.velocity = Vec3::ZERO;

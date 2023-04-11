@@ -165,7 +165,7 @@ pub fn setup_maze(
     mut commands: Commands,
     resource_cache: Res<ResourceCache>,
 ) {
-    println!("Setup Maze");
+    info!("Setup Maze");
     //let wall_images = &resource_cache.wall_images;
 
     // distance from world center 0,0 to bottom left of maze.
@@ -214,7 +214,7 @@ pub fn setup_maze(
     // let maze: Vec<Vec<u32>> = maze_array.iter().map(|row| row.to_vec()).collect();
     // let grid = Grid::from_maze(&maze);
 
-    println!("Dungeon Grid:\n{:?}", grid);
+    info!("Dungeon Grid:\n{:?}", grid);
     // Add the Grid as a Bevy resource
     commands.insert_resource(grid);
 

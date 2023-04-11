@@ -172,12 +172,12 @@ pub fn projectile_dragon_collision_system(
                         dragon.health -= 1;
                         if let Some(_) = &dragon.my_dragon {
                             // Handle hit on my_dragon
-                            println!("Ouch...  Someone hit my dragon! Health: {}",dragon.health);
+                            info!("Ouch...  Someone hit my dragon! Health: {}",dragon.health);
                         } else {
                             if projectile.shot_by == my_dragon_id {
-                                println!("Yay...  I hit an enemy dragon, Health: {}",dragon.health);
+                                info!("Yay...  I hit an enemy dragon, Health: {}",dragon.health);
                             } else {
-                                println!("Yay...  Someone hit an enemy dragon, Health: {}",dragon.health);
+                                info!("Yay...  Someone hit an enemy dragon, Health: {}",dragon.health);
                             }
                         }
                     }

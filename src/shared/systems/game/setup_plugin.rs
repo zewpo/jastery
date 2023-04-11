@@ -49,16 +49,16 @@ fn check_setup_complete(
     let walls_found = wall_query.iter().collect::<Vec<_>>().len() > 0;
     
     if game_status.phase != GamePhase::Start {
-        print!("check_setup_complete -- ");
+        info!("check_setup_complete -- ");
         if my_dragon_found  && walls_found {
-                println!(" All complete.  set GamePhase::Start.");
+                info!(" -- All complete.  set GamePhase::Start.");
                 game_status.phase = GamePhase::Start;
                 //next_game_phase.set(GamePhase::Playing);
         } else {
-            println!(" Not complete.  GamePhase: {:?}", game_status.phase );
+            info!(" -- Not complete.  GamePhase: {:?}", game_status.phase );
         }
     } else {
-        println!("check_setup_complete: Already Playing");
+        info!("check_setup_complete: Already Playing");
     }
     
 }
