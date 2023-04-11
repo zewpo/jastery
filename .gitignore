@@ -7,5 +7,3 @@ flamegraph.svg
 output-cargo-metadata.txt
 output-cargo-metadata.json
 wasm/target
-wasm/target/wasm_jastery.js
-wasm/target/wasm_jastery_bg.wasm
