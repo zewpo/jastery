@@ -31,6 +31,7 @@ lazy_static = "1.4.0"
 # ansi_term = "0.12"
 
 md5 = { version = "0.7.0", optional = true }
+regex = { version = "1.7.3", optional = true }
 
 [build-dependencies]
 walkdir = "2.3.3"
@@ -45,10 +46,10 @@ debug = true
 
 
 [[bin]]
-name = "post_wasm_build"
-path = "src/bin/post_wasm_build.rs"
-required-features = ["post_wasm_build"]
+name = "wasm_build"
+path = "src/bin/wasm_build.rs"
+required-features = ["wasm_build"]
 
 [features]
 default = []
-post_wasm_build = ["md5"]
+wasm_build = ["md5","regex"]
