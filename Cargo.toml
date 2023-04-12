@@ -3,11 +3,11 @@ name = "jastery"
 version = "0.1.0"
 edition = "2021"
 build = "build.rs"
+default-run = "jastery"
 
 # [[bin]]
 # name = "build-script"
 # path = "build.rs"
-
 
 [dependencies]
 bevy = "0.10.0"
@@ -27,7 +27,10 @@ wasm-bindgen-futures = "0.4.34"
 
 lazy_static = "1.4.0"
 
+# [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # ansi_term = "0.12"
+
+md5 = { version = "0.7.0", optional = true }
 
 [build-dependencies]
 walkdir = "2.3.3"
@@ -40,3 +43,12 @@ debug = false
 [profile.dev]
 debug = true
 
+
+[[bin]]
+name = "post_wasm_build"
+path = "src/bin/post_wasm_build.rs"
+required-features = ["post_wasm_build"]
+
+[features]
+default = []
+post_wasm_build = ["md5"]

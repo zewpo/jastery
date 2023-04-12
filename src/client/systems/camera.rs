@@ -39,19 +39,20 @@ pub fn setup_camera(
     ));
 
 }
-
 pub fn camera_follow_system(
     time: Res<Time>,
-    dragon_query: Query<(&mut Dragon, &Transform), (With<MyDragon>,Without<GameCamera>)>,
+    dragon_query: Query<(&mut Dragon, &Transform), (With<MyDragon>, Without<GameCamera>)>,
     mut camera_query: Query<(&GameCamera, &mut Transform), With<GameCamera>>,
     windows: Query<&Window>,
-    // images: Res<Assets<Image>>,
 ) {
     let window = windows.single();
-    let (game_camera, mut camera_transform ) = camera_query.single_mut();
+    let (game_camera, mut camera_transform) = camera_query.single_mut();
     let (dragon, dragon_transform) = dragon_query.single();
 
-    let scaled_dragon_size = Vec2::new(dragon.image.width_f32() * dragon_transform.scale.x.abs(), dragon.image.height_f32() * dragon_transform.scale.y.abs());
+    let scaled_dragon_size = Vec2::new(
+        dragon.image.width_f32() * dragon_transform.scale.x.abs(),
+        dragon.image.height_f32() * dragon_transform.scale.y.abs(),
+    );
 
     let dragon_left_edge = dragon_transform.translation.x - (scaled_dragon_size.x / 2.0);
     let dragon_right_edge = dragon_left_edge + scaled_dragon_size.x;
@@ -83,6 +84,15 @@ pub fn camera_follow_system(
         target_translation.y += (dragon_top_edge - (window_top_edge - margin)).abs();
     }
 
-    let lerp_rate = 7.0;
-    camera_transform.translation = camera_transform.translation.lerp(target_translation, time.delta_seconds() * lerp_rate);
+    let lerp_t = time.delta_seconds() * 7.0;
+    let smooth_t = smoothstep(0.0, 1.0, lerp_t);
+
+    camera_transform.translation = camera_transform.translation.lerp(target_translation, smooth_t);
 }
+
+// Smoothstep function
+fn smoothstep(edge0: f32, edge1: f32, x: f32) -> f32 {
+    let t = ((x - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
+    t * t * (3.0 - 2.0 * t)
+}
+
