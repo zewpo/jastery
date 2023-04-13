@@ -38,9 +38,10 @@ If you havent already installed the wasm target for the rust compiler;
 `rustup target add wasm32-unknown-unknown`
 
 and;
+
 `cargo install wasm-bindgen-cli`
 
-Then, you can just run this.
+Then, the cargo.toml file has a bin target you can use, so you can just run this.
 
 `cargo run --bin wasm_build --features wasm_build`
 
@@ -48,7 +49,7 @@ This cargo bin target simply runs the contents of the wasm_build.script file, as
 
 At the moment, this works for all desktop platforms I am aware of - where you might want to compile the wasm package.  
 
-You dont have to run the following manually, I'm just showing the content of the script that the wasm_build target runs automatically.
+You dont have to run the following code block manually, I'm just showing the content of the script that the wasm_build target will run automatically.
 
 ```sh
 cargo build --release --target wasm32-unknown-unknown
