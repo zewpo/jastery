@@ -9,6 +9,9 @@ output-cargo-metadata.txt
 output-cargo-metadata.json
 wasm/target
 wasm/target/wasm_jastery_bg.wasm
+wasm/target/wasm_jastery_bg.wasm.d.ts
+wasm/target/wasm_jastery.d.ts
+wasm/target/wasm_jastery.js
 dragon_output.2.txt
 src/generated/generated_assets.rs
 
