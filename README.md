@@ -37,21 +37,27 @@ If you havent already installed the wasm target for the rust compiler;
 
 `rustup target add wasm32-unknown-unknown`
 
+and;
+`cargo install wasm-bindgen-cli`
 
 Then, you can just run this.
 
 `cargo run --bin wasm_build --features wasm_build`
 
-This cargo bin target simply runs the contents of the wasm_build.script file - and then does some md5 hashing to make the webassembly thing avoid using old cached versions.
+This cargo bin target simply runs the contents of the wasm_build.script file, as shown in the next code block. - It then does some md5 hashing to make the webassembly thing avoid using old cached versions.
 
-At the moment, this works for all desktop platforms I am aware of.
+At the moment, this works for all desktop platforms I am aware of - where you might want to compile the wasm package.  
 
-```bat
+You dont have to run the following manually, I'm just showing the content of the script that the wasm_build target runs automatically.
+
+```sh
 cargo build --release --target wasm32-unknown-unknown
 wasm-bindgen --out-name wasm_jastery --out-dir wasm/target --target web target/wasm32-unknown-unknown/release/jastery.wasm
 ```
 
 You will end up with a 'wasm' directory with the compiled content, which you can serve over web.
+
+## License
 
 If you use this software, and it eats your cat, well, that is exactly what dragons are likely to do, so please dont blame me.
 
