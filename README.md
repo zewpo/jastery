@@ -6,9 +6,9 @@ Currently, it only consists of a players dragon trying to survive against 3 NPC 
 
 It is still in very, very early proof-of-concept stage, so it's not like it will be super fun yet.
 
-It should run on any platform that rust rust in - even in web-assembly.   
+It should run on any platform that rust runs in - even in web-assembly.
 You can view a sample of the game running here;
-(createng.com/dragons)[https://createng.com/dragons/]
+[createng.com/dragons](https://createng.com/dragons/)
 
 Controls are still very much a work in progress.  
 
@@ -23,23 +23,23 @@ The shooting direction is also affected by your velocity, so if you have trouble
 
 Thats about all there is to it for now.
 
-
 ## To Build and Run on Windows or *nix
+
 `cargo build`
 
 `cargo run`
- 
+
  etc.
 
 ## To Build for WebAssembly
 
 `cargo run --bin wasm_build --features wasm_build`
 
-This cargo bin target simply runs the contents of the wasm_build.script file - and then does some md5 hashing to make the webassembly thing avoid using old cached versions.   
+This cargo bin target simply runs the contents of the wasm_build.script file - and then does some md5 hashing to make the webassembly thing avoid using old cached versions.
 
 At the moment, this works for all desktop platforms I am aware of.
 
-```
+```bat
 cargo build --release --target wasm32-unknown-unknown
 wasm-bindgen --out-name wasm_jastery --out-dir wasm/target --target web target/wasm32-unknown-unknown/release/jastery.wasm
 ```
