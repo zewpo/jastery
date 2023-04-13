@@ -33,6 +33,13 @@ Thats about all there is to it for now.
 
 ## To Build for WebAssembly
 
+If you havent already installed the wasm target for the rust compiler;
+
+`rustup target add wasm32-unknown-unknown`
+
+
+Then, you can just run this.
+
 `cargo run --bin wasm_build --features wasm_build`
 
 This cargo bin target simply runs the contents of the wasm_build.script file - and then does some md5 hashing to make the webassembly thing avoid using old cached versions.
@@ -43,6 +50,8 @@ At the moment, this works for all desktop platforms I am aware of.
 cargo build --release --target wasm32-unknown-unknown
 wasm-bindgen --out-name wasm_jastery --out-dir wasm/target --target web target/wasm32-unknown-unknown/release/jastery.wasm
 ```
+
+You will end up with a 'wasm' directory with the compiled content, which you can serve over web.
 
 If you use this software, and it eats your cat, well, that is exactly what dragons are likely to do, so please dont blame me.
 
