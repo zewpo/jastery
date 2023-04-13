@@ -64,12 +64,11 @@ fn delete_js_files_in_dir(dir_path: &Path, keep_files: &[&str]) -> io::Result<()
     Ok(())
 }
 
-fn main() {
-
-    run_wasm_build_script();
+fn main() -> io::Result<()> {
+    run_wasm_build_script()?;
 
     let wasm_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("wasm");
-    let wasm_target_dir = Path::new(&wasm_dir).join("target");
+    let wasm_target_dir = wasm_dir.join("target");
     let wasm_file_path = wasm_target_dir.join("wasm_jastery_bg.wasm");
 
     if !wasm_file_path.exists() {
@@ -83,29 +82,32 @@ fn main() {
     let wasm_md5 = md5::compute(wasm_data);
     let wasm_md5_string = format!("{:x}", wasm_md5);
 
-    // let input_dir = "wasm/target";
     let js_file = "wasm_jastery.js";
     let js_file_path = wasm_target_dir.join(js_file);
 
-    let new_js_file = &format!("wasm_jastery.{}.js", wasm_md5_string );
+    let new_js_file = &format!("wasm_jastery.{}.js", wasm_md5_string);
     let new_js_file_path = js_file_path.with_file_name(new_js_file);
 
-    let keep_files = vec![
-        js_file, 
-        new_js_file,
-    ];
-    delete_js_files_in_dir(&wasm_target_dir, &keep_files).unwrap();
-    
+    let keep_files = vec![js_file, new_js_file];
+    delete_js_files_in_dir(&wasm_target_dir, &keep_files)?;
+
     if !new_js_file_path.exists() {
-        fs::rename(&js_file_path, &new_js_file_path).expect(&format!("Failed to rename input file: [{}] ", js_file_path.display() ) );
+        fs::rename(&js_file_path, &new_js_file_path).expect(&format!("Failed to rename input file: [{}] ", js_file_path.display()));
     }
 
-    let index_html_path = Path::new(&wasm_dir).join("index.html");
+    let index_html_path = wasm_dir.join("index.html");
     let mut index_html_content =
         fs::read_to_string(&index_html_path).expect("Failed to read index.html file");
-    index_html_content = index_html_content.replace(js_file, &new_js_file);
+
+    let wasm_jastery_pattern = Regex::new(r#"wasm_jastery(\.[a-f0-9]{32})?\.js"#).unwrap();
+
+    index_html_content = wasm_jastery_pattern
+        .replace(&index_html_content, new_js_file)
+        .to_string();
 
     fs::write(&index_html_path, index_html_content).expect("Failed to write updated index.html file");
 
     println!("Cache-busted index.html; {} -> {}", js_file, new_js_file);
+
+    Ok(())
 }
