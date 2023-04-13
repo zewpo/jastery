@@ -9,7 +9,10 @@ use std::path::Path;
 use std::process::Command;
 
 fn run_wasm_build_script() -> io::Result<()> {
-    let script_path = Path::new("wasm_build.script");
+    let script_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+                                .join("src")
+                                .join("bin")
+                                .join("wasm_build.script");
 
     if !script_path.exists() {
         eprintln!("Error: wasm_build.script not found.");
