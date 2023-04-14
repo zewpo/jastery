@@ -1,3 +1,4 @@
+// src/shared/components/resource_cache.rs
 // use std::collections::HashMap;
 use bevy::prelude::*;
 // use image::DynamicImage;

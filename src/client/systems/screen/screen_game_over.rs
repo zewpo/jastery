@@ -1,4 +1,4 @@
-// src\client\systems\screen_game_over.rs
+// src/client/systems/screen/screen_game_over.rs
 
 use bevy::prelude::*;
 use crate::shared::components::*;

@@ -1,3 +1,4 @@
+// src/shared/systems/game/mod.rs
 pub mod game_plugin;
 pub mod setup_plugin;
 pub mod setup_dragons;

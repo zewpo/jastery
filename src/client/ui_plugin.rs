@@ -1,3 +1,4 @@
+// src/client/ui_plugin.rs
 use bevy::prelude::*;
 
 use crate::client::systems::{

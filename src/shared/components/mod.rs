@@ -1,4 +1,4 @@
-// src/shared/mod.rs
+// src/shared/components/mod.rs
 pub mod dragon;
 pub mod elemental_theme;
 pub mod game;

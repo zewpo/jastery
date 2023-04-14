@@ -1,4 +1,4 @@
-// src\shared\components\game.rs
+// src/shared/components/game.rs
 
 use bevy::prelude::*;
 use uuid::Uuid;

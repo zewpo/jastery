@@ -1,4 +1,4 @@
-//  src\shared\systems\game\game_plugin.rs
+// src/shared/systems/game/game_plugin.rs
 
 use bevy::prelude::*;
 

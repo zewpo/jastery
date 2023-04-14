@@ -1,3 +1,4 @@
+// src/shared/systems/resource_cache.rs
 use bevy::prelude::*;
 use image::DynamicImage;
 use std::collections::{HashMap, HashSet};

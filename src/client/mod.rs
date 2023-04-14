@@ -1,3 +1,4 @@
+// src/client/mod.rs
 pub mod components;
 pub mod systems;
 pub mod ui_plugin;

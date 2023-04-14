@@ -1,3 +1,4 @@
+// src/client/components/mod.rs
 pub mod client;
 pub mod game_camera;
 pub mod network;

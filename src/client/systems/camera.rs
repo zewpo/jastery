@@ -1,3 +1,4 @@
+// src/client/systems/camera.rs
 use bevy::prelude::*;
 use crate::client::components::*;
 use crate::shared::components::*;

@@ -1,4 +1,4 @@
-// src\client\systems\screen.rs
+// src/client/systems/screen/screen.rs
 
 use bevy::{
     app::AppExit,

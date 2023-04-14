@@ -1,4 +1,4 @@
-// src\shared\components\collideable_image.rs
+// src/shared/components/collideable_image.rs
 
 use bevy::prelude::*;
 // use image::DynamicImage;

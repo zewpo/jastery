@@ -1,4 +1,4 @@
-// src\client\systems\screen.rs
+// src/client/systems/screen/screen_settings.rs
 
 use bevy::prelude::*;
 use crate::{shared::components::*, client::systems::*};

@@ -1,3 +1,4 @@
+// src/shared/components/wall.rs
 use bevy::prelude::*;
 use std::sync::Arc;
 

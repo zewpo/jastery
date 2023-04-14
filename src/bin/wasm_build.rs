@@ -1,3 +1,4 @@
+// src/bin/wasm_build.rs
 
 use regex::{Regex, escape};
 

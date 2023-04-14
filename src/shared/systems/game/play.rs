@@ -1,4 +1,4 @@
-//  src\shared\systems\game\play.rs
+// src/shared/systems/game/play.rs
 
 use bevy::prelude::*;
 use crate::{shared::{components::{dragon::*, game::*}, systems::{projectile::*, dragon::*}}, client::systems::AppScreen };

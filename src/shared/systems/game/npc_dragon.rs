@@ -1,3 +1,4 @@
+// src/shared/systems/game/npc_dragon.rs
 use bevy::prelude::*;
 use crate::shared::components::*;
 use rand::Rng;

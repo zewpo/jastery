@@ -1,3 +1,4 @@
+// src/main.rs
 mod client;
 mod server;
 mod shared;

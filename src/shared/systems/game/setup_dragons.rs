@@ -1,4 +1,4 @@
-// src\shared\systems\game\setup_dragons.rs
+// src/shared/systems/game/setup_dragons.rs
 
 use bevy::prelude::*;
 use uuid::Uuid;

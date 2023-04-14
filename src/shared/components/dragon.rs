@@ -1,3 +1,4 @@
+// src/shared/components/dragon.rs
 use std::sync::Arc;
 
 use bevy::prelude::*;

@@ -1,4 +1,4 @@
-// src\shared\systems\game\setup_maze.rs
+// src/shared/systems/game/setup_maze.rs
 
 use std::fmt;
 use bevy::prelude::*;

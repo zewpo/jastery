@@ -1,4 +1,4 @@
-// src\client\systems\screen_game_play.rs
+// src/client/systems/screen/screen_game_play.rs
 
 use bevy::prelude::*;
 use crate::mutils;
