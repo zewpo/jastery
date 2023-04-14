@@ -1,4 +1,5 @@
 // src/shared/systems/game/setup_plugin.rs
+
 use bevy::prelude::*;
 
 use crate::client::systems::AppScreen;

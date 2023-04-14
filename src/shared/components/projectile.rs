@@ -1,4 +1,5 @@
 // src/shared/components/projectile.rs
+
  use std::sync::Arc;
 
 //Projectile, ProjectileBundle, ProjectileMovement, and ProjectileImage

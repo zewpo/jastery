@@ -17,13 +17,18 @@ def process_file(filepath):
         lines.insert(0, correct_path_comment)
         action = "added"
 
+    # Ensure there's a blank line after the path-filename reference
+    if len(lines) == 1 or (len(lines) > 1 and lines[1].strip() != ""):
+        lines.insert(1, "\n")
+        action = "added blank line" if not action else action
+
     with open(filepath, 'w', encoding='utf-8') as file:
         file.writelines(lines)
 
     if action:
         print(f"{action.title()} path comment in {filepath}")
-    # else:
-    #     print(f"Path comment unchanged in {filepath}")
+    else:
+        print(f"Path comment unchanged in {filepath}")
 
 def process_directory(root_dir):
     ignored_dirs = {'src/generated', 'target'}
