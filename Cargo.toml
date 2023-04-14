@@ -2,7 +2,7 @@
 name = "jastery"
 version = "0.1.0"
 edition = "2021"
-build = "pre_build.rs"
+build = "src/bin/pre_build.rs"
 default-run = "jastery"
 
 # [[bin]]
@@ -44,6 +44,9 @@ debug = false
 [profile.dev]
 debug = true
 
+[[bin]]
+name = "pre_build"
+path = "src/bin/pre_build.rs"
 
 [[bin]]
 name = "wasm_build"
