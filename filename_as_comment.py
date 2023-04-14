@@ -22,8 +22,8 @@ def process_file(filepath):
 
     if action:
         print(f"{action.title()} path comment in {filepath}")
-    else:
-        print(f"Path comment unchanged in {filepath}")
+    # else:
+    #     print(f"Path comment unchanged in {filepath}")
 
 def process_directory(root_dir):
     ignored_dirs = {'src/generated', 'target'}
