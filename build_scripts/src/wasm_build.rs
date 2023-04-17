@@ -1,4 +1,4 @@
-// src/bin/wasm_build.rs
+// build_scripts/src/wasm_build.rs
 
 use regex::{Regex, escape};
 

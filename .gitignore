@@ -18,3 +18,4 @@ src/generated/generated_assets.rs
 /.vs/slnx.sqlite
 /.vs
 build_scripts/target
+rename_mod_files.py

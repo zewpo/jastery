@@ -1,4 +1,4 @@
-// src/client/mod.rs
+// src/client.rs
 
 pub mod components;
 pub mod systems;

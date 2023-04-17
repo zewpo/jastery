@@ -1,4 +1,4 @@
-// src/server/components/mod.rs
+// src/server/components.rs
 
 pub mod game_rules;
 pub mod player_management;

@@ -1,4 +1,4 @@
-// src/client/systems/screen/mod.rs
+// src/client/systems/screen.rs
 
 pub mod screen;
 pub mod screen_game_over;

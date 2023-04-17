@@ -1,4 +1,4 @@
-// src/shared/systems/game/mod.rs
+// src/shared/systems/game.rs
 
 pub mod game_plugin;
 pub mod setup_plugin;

@@ -1,4 +1,4 @@
-// src/shared/systems/mod.rs
+// src/shared/systems.rs
 
 pub mod projectile;
 pub mod dragon;

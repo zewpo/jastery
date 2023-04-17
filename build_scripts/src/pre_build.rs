@@ -1,4 +1,4 @@
-// src/bin/pre_build.rs
+// build_scripts/src/pre_build.rs
 
 use std::fs::{self, File};
 use std::io::Write;

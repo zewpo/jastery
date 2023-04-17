@@ -1,4 +1,4 @@
-// src/client/systems/mod.rs
+// src/client/systems.rs
 
 pub mod camera;
 pub mod user_input;

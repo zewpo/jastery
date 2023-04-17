@@ -1,3 +1,5 @@
+// build_scripts/src/lib.rs
+
 pub mod pre_build;
 pub mod wasm_build;
 

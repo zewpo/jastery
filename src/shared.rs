@@ -1,4 +1,4 @@
-// src/shared/mod.rs
+// src/shared.rs
 
 pub mod components;
 pub mod systems;

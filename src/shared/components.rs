@@ -1,4 +1,4 @@
-// src/shared/components/mod.rs
+// src/shared/components.rs
 
 pub mod dragon;
 pub mod elemental_theme;
