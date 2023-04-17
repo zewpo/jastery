@@ -1036,6 +1036,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "build_scripts"
+version = "0.1.0"
+dependencies = [
+ "Inflector",
+ "md5",
+ "regex",
+ "walkdir",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1993,21 +2003,18 @@ checksum = "453ad9f582a441959e5f0d088b02ce04cfe8d51a8eaf077f12ac6d3e94164ca6"
 name = "jastery"
 version = "0.1.0"
 dependencies = [
- "Inflector",
  "bevy",
+ "build_scripts",
  "chrono",
  "getrandom",
  "image",
  "js-sys",
  "lazy_static",
- "md5",
  "pathfinding",
  "rand",
- "regex",
  "tracing-appender",
  "tracing-subscriber",
  "uuid",
- "walkdir",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",

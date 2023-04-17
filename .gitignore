@@ -17,3 +17,4 @@ src/generated/generated_assets.rs
 
 /.vs/slnx.sqlite
 /.vs
+build_scripts/target

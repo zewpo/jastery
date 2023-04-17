@@ -29,9 +29,13 @@ Thats about all there is to it for now.
 
 `cargo run`
 
- etc.
+ This runs the game as a native application on your desktop.
 
-## To Build for WebAssembly
+## WebAssembly
+
+Optionally, you can build the game for web-assembly, and run it in a web browser.
+
+### Pre-Requisites to Build for WebAssembly
 
 If you havent already installed the wasm target for the rust compiler;
 
@@ -41,25 +45,29 @@ and;
 
 `cargo install wasm-bindgen-cli`
 
-Then, the cargo.toml file has a bin target you can use, so you can just run this.
+### Build for WebAssembly
 
-`cargo run --bin wasm_build --features wasm_build`
+The build_scripts/cargo.toml file has a bin target you can use, so you can just run this.
 
-This cargo bin target simply runs the contents of the wasm_build.script file, as shown in the next code block. - It then does some md5 hashing to make the webassembly thing avoid using old cached versions.
+`cargo run --manifest-path build_scripts/Cargo.toml --bin wasm_build`
 
-At the moment, this works for all desktop platforms I am aware of - where you might want to compile the wasm package.  
+This bin target first runs the contents of the wasm_build.script file, as shown in the next code block.  It then does some md5 hashing of the output to add some cache-busting to the index.html file.
+
+At the moment, building this should work for windows, mac and linux.
 
 You dont have to run the following code block manually, I'm just showing the content of the script that the wasm_build target will run automatically.
+
+The content of the wasm_build.script file is;
 
 ```sh
 cargo build --release --target wasm32-unknown-unknown
 wasm-bindgen --out-name wasm_jastery --out-dir wasm/target --target web target/wasm32-unknown-unknown/release/jastery.wasm
 ```
 
-You will end up with a 'wasm' directory with the compiled content, which you can serve over web.
+The 'wasm' directory will now have all the compiled content, which you can serve over web.   Any modern web client should be able to access the game this way.
 
 ## License
 
-If you use this software, and it eats your cat, well, that is exactly what dragons are likely to do, so please dont blame me.
+If you use this software and it eats your cat, well, that is exactly what dragons are likely to do, so please dont blame me.
 
 All of the artwork, source code and game content was developed by me - so I own the copyright.   Not sure what type license it should go under yet, maybe something like MIT or Apache sort of thing.

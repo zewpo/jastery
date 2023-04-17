@@ -1,0 +1,22 @@
+[package]
+name = "build_scripts"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+walkdir = "2.3.3"
+Inflector = "0.11.4"
+md5 = "0.7.0"
+regex = "1.7.3"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["lib"]
+
+[[bin]]
+name = "pre_build"
+path = "src/pre_build.rs"
+
+[[bin]]
+name = "wasm_build"
+path = "src/wasm_build.rs"
